@@ -1,5 +1,5 @@
 import { BaseLocal } from "@/db/local";
-import type { Asistencia, AsistenciaSesion, Calificacion, Fila, NombreTabla, Periodo, Usuario } from "@/db/tipos";
+import type { Asistencia, AsistenciaSesion, Calificacion, Fila, Justificacion, NombreTabla, Periodo, Usuario } from "@/db/tipos";
 import { evaluarMarca, firmaValida, leerTokenQr } from "@/dominio/qr";
 import { TABLAS } from "@/db/tipos";
 import type { CambioSalida, RespuestaPull, ResultadoPush, Transporte } from "./motor";
@@ -52,6 +52,19 @@ export class ServidorDemo extends BaseLocal {
       }
       if (antes.estado === "cerrado" && p.estado === "abierto" && (!p.motivo_reapertura?.trim() || p.motivo_reapertura === antes.motivo_reapertura)) {
         throw new Error(`Para reabrir el ${p.nombre} indique el motivo.`);
+      }
+    }
+
+    if (validar && tabla === "justificacion") {
+      // Igual que el trigger validar_justificacion (migración 0009).
+      const u = usuarioId ? ((await this.tabla("usuario").get(usuarioId)) as Usuario | undefined) : undefined;
+      const personal = u?.roles.some((r) => ["director", "subdirector", "docente", "tutor", "auxiliar"].includes(r));
+      const j = fila as Justificacion;
+      if (!personal) {
+        if (j.estado !== "pendiente" || j.revisado_por || j.respuesta) throw new Error("Solo el colegio puede aprobar o rechazar una justificación");
+        if (actual && (actual as Justificacion).estado !== "pendiente") throw new Error("La justificación ya fue revisada");
+      } else if (j.estado !== "pendiente" && (!actual || (actual as Justificacion).estado === "pendiente")) {
+        j.revisado_por = usuarioId;
       }
     }
 

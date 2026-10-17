@@ -1,8 +1,8 @@
 // Datos ficticios para el modo demo (sin servidor). Los nombres son inventados.
 import cneb from "./cneb.json";
-import { idCalificacion } from "@/dominio/notas";
+import { idCalificacion, idDeterministico } from "@/dominio/notas";
 import type {
-  AnioEscolar, Apoderado, Incidencia, IncidenciaAccion, Observacion, SesionTutoria, Area, Calificacion, Colegio, Comunicado, Competencia, DocenteAsignacion,
+  AnioEscolar, Apoderado, Asistencia, AsistenciaSesion, Incidencia, IncidenciaAccion, Observacion, SesionTutoria, Area, Calificacion, Colegio, Comunicado, Competencia, DocenteAsignacion,
   Estudiante, EstudianteApoderado, Fila, Grado, Matricula, NivelLogro, NombreTabla, Periodo, Rol, Seccion, Usuario,
 } from "@/db/tipos";
 
@@ -51,7 +51,7 @@ const CONCLUSIONES: Record<"B" | "C", string[]> = {
 };
 
 /** Cambia este número cuando cambien los datos de demo: los equipos vuelven a sembrar. */
-export const VERSION_DEMO = 3;
+export const VERSION_DEMO = 4;
 
 export async function datosDemo(): Promise<Partial<Record<NombreTabla, Fila[]>>> {
   const r = rng(42);
@@ -161,6 +161,22 @@ export async function datosDemo(): Promise<Partial<Record<NombreTabla, Fila[]>>>
   const acciones: IncidenciaAccion[] = [
     { id: id("fe000000", 1), colegio_id: CID, incidencia_id: incidencias[0].id, autor_id: uRojas.id, fecha: "2026-10-15", texto: "Conversación con los estudiantes involucrados y compromiso de respeto." },
   ];
+  // Asistencia de una semana en 2.º B: Luis faltó el miércoles y llegó tarde el viernes; Juan acumula faltas.
+  const deSec = estudiantes.filter((e) => matriculas.find((m) => m.estudiante_id === e.id)!.seccion_id === secSec.id);
+  const sesionesAsis: AsistenciaSesion[] = [];
+  const marcasAsis: Asistencia[] = [];
+  const dias = ["2026-10-12", "2026-10-13", "2026-10-14", "2026-10-15", "2026-10-16"];
+  for (const [k, fecha] of dias.entries()) {
+    const sid = id("ff000000", k + 1);
+    sesionesAsis.push({ id: sid, colegio_id: CID, seccion_id: secSec.id, area_id: null, docente_id: uRojas.id, fecha, modo: "manual", abierta_en: Date.parse(`${fecha}T08:00:00-05:00`), estado: "confirmada" });
+    for (const e of deSec) {
+      let estado: Asistencia["estado"] = "P";
+      if (e.id === estudiantes[0].id && k === 2) estado = "F";
+      if (e.id === estudiantes[0].id && k === 4) estado = "T";
+      if (e.nombres === "Juan" && k !== 1) estado = "F";
+      marcasAsis.push({ id: await idDeterministico("asistencia", sid, e.id), colegio_id: CID, sesion_id: sid, estudiante_id: e.id, estado, origen: "manual", marcado_en: `${fecha}T13:05:00.000Z`, token_qr: null, por_revisar: false });
+    }
+  }
   void uUgel;
 
   return {
@@ -168,6 +184,6 @@ export async function datosDemo(): Promise<Partial<Record<NombreTabla, Fila[]>>>
     seccion: [secSec, secPri], area: areas, competencia: competencias, docente_asignacion: asignaciones,
     estudiante: estudiantes, matricula: matriculas, apoderado: [apoderado], estudiante_apoderado: [vinculo],
     calificacion: califs, comunicado: comunicados, observacion: observaciones, sesion_tutoria: sesionesTutoria,
-    incidencia: incidencias, incidencia_accion: acciones,
+    incidencia: incidencias, incidencia_accion: acciones, asistencia_sesion: sesionesAsis, asistencia: marcasAsis,
   };
 }
