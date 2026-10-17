@@ -8,6 +8,8 @@ import { Perfil } from "@/paginas/Perfil";
 import { Proximamente } from "@/paginas/Proximamente";
 import { Configuracion } from "@/paginas/configuracion/Configuracion";
 import { Notas } from "@/paginas/notas/Notas";
+import { Asistencia } from "@/paginas/asistencia/Asistencia";
+import { MarcarAsistencia } from "@/paginas/asistencia/MarcarAsistencia";
 import { Sincronizacion } from "@/paginas/Sincronizacion";
 import { Marco } from "@/ui/Marco";
 import { Aviso, Boton, Contenido } from "@/ui/componentes";
@@ -18,10 +20,12 @@ const IMPLEMENTADAS: Record<string, JSX.Element> = {
   "/sincronizacion": <Sincronizacion />,
   "/configuracion": <Configuracion />,
   "/notas": <Notas />,
+  "/asistencia": <Asistencia />,
+  "/marcar": <MarcarAsistencia />,
 };
 
 /** Rutas con subpáginas propias. */
-const CON_SUBRUTAS = new Set(["/configuracion"]);
+const CON_SUBRUTAS = new Set(["/configuracion", "/asistencia"]);
 
 export function App() {
   const { sesion, usuario, cargandoPerfil, sync, cerrarSesion } = useApp();

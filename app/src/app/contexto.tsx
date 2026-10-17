@@ -7,6 +7,7 @@ import { MotorSync, type ResumenSync, type Transporte } from "@/sync/motor";
 import { ServidorDemo, TransporteDemo } from "@/sync/transporte-demo";
 import { TransporteSupabase } from "@/sync/transporte-supabase";
 import { alCambiarConexion, hayConexion } from "@/sync/red";
+import { fijarDesfase } from "@/sync/reloj";
 import { datosDemo, USUARIOS_DEMO, VERSION_DEMO } from "@/data/demo";
 
 const CLAVE_SESION = "cc.sesion";
@@ -129,6 +130,8 @@ export function ProveedorApp({ children }: { children: ReactNode }) {
       setConectado(c);
       if (c) void sincronizarAhora();
     });
+    // Último desfase de reloj conocido (para la hora de los QR sin conexión).
+    void db.leerMeta<number>("desfase_ms", 0).then(fijarDesfase);
     // En demo, si cambió la versión de los datos de ejemplo se vuelven a sembrar antes de sincronizar.
     void prepararServidorDemo().then(() => sincronizarAhora());
     const t = setInterval(() => hayConexion() && void sincronizarAhora(), INTERVALO_SYNC_MS);
