@@ -8,12 +8,16 @@ import { ServidorDemo, TransporteDemo } from "@/sync/transporte-demo";
 import { TransporteSupabase } from "@/sync/transporte-supabase";
 import { alCambiarConexion, hayConexion } from "@/sync/red";
 import { fijarDesfase } from "@/sync/reloj";
+import { AlmacenDemo, AlmacenSupabase, subirPendientes, type AlmacenArchivos } from "@/sync/archivos";
 import { datosDemo, USUARIOS_DEMO, VERSION_DEMO } from "@/data/demo";
 
 const CLAVE_SESION = "cc.sesion";
 
 export const db = new BaseLocal("colegio-local");
 const servidorDemo = MODO === "demo" ? new ServidorDemo() : null;
+
+/** Dónde se suben los archivos de evidencias (servidor demo o Supabase Storage). */
+export const almacen: AlmacenArchivos = servidorDemo ? new AlmacenDemo(servidorDemo) : new AlmacenSupabase(supabase!);
 
 // Solo en desarrollo: acceso desde la consola para pruebas manuales.
 if (import.meta.env.DEV) {
@@ -114,6 +118,12 @@ export function ProveedorApp({ children }: { children: ReactNode }) {
     try {
       const r = await motor.sincronizar();
       setUltimoError(r.error);
+      // Después de las filas, los archivos de evidencias pendientes (no bloquea si falla).
+      if (!r.error) {
+        const colegio = (await db.tabla("usuario").get(sesionRef.current!.usuarioId))?.colegio_id ?? null;
+        const subidos = await subirPendientes(db, almacen, colegio).catch(() => 0);
+        if (subidos) await motor.sincronizar();
+      }
       return r;
     } finally {
       setSincronizando(false);

@@ -1,15 +1,18 @@
 import { useSyncExternalStore } from "react";
 import { useLiveQuery } from "dexie-react-hooks";
-import { CloudOff, MonitorSmartphone } from "lucide-react";
+import { CloudOff, MonitorSmartphone, Wifi } from "lucide-react";
 import { db, useApp } from "@/app/contexto";
 import { NOMBRE_ROL, TONO_ROL } from "@/app/modulos";
 import { MODO } from "@/config";
 import { alCambiarConexion, forzarSinConexion, sinConexionForzada } from "@/sync/red";
+import { fijarSoloWifi, soloWifi } from "@/sync/archivos";
+import { useState } from "react";
 import { BotonRegresar, Contenido, Dato, Encabezado, Gema, Tarjeta, cx, iniciales, orden } from "@/ui/componentes";
 
 export function Perfil() {
   const { usuario } = useApp();
   const forzado = useSyncExternalStore(alCambiarConexion, sinConexionForzada);
+  const [wifi, setWifi] = useState(soloWifi);
   const colegio = useLiveQuery(() => (usuario?.colegio_id ? db.tabla("colegio").get(usuario.colegio_id) : undefined), [usuario?.colegio_id]);
   if (!usuario) return null;
 
@@ -59,6 +62,14 @@ export function Perfil() {
             </span>
             <input type="checkbox" role="switch" checked={forzado} onChange={(e) => forzarSinConexion(e.target.checked)} className="peer sr-only" />
             <span aria-hidden className="relative h-8 w-14 shrink-0 rounded-full bg-tinta/15 shadow-[inset_0_2px_4px_rgba(11,46,51,.2)] transition peer-checked:bg-amber-400 peer-focus-visible:ring-4 peer-focus-visible:ring-teal-300 after:absolute after:left-1 after:top-1 after:h-6 after:w-6 after:rounded-full after:bg-white after:shadow-md after:transition peer-checked:after:translate-x-6" />
+          </label>
+          <label className="mt-2 flex cursor-pointer items-center gap-4 rounded-2xl bg-white/40 p-3 ring-1 ring-white/80">
+            <span className="min-w-0 flex-1 text-sm">
+              <span className="flex items-center gap-1.5 font-semibold"><Wifi className="h-4 w-4" aria-hidden /> Subir fotos solo con wifi</span>
+              <span className="block text-xs text-tinta-suave">Ahorra datos móviles. Las notas y la asistencia se envían igual.</span>
+            </span>
+            <input type="checkbox" role="switch" checked={wifi} onChange={(e) => { fijarSoloWifi(e.target.checked); setWifi(e.target.checked); }} className="peer sr-only" />
+            <span aria-hidden className="relative h-8 w-14 shrink-0 rounded-full bg-tinta/15 shadow-[inset_0_2px_4px_rgba(11,46,51,.2)] transition peer-checked:bg-teal-500 peer-focus-visible:ring-4 peer-focus-visible:ring-teal-300 after:absolute after:left-1 after:top-1 after:h-6 after:w-6 after:rounded-full after:bg-white after:shadow-md after:transition peer-checked:after:translate-x-6" />
           </label>
         </Tarjeta>
 

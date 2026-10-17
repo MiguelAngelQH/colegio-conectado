@@ -11,6 +11,8 @@ const NOMBRE_TABLA: Partial<Record<NombreTabla, string>> = {
   calificacion: "Nota", asistencia: "Asistencia", asistencia_sesion: "Sesión de asistencia", observacion: "Observación",
   estudiante: "Estudiante", matricula: "Matrícula", comunicado: "Comunicado", incidencia: "Incidencia",
   sesion_tutoria: "Sesión de tutoría", periodo: "Periodo", seccion: "Sección", usuario: "Usuario",
+  entrevista: "Entrevista", incidencia_accion: "Seguimiento de incidencia", comunicado_lectura: "Lectura de comunicado",
+  evidencia: "Evidencia", asistencia_secreto: "Código QR de la clase",
 };
 
 export function Sincronizacion() {
@@ -18,6 +20,7 @@ export function Sincronizacion() {
   const [resultado, setResultado] = useState<string | null>(null);
   const [aDescartar, setADescartar] = useState<EntradaOutbox | null>(null);
   const entradas = useLiveQuery(() => db.outbox.orderBy("id").toArray(), [], []);
+  const archivosPendientes = useLiveQuery(() => db.archivo.where("subido").equals(0).count(), [], 0);
   const rechazados = entradas.filter((e) => e.estado === "rechazado");
   const pendientes = entradas.filter((e) => e.estado !== "rechazado");
 
@@ -44,6 +47,7 @@ export function Sincronizacion() {
               <h2 className="titulo-display text-2xl font-bold">{estado.titulo}</h2>
               <p className="mt-1 text-sm text-tinta-suave">{estado.texto}</p>
               <p className="mt-2 text-xs text-tinta-suave">Última sincronización: <strong className="text-tinta">{fechaHora(sync.ultima)}</strong></p>
+              {archivosPendientes > 0 && <p className="mt-1 text-xs font-semibold text-sky-800">{archivosPendientes} {archivosPendientes === 1 ? "foto o archivo" : "fotos o archivos"} por subir</p>}
             </div>
           </div>
           <div className="mt-5 flex flex-wrap items-center gap-3">

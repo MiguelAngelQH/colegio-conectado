@@ -1,7 +1,7 @@
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { Link, NavLink, Outlet, useLocation } from "react-router-dom";
 import { useLiveQuery } from "dexie-react-hooks";
-import { GraduationCap, LayoutGrid, LogOut, X } from "lucide-react";
+import { GraduationCap, LayoutGrid, LoaderCircle, LogOut, X } from "lucide-react";
 import { db, useApp } from "@/app/contexto";
 import { modulosPara, NOMBRE_ROL, TONO_ROL, type Modulo } from "@/app/modulos";
 import { Boton, Dialogo, Gema, cx, iniciales, orden } from "./componentes";
@@ -84,7 +84,10 @@ export function Marco() {
       </header>
 
       <main className="lg:pl-[19.5rem] lg:pr-2">
-        <Outlet />
+        {/* Los módulos se cargan bajo demanda: mientras tanto se mantiene el marco y se muestra un indicador. */}
+        <Suspense fallback={<div className="flex justify-center p-12" role="status"><LoaderCircle className="h-7 w-7 animate-spin text-teal-600" aria-label="Cargando" /></div>}>
+          <Outlet />
+        </Suspense>
       </main>
 
       {/* ---------- Celular: dock inferior ---------- */}

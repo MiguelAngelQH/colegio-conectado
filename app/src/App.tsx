@@ -1,3 +1,4 @@
+import { lazy } from "react";
 import { Navigate, Route, Routes } from "react-router-dom";
 import { LoaderCircle } from "lucide-react";
 import { useApp } from "@/app/contexto";
@@ -6,13 +7,18 @@ import { Inicio } from "@/paginas/Inicio";
 import { Login } from "@/paginas/Login";
 import { Perfil } from "@/paginas/Perfil";
 import { Proximamente } from "@/paginas/Proximamente";
-import { Configuracion } from "@/paginas/configuracion/Configuracion";
-import { Notas } from "@/paginas/notas/Notas";
-import { Asistencia } from "@/paginas/asistencia/Asistencia";
-import { MarcarAsistencia } from "@/paginas/asistencia/MarcarAsistencia";
 import { Sincronizacion } from "@/paginas/Sincronizacion";
 import { Marco } from "@/ui/Marco";
 import { Aviso, Boton, Contenido } from "@/ui/componentes";
+
+// Módulos grandes: se cargan al abrirlos (el service worker los guarda igual para usarlos sin internet).
+const Configuracion = lazy(() => import("@/paginas/configuracion/Configuracion").then((m) => ({ default: m.Configuracion })));
+const Notas = lazy(() => import("@/paginas/notas/Notas").then((m) => ({ default: m.Notas })));
+const Asistencia = lazy(() => import("@/paginas/asistencia/Asistencia").then((m) => ({ default: m.Asistencia })));
+const MarcarAsistencia = lazy(() => import("@/paginas/asistencia/MarcarAsistencia").then((m) => ({ default: m.MarcarAsistencia })));
+const Tutoria = lazy(() => import("@/paginas/tutoria/Tutoria").then((m) => ({ default: m.Tutoria })));
+const Convivencia = lazy(() => import("@/paginas/convivencia/Convivencia").then((m) => ({ default: m.Convivencia })));
+const Comunicados = lazy(() => import("@/paginas/comunicados/Comunicados").then((m) => ({ default: m.Comunicados })));
 
 const IMPLEMENTADAS: Record<string, JSX.Element> = {
   "/": <Inicio />,
@@ -22,10 +28,13 @@ const IMPLEMENTADAS: Record<string, JSX.Element> = {
   "/notas": <Notas />,
   "/asistencia": <Asistencia />,
   "/marcar": <MarcarAsistencia />,
+  "/tutoria": <Tutoria />,
+  "/convivencia": <Convivencia />,
+  "/comunicados": <Comunicados />,
 };
 
 /** Rutas con subpáginas propias. */
-const CON_SUBRUTAS = new Set(["/configuracion", "/asistencia"]);
+const CON_SUBRUTAS = new Set(["/configuracion", "/asistencia", "/tutoria", "/convivencia"]);
 
 export function App() {
   const { sesion, usuario, cargandoPerfil, sync, cerrarSesion } = useApp();
