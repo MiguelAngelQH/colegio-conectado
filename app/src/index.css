@@ -171,3 +171,13 @@ body {
 
 /* Bordes inferiores seguros en celulares con barra de gestos. */
 .pb-seguro { padding-bottom: max(1rem, env(safe-area-inset-bottom)); }
+
+/* Línea que recorre el visor del escáner. */
+@media (prefers-reduced-motion: no-preference) {
+  .linea-escaneo { animation: escaneo 2.2s ease-in-out infinite alternate; }
+}
+@keyframes escaneo { from { top: 8%; } to { top: 92%; } }
+.linea-escaneo { top: 50%; }
+
+/* Anillo de cuenta regresiva del QR. */
+.anillo { transition: stroke-dashoffset 1s linear; }
