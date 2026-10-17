@@ -4,6 +4,7 @@ import { readFileSync, readdirSync } from "node:fs";
 import { resolve } from "node:path";
 import { PGlite } from "@electric-sql/pglite";
 import { beforeAll, describe, expect, it } from "vitest";
+import { crearTokenQr, leerTokenQr } from "@/dominio/qr";
 
 const DIR = resolve(__dirname, "../../supabase/migrations");
 
@@ -265,5 +266,88 @@ describe("sync_pull y RLS", () => {
     const leer = (u: string) => como(u, async () => (await db.query("select count(*)::int n from auditoria")).rows[0] as { n: number });
     expect((await leer(U.director)).n).toBeGreaterThan(0);
     expect((await leer(U.docente)).n).toBe(0);
+  });
+});
+
+describe("asistencia con QR", () => {
+  const SESION = "60000000-0000-4000-8000-000000000001";
+  const SECRETO = "secreto-de-prueba-1234567890";
+  const U_EST2 = "10000000-0000-4000-8000-000000000007";
+  const ahora = () => Date.now();
+  const marca = (estudiante: string, token: string, extra: Record<string, unknown> = {}) => ({
+    tabla: "asistencia",
+    parche: {
+      id: crypto.randomUUID(), colegio_id: COL, sesion_id: SESION, estudiante_id: estudiante, estado: "P", origen: "qr",
+      marcado_en: new Date().toISOString(), token_qr: token, por_revisar: false, dispositivo_id: "equipo-A", ...extra,
+    },
+  });
+
+  beforeAll(async () => {
+    // Segundo estudiante con cuenta (E2).
+    await db.exec(`
+      insert into auth.users (id) values ('${U_EST2}');
+      insert into usuario (id, colegio_id, nombres, apellidos, roles) values ('${U_EST2}', '${COL}', 'Ana', 'C', '{estudiante}');
+      update estudiante set usuario_id = '${U_EST2}' where id = '${E2}';
+    `);
+  });
+
+  it("la firma calculada en Postgres es idéntica a la de la app", async () => {
+    const token = await crearTokenQr(SESION, SECRETO, 1_792_000_000_000);
+    const t = leerTokenQr(token)!;
+    const r = await db.query<{ f: string }>("select firma_qr($1, $2, $3) f", [SECRETO, SESION, t.ventana]);
+    expect(r.rows[0].f).toBe(t.firma);
+  });
+
+  it("si la clase aún no llegó al servidor, la marca se reintenta luego (no se pierde)", async () => {
+    const [r] = await push(U.estudiante, [marca(E1, await crearTokenQr(SESION, SECRETO, ahora()))]);
+    expect(r.estado).toBe("reintentar");
+  });
+
+  it("el docente abre la sesión con su secreto", async () => {
+    const r = await push(U.docente, [
+      { tabla: "asistencia_sesion", parche: { id: SESION, colegio_id: COL, seccion_id: SEC, area_id: null, docente_id: U.docente, fecha: "2026-10-19", modo: "qr", abierta_en: ahora() - 60_000, estado: "abierta" } },
+      { tabla: "asistencia_secreto", parche: { id: SESION, colegio_id: COL, sesion_id: SESION, docente_id: U.docente, secreto: SECRETO } },
+    ]);
+    expect(r.map((x) => x.estado)).toEqual(["ok", "ok"]);
+  });
+
+  it("el estudiante marca con un código válido y queda presente", async () => {
+    const m = marca(E1, await crearTokenQr(SESION, SECRETO, ahora()));
+    expect((await push(U.estudiante, [m]))[0].estado).toBe("ok");
+    const f = (await db.query<{ estado: string; por_revisar: boolean }>("select estado, por_revisar from asistencia where id = $1", [m.parche.id])).rows[0];
+    expect(f).toEqual({ estado: "P", por_revisar: false });
+    // No puede volver a marcar ni cambiar su marca.
+    const [otra] = await push(U.estudiante, [{ tabla: "asistencia", parche: { id: m.parche.id, estado: "J" } }]);
+    expect(otra.estado).toBe("rechazado");
+  });
+
+  it("rechaza códigos alterados y marcas por otro estudiante", async () => {
+    const token = await crearTokenQr(SESION, SECRETO, ahora());
+    const [alterado] = await push(U_EST2, [marca(E2, token.slice(0, -2) + "zz")]);
+    expect(alterado).toMatchObject({ estado: "rechazado", motivo: "Código QR no válido" });
+    const [ajeno] = await push(U.estudiante, [marca(E3, token)]);
+    expect(ajeno.estado).toBe("rechazado");
+  });
+
+  it("una foto escaneada tarde o un celular prestado quedan por revisar", async () => {
+    const token = await crearTokenQr(SESION, SECRETO, ahora());
+    const m = marca(E2, token, { marcado_en: new Date(ahora() + 10 * 60_000).toISOString() });
+    expect((await push(U_EST2, [m]))[0]).toEqual({ ref: 1, estado: "ok" });
+    const f = (await db.query<{ por_revisar: boolean; motivo_revision: string }>("select por_revisar, motivo_revision from asistencia where id = $1", [m.parche.id])).rows[0];
+    expect(f.por_revisar).toBe(true);
+    // equipo-A ya marcó por E1 en esta sesión.
+    expect(f.motivo_revision).toMatch(/fuera de tiempo; Este celular ya marcó por otro estudiante/);
+  });
+
+  it("el secreto solo lo ve quien abrió la sesión (ni estudiantes ni la UGEL)", async () => {
+    expect((await pull(U.docente)).filas.asistencia_secreto?.map((s) => s.id)).toEqual([SESION]);
+    expect((await pull(U.estudiante)).filas.asistencia_secreto).toBeUndefined();
+    expect((await pull(U.ugel)).filas.asistencia_secreto).toBeUndefined();
+    expect((await pull(U.estudiante)).filas.asistencia_sesion).toBeUndefined();
+  });
+
+  it("devuelve la hora del servidor para corregir relojes", async () => {
+    const r = await como(U.docente, async () => (await db.query<{ r: { hora: number } }>("select sync_pull_con_hora(null, 1) r")).rows[0].r);
+    expect(Math.abs(r.hora - Date.now())).toBeLessThan(5_000);
   });
 });

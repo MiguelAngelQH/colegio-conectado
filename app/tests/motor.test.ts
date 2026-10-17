@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it } from "vitest";
 import { BaseLocal } from "@/db/local";
 import { guardar } from "@/db/repositorio";
 import type { Calificacion, Periodo } from "@/db/tipos";
-import { MotorSync, descartarCambio, espera, reintentarRechazado } from "@/sync/motor";
+import { MAX_INTENTOS, MotorSync, descartarCambio, espera, reintentarRechazado } from "@/sync/motor";
 import { ServidorDemo, TransporteDemo } from "@/sync/transporte-demo";
 
 let n = 0;
@@ -171,5 +171,23 @@ describe("motor de sincronización", () => {
     expect((await db.sombra.get("calificacion:cal-1"))?.fila).toMatchObject({ nivel_logro: "C" });
     const [e] = await db.outbox.toArray();
     expect(e).toMatchObject({ estado: "pendiente", error: "ocupado" });
+  });
+
+  it("deja de insistir tras muchos reintentos y lo muestra como no aceptado", async () => {
+    const db = new BaseLocal(`equipo-${++n}`);
+    let t = 0;
+    const motor = new MotorSync(db, {
+      disponible: () => true,
+      push: async (cs) => cs.map((c) => ({ ref: c.ref, estado: "reintentar" as const, motivo: "La clase todavía no se sincroniza" })),
+      pull: async () => ({ filas: {}, cursor: "c", hay_mas: false }),
+    }, { ahora: () => t });
+    await guardar(db, "asistencia", { id: "a1", sesion_id: "x", estudiante_id: "e", estado: "P", origen: "qr" }, COL);
+    for (let i = 0; i < MAX_INTENTOS; i++) {
+      t += 60 * 60_000;
+      await motor.sincronizar();
+    }
+    const [e] = await db.outbox.toArray();
+    expect(e.estado).toBe("rechazado");
+    expect(e.error).toMatch(/tras 30 intentos: La clase todavía no se sincroniza/);
   });
 });
