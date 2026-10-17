@@ -142,9 +142,16 @@ export interface AsistenciaSesion extends Fila {
   docente_id: string;
   fecha: string;
   modo: "manual" | "carne" | "qr";
-  /** Secreto HMAC del QR dinámico. Solo lo ven el docente y el servidor. */
-  secreto_qr: string | null;
+  /** Hora (ms, reloj corregido del docente) en que se abrió; acota la validez de los QR. */
+  abierta_en: number | null;
   estado: "abierta" | "confirmada";
+}
+
+/** Secreto HMAC del QR dinámico. Solo lo ven quien abrió la sesión, la dirección y el servidor. */
+export interface AsistenciaSecreto extends Fila {
+  sesion_id: string;
+  docente_id: string;
+  secreto: string;
 }
 
 export interface Asistencia extends Fila {
@@ -156,6 +163,9 @@ export interface Asistencia extends Fila {
   /** Token QR escaneado por el estudiante, validado por el servidor. */
   token_qr: string | null;
   por_revisar: boolean;
+  /** Equipo desde el que el estudiante marcó (detecta celulares prestados). */
+  dispositivo_id?: string | null;
+  motivo_revision?: string | null;
 }
 
 export interface Observacion extends Fila {
@@ -217,6 +227,7 @@ export interface Tablas {
   estudiante_apoderado: EstudianteApoderado;
   calificacion: Calificacion;
   asistencia_sesion: AsistenciaSesion;
+  asistencia_secreto: AsistenciaSecreto;
   asistencia: Asistencia;
   observacion: Observacion;
   sesion_tutoria: SesionTutoria;
@@ -243,7 +254,8 @@ export const INDICES: Record<NombreTabla, string> = {
   apoderado: "id, usuario_id",
   estudiante_apoderado: "id, estudiante_id, apoderado_id",
   calificacion: "id, [seccion_id+periodo_id], estudiante_id, [estudiante_id+competencia_id+periodo_id]",
-  asistencia_sesion: "id, seccion_id, docente_id, fecha",
+  asistencia_sesion: "id, seccion_id, docente_id, fecha, [seccion_id+fecha]",
+  asistencia_secreto: "id, sesion_id",
   asistencia: "id, sesion_id, estudiante_id, [sesion_id+estudiante_id]",
   observacion: "id, estudiante_id, autor_id",
   sesion_tutoria: "id, seccion_id",

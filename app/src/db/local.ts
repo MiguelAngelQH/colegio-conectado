@@ -38,12 +38,10 @@ export class BaseLocal extends Dexie {
 
   constructor(nombre: string) {
     super(nombre);
-    this.version(1).stores({
-      ...INDICES,
-      outbox: "++id, estado, [tabla+fila_id], proximo_intento",
-      sombra: "clave",
-      meta: "clave",
-    });
+    const internas = { outbox: "++id, estado, [tabla+fila_id], proximo_intento", sombra: "clave", meta: "clave" };
+    // Al cambiar índices o tablas se agrega una versión nueva; Dexie migra los datos existentes.
+    this.version(1).stores({ ...INDICES, asistencia_sesion: "id, seccion_id, docente_id, fecha", asistencia_secreto: null, ...internas });
+    this.version(2).stores({ ...INDICES, ...internas });
   }
 
   tabla<K extends NombreTabla>(nombre: K): Table<Tablas[K], string> {
