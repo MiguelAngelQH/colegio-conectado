@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Route, Routes, useNavigate } from "react-router-dom";
 import { useLiveQuery } from "dexie-react-hooks";
-import { CalendarDays, ChevronRight, ClipboardCheck, History, IdCard } from "lucide-react";
+import { CalendarDays, ChevronRight, ClipboardCheck, FileCheck, History, IdCard } from "lucide-react";
 import { db, useApp } from "@/app/contexto";
 import { abrirSesion, hoyLocal } from "@/datos/asistencia";
 import { anioActivo, seccionesDetalle } from "@/datos/consultas";
@@ -11,6 +11,7 @@ import { Boton, Contenido, Encabezado, Gema, Tarjeta, cx, orden } from "@/ui/com
 import { Campo, Selector, Vacio } from "@/ui/formulario";
 import { Carnes } from "./Carnes";
 import { TomaAsistencia } from "./TomaAsistencia";
+import { Justificaciones } from "./Justificaciones";
 
 export function Asistencia() {
   return (
@@ -18,6 +19,7 @@ export function Asistencia() {
       <Route index element={<InicioAsistencia />} />
       <Route path="sesion/:id" element={<TomaAsistencia />} />
       <Route path="carnes" element={<Carnes />} />
+      <Route path="justificaciones" element={<Justificaciones />} />
     </Routes>
   );
 }
@@ -36,7 +38,7 @@ function InicioAsistencia() {
   const datos = useLiveQuery(async () => {
     if (!usuario) return null;
     const anio = await anioActivo();
-    if (!anio) return { secciones: [], asig: [], areas: new Map(), sesiones: [] };
+    if (!anio) return { secciones: [], asig: [], areas: new Map(), sesiones: [], justificacionesPendientes: 0 };
     const todas = await seccionesDetalle(anio.id);
     const asig = vivas(await db.tabla("docente_asignacion").where("docente_id").equals(usuario.id).toArray());
     const mias = new Set([...asig.map((a) => a.seccion_id), ...todas.filter((s) => s.tutor_id === usuario.id).map((s) => s.id)]);
@@ -55,7 +57,8 @@ function InicioAsistencia() {
         revisar: marcas.filter((m) => m.por_revisar).length,
       });
     }
-    return { secciones, asig, areas, sesiones: sesiones.map((s) => ({ s, c: conteos.get(s.id)! })) };
+    const justificacionesPendientes = vivas(await db.tabla("justificacion").where("estado").equals("pendiente").toArray()).length;
+    return { secciones, asig, areas, justificacionesPendientes, sesiones: sesiones.map((s) => ({ s, c: conteos.get(s.id)! })) };
   }, [usuario?.id, verTodo]);
 
   useEffect(() => {
@@ -107,6 +110,14 @@ function InicioAsistencia() {
             </div>
             <Boton icono={ClipboardCheck} className="w-full" onClick={tomar} cargando={abriendo} disabled={!seccionId}>Tomar asistencia de hoy</Boton>
           </Tarjeta>
+        )}
+
+        {datos.justificacionesPendientes > 0 && (
+          <button onClick={() => navegar("justificaciones")} className="vidrio aparecer flex w-full items-center gap-3 p-4 text-left ring-1 ring-sky-200" style={orden(2)}>
+            <Gema icono={FileCheck} tono="tono-cielo" tam="sm" />
+            <span className="flex-1 font-semibold">{datos.justificacionesPendientes} {datos.justificacionesPendientes === 1 ? "justificación" : "justificaciones"} de familias por revisar</span>
+            <ChevronRight className="h-5 w-5 text-tinta-suave" aria-hidden />
+          </button>
         )}
 
         {verTodo && (
