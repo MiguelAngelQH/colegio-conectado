@@ -1,6 +1,6 @@
 import type { LucideIcon } from "lucide-react";
 import {
-  BookOpenCheck, ChartColumn, ClipboardList, Eye, FileSpreadsheet, HandHeart, House, ListChecks, Megaphone,
+  Bell, BookOpenCheck, ChartColumn, ClipboardList, Eye, FileSpreadsheet, HandHeart, House, ListChecks, Megaphone,
   QrCode, RefreshCw, Settings, ShieldAlert, User,
 } from "lucide-react";
 import type { Rol } from "@/db/tipos";
@@ -31,13 +31,14 @@ export const MODULOS: Modulo[] = [
   { id: "mis-notas", titulo: "Notas y libreta", descripcion: "Logros por competencia y libreta", icono: BookOpenCheck, ruta: "/mis-notas", roles: ["estudiante", "apoderado"], fase: 5, enInicio: true, tono: "tono-cielo" },
   { id: "asistencia", titulo: "Asistencia", descripcion: "Con QR, escaneo de carnés o lista", icono: QrCode, ruta: "/asistencia", roles: ["docente", "tutor", "auxiliar", "director", "subdirector"], fase: 3, enInicio: true, tono: "tono-laguna" },
   { id: "marcar", titulo: "Marcar asistencia", descripcion: "Escanear el QR del docente", icono: QrCode, ruta: "/marcar", roles: ["estudiante"], fase: 3, enInicio: true, tono: "tono-laguna" },
-  { id: "mi-asistencia", titulo: "Asistencia", descripcion: "Faltas, tardanzas y justificaciones", icono: ListChecks, ruta: "/mi-asistencia", roles: ["apoderado"], fase: 5, enInicio: true, tono: "tono-laguna" },
+  { id: "mi-asistencia", titulo: "Asistencia", descripcion: "Faltas, tardanzas y justificaciones", icono: ListChecks, ruta: "/mi-asistencia", roles: ["apoderado", "estudiante"], fase: 5, enInicio: true, tono: "tono-laguna" },
   { id: "tutoria", titulo: "Tutoría", descripcion: "Sesiones, entrevistas y seguimiento", icono: HandHeart, ruta: "/tutoria", roles: ["tutor", "director", "subdirector", "estudiante"], fase: 4, enInicio: true, tono: "tono-rosa" },
   { id: "convivencia", titulo: "Convivencia", descripcion: "Incidencias y seguimiento (SíseVe)", icono: ShieldAlert, ruta: "/convivencia", roles: ["director", "subdirector", "tutor", "auxiliar"], fase: 4, enInicio: true, tono: "tono-coral" },
   { id: "comunicados", titulo: "Comunicados", descripcion: "Avisos para la comunidad educativa", icono: Megaphone, ruta: "/comunicados", roles: "todos", fase: 4, enInicio: true, tono: "tono-ambar" },
   { id: "paneles", titulo: "Paneles e indicadores", descripcion: "Avance, logros, asistencia y alertas", icono: ChartColumn, ruta: "/paneles", roles: ["director", "subdirector", "ugel"], fase: 6, enInicio: true, tono: "tono-lila" },
   { id: "monitoreo", titulo: "Monitoreo UGEL", descripcion: "Observaciones de monitoreo al director", icono: Eye, ruta: "/monitoreo", roles: ["ugel", "director"], fase: 6, enInicio: true, tono: "tono-lila" },
   { id: "siagie", titulo: "Exportar a SIAGIE", descripcion: "Archivo Excel para la carga oficial", icono: FileSpreadsheet, ruta: "/siagie", roles: ["director", "subdirector"], fase: 7, enInicio: true, tono: "tono-musgo" },
+  { id: "avisos", titulo: "Avisos", descripcion: "Faltas, notas, comunicados y respuestas", icono: Bell, ruta: "/avisos", roles: "todos", fase: 5, tono: "tono-ambar" },
   { id: "sincronizacion", titulo: "Sincronización", descripcion: "Cambios pendientes y estado de la conexión", icono: RefreshCw, ruta: "/sincronizacion", roles: "todos", fase: 0, enInicio: true, tono: "tono-laguna" },
 ];
 

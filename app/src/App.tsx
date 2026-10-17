@@ -18,6 +18,9 @@ const Asistencia = lazy(() => import("@/paginas/asistencia/Asistencia").then((m)
 const MarcarAsistencia = lazy(() => import("@/paginas/asistencia/MarcarAsistencia").then((m) => ({ default: m.MarcarAsistencia })));
 const Tutoria = lazy(() => import("@/paginas/tutoria/Tutoria").then((m) => ({ default: m.Tutoria })));
 const Convivencia = lazy(() => import("@/paginas/convivencia/Convivencia").then((m) => ({ default: m.Convivencia })));
+const MisNotas = lazy(() => import("@/paginas/familia/MisNotas").then((m) => ({ default: m.MisNotas })));
+const MiAsistencia = lazy(() => import("@/paginas/familia/MiAsistencia").then((m) => ({ default: m.MiAsistencia })));
+const Avisos = lazy(() => import("@/paginas/familia/Avisos").then((m) => ({ default: m.Avisos })));
 const Comunicados = lazy(() => import("@/paginas/comunicados/Comunicados").then((m) => ({ default: m.Comunicados })));
 
 const IMPLEMENTADAS: Record<string, JSX.Element> = {
@@ -31,6 +34,9 @@ const IMPLEMENTADAS: Record<string, JSX.Element> = {
   "/tutoria": <Tutoria />,
   "/convivencia": <Convivencia />,
   "/comunicados": <Comunicados />,
+  "/mis-notas": <MisNotas />,
+  "/mi-asistencia": <MiAsistencia />,
+  "/avisos": <Avisos />,
 };
 
 /** Rutas con subpáginas propias. */

@@ -1,9 +1,11 @@
 import { Link } from "react-router-dom";
 import { useLiveQuery } from "dexie-react-hooks";
-import { ArrowUpRight, CalendarDays, Megaphone, Users } from "lucide-react";
+import { ArrowUpRight, CalendarDays, GraduationCap, Megaphone, TriangleAlert, Users } from "lucide-react";
 import { db, useApp } from "@/app/contexto";
 import { modulosPara } from "@/app/modulos";
 import { vivas } from "@/db/repositorio";
+import { hijosDe } from "@/datos/familia";
+import { indicadores, type Indicadores } from "@/dominio/seguimiento";
 import type { Periodo } from "@/db/tipos";
 import { Contenido, Gema, Tarjeta, orden } from "@/ui/componentes";
 
@@ -50,7 +52,22 @@ export function Inicio() {
         };
       }));
     }
-    return { anio, periodo: periodoVigente(periodos), comunicados, secciones };
+    // Familia: un resumen por hijo (asistencia del año y notas del periodo).
+    let familia: { id: string; nombre: string; ind: Indicadores }[] = [];
+    if (usuario && usuario.roles.some((r) => r === "estudiante" || r === "apoderado")) {
+      const p = periodoVigente(periodos);
+      familia = await Promise.all((await hijosDe(usuario)).map(async (h) => {
+        const [asistencias, califs] = await Promise.all([
+          db.tabla("asistencia").where("estudiante_id").equals(h.id).toArray(),
+          db.tabla("calificacion").where("estudiante_id").equals(h.id).toArray(),
+        ]);
+        // Si el periodo vigente aún no tiene notas, se usa el último que sí tenga.
+        const conNotas = [...periodos].sort((a, b) => b.numero - a.numero).find((x) => califs.some((c) => c.periodo_id === x.id && c.nivel_logro));
+        const pid = califs.some((c) => c.periodo_id === p?.id && c.nivel_logro) ? p?.id : conNotas?.id;
+        return { id: h.id, nombre: `${h.nombres} ${h.apellidos.split(" ")[0]}`, ind: indicadores({ asistencias, calificacionesPeriodo: califs.filter((c) => c.periodo_id === pid), incidencias: [] }) };
+      }));
+    }
+    return { anio, periodo: periodoVigente(periodos), comunicados, secciones, familia };
   }, [usuario?.id]);
 
   if (!usuario) return null;
@@ -94,6 +111,30 @@ export function Inicio() {
           </Tarjeta>
         )}
       </section>
+
+      {datos && datos.familia.length > 0 && (
+        <section className="grid gap-3 sm:grid-cols-2">
+          {datos.familia.map((h, i) => (
+            <Tarjeta key={h.id} className="aparecer p-4" style={orden(i + 1)}>
+              <div className="flex items-center gap-3">
+                <Gema icono={GraduationCap} tono={h.ind.alertas.length ? "tono-ambar" : "tono-musgo"} tam="sm" />
+                <p className="font-bold">{h.nombre}</p>
+              </div>
+              <div className="mt-3 grid grid-cols-3 gap-2 text-center">
+                {[[h.ind.asistencia === null ? "-" : `${h.ind.asistencia}%`, "asistencia"], [h.ind.faltas, "faltas"], [h.ind.notasC, "notas en C"]].map(([v, t]) => (
+                  <div key={t as string} className="rounded-2xl bg-white/45 py-2 ring-1 ring-white/80">
+                    <p className="titulo-display text-xl font-bold">{v}</p>
+                    <p className="text-[0.65rem] text-tinta-suave">{t}</p>
+                  </div>
+                ))}
+              </div>
+              {h.ind.alertas.length > 0 && (
+                <p className="mt-2 flex items-center gap-1.5 text-xs font-semibold text-amber-800"><TriangleAlert className="h-3.5 w-3.5" aria-hidden /> {h.ind.alertas.join(" · ")}</p>
+              )}
+            </Tarjeta>
+          ))}
+        </section>
+      )}
 
       {/* Módulos */}
       <section aria-label="Módulos" className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
