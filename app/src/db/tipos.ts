@@ -254,11 +254,16 @@ export interface Comunicado extends Fila {
   fecha: string;
 }
 
+export type CategoriaMonitoreo = "pedagogica" | "gestion" | "convivencia" | "asistencia" | "infraestructura";
+
 export interface ObservacionMonitoreo extends Fila {
   autor_id: string;
   fecha: string;
   texto: string;
   estado: "pendiente" | "atendida";
+  categoria: CategoriaMonitoreo;
+  respuesta: string | null;
+  respondido_en?: string | null;
 }
 
 /** Mapa tabla -> tipo de fila. Debe coincidir con las tablas del servidor. */
