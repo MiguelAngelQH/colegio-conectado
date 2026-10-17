@@ -410,3 +410,57 @@ describe("tutoría, convivencia, comunicados y evidencias", () => {
     expect(x.estado).toBe("rechazado");
   });
 });
+
+describe("justificaciones de la familia", () => {
+  const SES = "80000000-0000-4000-8000-000000000001";
+  const FALTA_E1 = "81000000-0000-4000-8000-000000000001";
+  const FALTA_E2 = "81000000-0000-4000-8000-000000000002";
+  const J1 = "82000000-0000-4000-8000-000000000001";
+  const justif = (id: string, asistencia_id: string, estudiante_id: string, extra: Record<string, unknown> = {}) => ({
+    tabla: "justificacion",
+    parche: { id, colegio_id: COL, asistencia_id, estudiante_id, solicitante_id: U.apoderado, motivo: "Cita médica", estado: "pendiente", revisado_por: null, respuesta: null, ...extra },
+  });
+
+  beforeAll(async () => {
+    const r = await push(U.docente, [
+      { tabla: "asistencia_sesion", parche: { id: SES, colegio_id: COL, seccion_id: SEC, area_id: null, docente_id: U.docente, fecha: "2026-10-21", modo: "manual", abierta_en: Date.now(), estado: "confirmada" } },
+      { tabla: "asistencia", parche: { id: FALTA_E1, colegio_id: COL, sesion_id: SES, estudiante_id: E1, estado: "F", origen: "manual", marcado_en: new Date().toISOString(), token_qr: null, por_revisar: false } },
+      { tabla: "asistencia", parche: { id: FALTA_E2, colegio_id: COL, sesion_id: SES, estudiante_id: E2, estado: "F", origen: "manual", marcado_en: new Date().toISOString(), token_qr: null, por_revisar: false } },
+    ]);
+    expect(r.map((x) => x.estado)).toEqual(["ok", "ok", "ok"]);
+  });
+
+  it("el apoderado justifica la falta de su hijo, pero no la de otro estudiante", async () => {
+    expect((await push(U.apoderado, [justif(J1, FALTA_E1, E1)]))[0].estado).toBe("ok");
+    expect((await push(U.apoderado, [justif(crypto.randomUUID(), FALTA_E2, E2)]))[0].estado).toBe("rechazado");
+  });
+
+  it("la familia no puede aprobar su propia solicitud", async () => {
+    const [r] = await push(U.apoderado, [{ tabla: "justificacion", parche: { id: J1, estado: "aprobada" } }]);
+    expect(r).toMatchObject({ estado: "rechazado", motivo: "Solo el colegio puede aprobar o rechazar una justificación" });
+  });
+
+  it("el tutor la aprueba y queda registrado quién la revisó", async () => {
+    const r = await push(U.docente, [
+      { tabla: "justificacion", parche: { id: J1, estado: "aprobada", respuesta: "Conforme" } },
+      { tabla: "asistencia", parche: { id: FALTA_E1, estado: "J" } },
+    ]);
+    expect(r.map((x) => x.estado)).toEqual(["ok", "ok"]);
+    const f = (await db.query<{ revisado_por: string }>("select revisado_por from justificacion where id = $1", [J1])).rows[0];
+    expect(f.revisado_por).toBe(U.docente);
+    // Ya revisada, la familia no la puede modificar.
+    expect((await push(U.apoderado, [{ tabla: "justificacion", parche: { id: J1, motivo: "Otro" } }]))[0].estado).toBe("rechazado");
+  });
+
+  it("el apoderado adjunta un sustento a su justificación, pero no evidencias académicas", async () => {
+    const ev = (entidad: string, entidad_id: string) => ({ tabla: "evidencia", parche: {
+      id: crypto.randomUUID(), colegio_id: COL, entidad, entidad_id, estudiante_id: E1, autor_id: U.apoderado, nombre: "certificado.pdf", tipo: "application/pdf", bytes: 2000, ruta: null, descripcion: null,
+    } });
+    const J2 = crypto.randomUUID();
+    await push(U.apoderado, [justif(J2, FALTA_E1, E1)]);
+    expect((await push(U.apoderado, [ev("justificacion", J2)]))[0].estado).toBe("ok");
+    expect((await push(U.apoderado, [ev("observacion", J2)]))[0].estado).toBe("rechazado");
+    expect((await pull(U.docente)).filas.justificacion?.length).toBe(2);
+    expect((await pull(U.otroColegio)).filas.justificacion).toBeUndefined();
+  });
+});
