@@ -6,8 +6,9 @@ import { db, useApp } from "@/app/contexto";
 import { modulosPara, NOMBRE_ROL, TONO_ROL, type Modulo } from "@/app/modulos";
 import { Boton, Dialogo, Gema, cx, iniciales, orden } from "./componentes";
 import { EstadoSync } from "./EstadoSync";
+import { Campana } from "./Campana";
 
-const FUERA_DEL_DOCK = new Set(["inicio", "perfil", "sincronizacion"]);
+const FUERA_DEL_DOCK = new Set(["inicio", "perfil", "sincronizacion", "avisos"]);
 
 /** Estructura común: barra lateral flotante (PC) o barra superior + dock inferior (celular). */
 export function Marco() {
@@ -77,8 +78,9 @@ export function Marco() {
               <span className="block truncate text-[0.7rem] text-tinta-suave">{colegio?.nombre}</span>
             </span>
           </Link>
-          <span className="ml-auto">
+          <span className="ml-auto flex items-center gap-2">
             <EstadoSync />
+            <Campana />
           </span>
         </div>
       </header>
