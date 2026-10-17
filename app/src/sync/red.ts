@@ -16,7 +16,8 @@ function leerForzado(): boolean {
 let forzado = typeof localStorage !== "undefined" ? leerForzado() : false;
 
 export function hayConexion(): boolean {
-  const nav = typeof navigator === "undefined" ? true : navigator.onLine;
+  // Si el entorno no informa el estado (onLine indefinido) se asume conectado.
+  const nav = typeof navigator === "undefined" ? true : navigator.onLine !== false;
   return nav && !forzado;
 }
 
