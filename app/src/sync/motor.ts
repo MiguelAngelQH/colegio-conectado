@@ -1,6 +1,7 @@
 import type { BaseLocal, EntradaOutbox } from "@/db/local";
 import type { Fila, NombreTabla } from "@/db/tipos";
 import { TABLAS } from "@/db/tipos";
+import { fijarDesfase } from "./reloj";
 
 export interface CambioSalida {
   ref: number; // id de la entrada en el outbox
@@ -18,6 +19,8 @@ export interface RespuestaPull {
   cursor: string;
   /** true si el servidor cortó la respuesta y hay más filas por traer. */
   hay_mas: boolean;
+  /** Hora del servidor (ms) al responder: sirve para corregir el reloj del equipo. */
+  hora?: number;
 }
 
 /** Comunicación con el servidor. Hay una implementación demo y una de Supabase. */
@@ -42,6 +45,8 @@ export interface ResumenSync {
 
 const ESPERA_BASE_MS = 5_000;
 const ESPERA_MAX_MS = 10 * 60_000;
+/** Reintentos de un cambio que el servidor pide "reintentar" antes de darlo por no aceptado. */
+export const MAX_INTENTOS = 30;
 
 export function espera(intentos: number): number {
   return Math.min(ESPERA_BASE_MS * 2 ** Math.max(0, intentos - 1), ESPERA_MAX_MS);
@@ -122,7 +127,12 @@ export class MotorSync {
     await this.db.transaction("rw", this.db.outbox, async () => {
       for (const e of lote) {
         const res = porRef.get(e.id!);
-        if (!res || res.estado === "reintentar") {
+        if ((!res || res.estado === "reintentar") && e.intentos + 1 >= MAX_INTENTOS) {
+          // Tras muchos intentos (por ejemplo, un QR de una clase que nunca existió) se deja de insistir:
+          // queda visible como "no aceptado" para que una persona decida.
+          await this.db.outbox.update(e.id!, { estado: "rechazado", intentos: e.intentos + 1, error: `No se pudo enviar tras ${MAX_INTENTOS} intentos: ${res?.motivo ?? "sin respuesta"}` });
+          r.rechazados++;
+        } else if (!res || res.estado === "reintentar") {
           await this.db.outbox.update(e.id!, {
             estado: "pendiente",
             intentos: e.intentos + 1,
@@ -157,7 +167,14 @@ export class MotorSync {
 
   private async pullPagina(r: ResumenSync): Promise<boolean> {
     const cursor = await this.db.leerMeta<string | null>("cursor", null);
+    const antes = Date.now();
     const resp = await this.transporte.pull(cursor);
+    if (typeof resp.hora === "number") {
+      // Se descuenta la mitad del tiempo de ida y vuelta.
+      const d = Math.round(resp.hora - (antes + Date.now()) / 2);
+      fijarDesfase(d);
+      await this.db.guardarMeta("desfase_ms", d);
+    }
     const tablas = TABLAS.filter((t) => resp.filas[t]?.length);
     await this.db.transaction("rw", [...tablas.map((t) => this.db.tabla(t)), this.db.outbox, this.db.sombra, this.db.meta], async () => {
       for (const t of tablas) {

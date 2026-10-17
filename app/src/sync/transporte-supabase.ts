@@ -28,9 +28,9 @@ export class TransporteSupabase implements Transporte {
 
   async pull(cursor: string | null): Promise<RespuestaPull> {
     if (!this.conectado()) throw new SinConexion();
-    const { data, error } = await this.cliente.rpc("sync_pull", { desde: cursor });
+    const { data, error } = await this.cliente.rpc("sync_pull_con_hora", { desde: cursor });
     if (error) throw new Error(error.message);
-    const r = data as { filas: Partial<Record<NombreTabla, Fila[]>>; cursor: string; hay_mas: boolean };
-    return { filas: r.filas ?? {}, cursor: r.cursor, hay_mas: r.hay_mas };
+    const r = data as { filas: Partial<Record<NombreTabla, Fila[]>>; cursor: string; hay_mas: boolean; hora: number };
+    return { filas: r.filas ?? {}, cursor: r.cursor, hay_mas: r.hay_mas, hora: r.hora };
   }
 }

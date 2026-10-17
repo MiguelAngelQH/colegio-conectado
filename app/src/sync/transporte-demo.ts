@@ -1,5 +1,6 @@
 import { BaseLocal } from "@/db/local";
-import type { Calificacion, Fila, NombreTabla, Periodo } from "@/db/tipos";
+import type { Asistencia, AsistenciaSesion, Calificacion, Fila, NombreTabla, Periodo, Usuario } from "@/db/tipos";
+import { evaluarMarca, firmaValida, leerTokenQr } from "@/dominio/qr";
 import { TABLAS } from "@/db/tipos";
 import type { CambioSalida, RespuestaPull, ResultadoPush, Transporte } from "./motor";
 import { SinConexion } from "./motor";
@@ -9,6 +10,9 @@ import { SinConexion } from "./motor";
  * capacitar sin Supabase. Aplica las mismas reglas de negocio clave que el servidor real
  * (parches por campo, hora asignada por el servidor, periodo cerrado).
  */
+/** Error temporal: el cambio se reintentará más tarde (igual que errcode 23503 en el servidor real). */
+export class ErrorReintentar extends Error {}
+
 export class ServidorDemo extends BaseLocal {
   private reloj = 0;
 
@@ -51,9 +55,43 @@ export class ServidorDemo extends BaseLocal {
       }
     }
 
+    if (validar && tabla === "asistencia") {
+      await this.validarMarcaQr(fila as Asistencia, !!actual, usuarioId);
+    }
+
     fila.updated_at = await this.marcaDeTiempo();
     fila.updated_by = usuarioId;
     await t.put(fila as never);
+  }
+
+  /** Misma regla que el trigger validar_marca_qr (migración 0007). Modifica la fila recibida. */
+  private async validarMarcaQr(a: Asistencia, existe: boolean, usuarioId: string | null) {
+    if (a.origen !== "qr" || !usuarioId) return;
+    const u = (await this.tabla("usuario").get(usuarioId)) as Usuario | undefined;
+    const personal = u?.roles.some((r) => ["director", "subdirector", "docente", "tutor", "auxiliar"].includes(r));
+    if (personal) return;
+    if (existe) throw new Error("Tu asistencia de esta clase ya fue registrada");
+    const token = leerTokenQr(a.token_qr ?? "");
+    if (!token || token.sesionId !== a.sesion_id) throw new Error("El código no corresponde a esta clase");
+    const secreto = (await this.tabla("asistencia_secreto").where("sesion_id").equals(a.sesion_id).first())?.secreto;
+    if (!secreto) throw new ErrorReintentar("La clase todavía no se sincroniza");
+    const sesion = (await this.tabla("asistencia_sesion").get(a.sesion_id)) as AsistenciaSesion | undefined;
+    const matriculado = !!(await this.tabla("matricula").where("estudiante_id").equals(a.estudiante_id).toArray())
+      .find((m) => m.seccion_id === sesion?.seccion_id && !m.eliminado && m.estado === "matriculado");
+    const marcas = await this.tabla("asistencia").toArray();
+    const habitual = marcas
+      .filter((m) => m.estudiante_id === a.estudiante_id && m.origen === "qr" && m.dispositivo_id && !m.por_revisar && !m.eliminado)
+      .sort((x, y) => (y.marcado_en ?? "").localeCompare(x.marcado_en ?? ""))[0]?.dispositivo_id ?? null;
+    const r = evaluarMarca({
+      token, firmaOk: await firmaValida(token, secreto), sesionId: a.sesion_id, abiertaEnMs: sesion?.abierta_en ?? null,
+      marcadoEnMs: a.marcado_en ? Date.parse(a.marcado_en) : null, matriculado,
+      dispositivoHabitual: habitual, dispositivo: a.dispositivo_id ?? null,
+      dispositivoUsadoPorOtro: !!a.dispositivo_id && marcas.some((m) => m.sesion_id === a.sesion_id && m.dispositivo_id === a.dispositivo_id && m.estudiante_id !== a.estudiante_id),
+    });
+    if (!r.valida) throw new Error(r.motivo);
+    a.estado = "P";
+    a.por_revisar = r.porRevisar;
+    a.motivo_revision = r.motivo;
   }
 
   /** Carga inicial de datos (semilla) directamente en el servidor. */
@@ -83,7 +121,8 @@ export class TransporteDemo implements Transporte {
         await this.servidor.aplicar(c.tabla, c.parche, this.usuarioId());
         res.push({ ref: c.ref, estado: "ok" });
       } catch (e) {
-        res.push({ ref: c.ref, estado: "rechazado", motivo: e instanceof Error ? e.message : String(e) });
+        const motivo = e instanceof Error ? e.message : String(e);
+        res.push({ ref: c.ref, estado: e instanceof ErrorReintentar ? "reintentar" : "rechazado", motivo });
       }
     }
     return res;
@@ -100,6 +139,6 @@ export class TransporteDemo implements Transporte {
       if (cambiadas.length) filas[t] = cambiadas;
       for (const f of cambiadas) if ((f.updated_at ?? "") > max) max = f.updated_at!;
     }
-    return { filas, cursor: max || new Date(0).toISOString(), hay_mas: false };
+    return { filas, cursor: max || new Date(0).toISOString(), hay_mas: false, hora: Date.now() };
   }
 }
