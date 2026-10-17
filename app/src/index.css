@@ -1,0 +1,173 @@
+@import "@fontsource-variable/bricolage-grotesque";
+@import "@fontsource-variable/onest";
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ------------------------------------------------------------------
+   Sistema visual "Cielo andino": liquid glass sobre una malla de luz.
+   ------------------------------------------------------------------ */
+:root {
+  --tinta: #0b2e33;          /* texto principal: verde petróleo muy oscuro */
+  --tinta-suave: #3f5f63;
+  --laguna: #0fb5a6;
+  --laguna-honda: #0b6e6a;
+  --cielo: #4cb8f0;
+  --ambar: #f6b44b;
+  --coral: #f2857a;
+  --vidrio: rgba(255, 255, 255, 0.46);
+  --vidrio-fuerte: rgba(255, 255, 255, 0.68);
+  --borde-luz: rgba(255, 255, 255, 0.72);
+  --sombra: 0 10px 40px -12px rgba(11, 46, 51, 0.28);
+  --radio: 1.5rem;
+  color-scheme: light;
+}
+
+html { -webkit-tap-highlight-color: transparent; background: #dff1ee; }
+body {
+  @apply antialiased;
+  color: var(--tinta);
+  font-family: "Onest Variable", system-ui, sans-serif;
+  /* Sin fondo propio: si no, taparía al .fondo-cielo (z-index -1). El color base va en html. */
+  background: transparent;
+}
+
+/* Fondo: manchas de luz fijas + grano. Estático a propósito (ahorra batería en gama baja). */
+.fondo-cielo {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background:
+    radial-gradient(55vmax 45vmax at 0% 0%, rgba(56, 182, 246, 0.85), transparent 62%),
+    radial-gradient(50vmax 42vmax at 100% 8%, rgba(13, 196, 176, 0.85), transparent 62%),
+    radial-gradient(40vmax 34vmax at 55% 45%, rgba(167, 243, 208, 0.55), transparent 65%),
+    radial-gradient(50vmax 42vmax at 92% 96%, rgba(250, 178, 62, 0.8), transparent 62%),
+    radial-gradient(45vmax 38vmax at 0% 92%, rgba(244, 128, 116, 0.6), transparent 62%),
+    linear-gradient(160deg, #d4f1ee 0%, #cfe9ea 45%, #f7e6cf 100%);
+}
+.fondo-cielo::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  opacity: 0.22;
+  mix-blend-mode: soft-light;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+/* En pantallas grandes la luz se mueve muy lentamente. */
+@media (min-width: 1024px) and (prefers-reduced-motion: no-preference) {
+  .fondo-cielo { animation: deriva 40s ease-in-out infinite alternate; background-size: 120% 120%; }
+}
+@keyframes deriva {
+  from { background-position: 0% 0%, 100% 0%, 100% 100%, 0% 100%, 0 0; }
+  to   { background-position: 6% 8%, 92% 6%, 94% 90%, 8% 94%, 0 0; }
+}
+
+@layer components {
+  /* Panel de vidrio: translúcido, desenfoca el fondo, borde de luz y brillo especular. */
+  .vidrio {
+    position: relative;
+    isolation: isolate;
+    background: linear-gradient(145deg, rgba(255, 255, 255, 0.62), rgba(255, 255, 255, 0.28));
+    -webkit-backdrop-filter: blur(22px) saturate(170%);
+    backdrop-filter: blur(22px) saturate(170%);
+    border: 1px solid var(--borde-luz);
+    border-radius: var(--radio);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.9),
+      inset 0 -1px 0 rgba(255, 255, 255, 0.25),
+      inset 0 0 22px rgba(255, 255, 255, 0.18),
+      var(--sombra);
+  }
+  .vidrio::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    border-radius: inherit;
+    pointer-events: none;
+    background: radial-gradient(120% 70% at 15% -10%, rgba(255, 255, 255, 0.75), transparent 55%);
+    opacity: 0.55;
+  }
+  .vidrio-fuerte {
+    @apply vidrio;
+    background: linear-gradient(145deg, rgba(255, 255, 255, 0.78), rgba(255, 255, 255, 0.5));
+  }
+  /* Vidrio casi opaco para diálogos y hojas: se lee bien sobre cualquier contenido. */
+  .vidrio-solido {
+    @apply vidrio;
+    background: linear-gradient(145deg, rgba(255, 255, 255, 0.94), rgba(244, 251, 250, 0.88));
+  }
+  /* Vidrio tintado (botón principal, elementos activos). */
+  .vidrio-laguna {
+    position: relative;
+    isolation: isolate;
+    color: white;
+    background: linear-gradient(150deg, rgba(20, 196, 179, 0.95), rgba(11, 110, 106, 0.95));
+    border: 1px solid rgba(255, 255, 255, 0.45);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.55),
+      inset 0 -2px 6px rgba(0, 40, 40, 0.25),
+      0 10px 24px -10px rgba(11, 110, 106, 0.75);
+  }
+
+  /* Ficha de ícono: gema de color con reflejo. El color viene de --t1/--t2. */
+  .gema {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    border-radius: 0.95rem;
+    background: linear-gradient(150deg, var(--t1), var(--t2));
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.6),
+      inset 0 -3px 8px rgba(0, 0, 0, 0.15),
+      0 8px 18px -8px var(--t2);
+  }
+  .gema::after {
+    content: "";
+    position: absolute;
+    inset: 1px 1px 50% 1px;
+    border-radius: 0.9rem 0.9rem 40% 40%;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.45), transparent);
+    pointer-events: none;
+  }
+
+  .titulo-display { font-family: "Bricolage Grotesque Variable", "Onest Variable", sans-serif; letter-spacing: -0.02em; }
+  .etiqueta { @apply text-[0.7rem] font-semibold uppercase tracking-[0.14em]; color: var(--tinta-suave); }
+
+  .campo {
+    @apply block w-full rounded-2xl px-4 py-3 text-base outline-none transition;
+    background: rgba(255, 255, 255, 0.55);
+    border: 1px solid rgba(255, 255, 255, 0.8);
+    box-shadow: inset 0 2px 6px rgba(11, 46, 51, 0.08);
+  }
+  .campo:focus { border-color: var(--laguna); box-shadow: 0 0 0 4px rgba(15, 181, 166, 0.2); }
+}
+
+/* Tonos de módulo para las gemas. */
+.tono-laguna { --t1: #2dd4bf; --t2: #0b7f78; }
+.tono-cielo  { --t1: #60c3f5; --t2: #1d6fb8; }
+.tono-ambar  { --t1: #fcc867; --t2: #d97a06; }
+.tono-coral  { --t1: #f99b8f; --t2: #d94a45; }
+.tono-lila   { --t1: #b9a3fb; --t2: #6d4fd6; }
+.tono-musgo  { --t1: #8fd694; --t2: #2f8f4e; }
+.tono-pizarra{ --t1: #9fb3bd; --t2: #46606b; }
+.tono-rosa   { --t1: #f7a6c8; --t2: #c2457d; }
+
+/* Entrada escalonada. */
+@media (prefers-reduced-motion: no-preference) {
+  .aparecer { animation: aparecer 0.55s cubic-bezier(0.2, 0.8, 0.2, 1) both; animation-delay: calc(var(--i, 0) * 45ms); }
+  .hoja { animation: subir 0.32s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+}
+@keyframes aparecer { from { opacity: 0; transform: translateY(12px) scale(0.98); } to { opacity: 1; transform: none; } }
+@keyframes subir { from { transform: translateY(100%); } to { transform: none; } }
+
+/* Navegadores sin desenfoque (WebView antiguos): vidrio opaco, igual de legible. */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .vidrio, .vidrio-fuerte { background: rgba(255, 255, 255, 0.92); }
+}
+
+/* Bordes inferiores seguros en celulares con barra de gestos. */
+.pb-seguro { padding-bottom: max(1rem, env(safe-area-inset-bottom)); }
