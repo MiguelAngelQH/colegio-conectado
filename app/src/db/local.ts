@@ -50,10 +50,12 @@ export class BaseLocal extends Dexie {
     const internas = { outbox: "++id, estado, [tabla+fila_id], proximo_intento", sombra: "clave", meta: "clave" };
     const nuevasV3 = { entrevista: null, incidencia_accion: null, comunicado_lectura: null, evidencia: null };
     // Al cambiar índices o tablas se agrega una versión nueva; Dexie migra los datos existentes.
-    this.version(1).stores({ ...INDICES, ...nuevasV3, asistencia_sesion: "id, seccion_id, docente_id, fecha", asistencia_secreto: null, ...internas });
-    this.version(2).stores({ ...INDICES, ...nuevasV3, ...internas });
+    this.version(1).stores({ ...INDICES, ...nuevasV3, justificacion: null, asistencia_sesion: "id, seccion_id, docente_id, fecha", asistencia_secreto: null, ...internas });
+    this.version(2).stores({ ...INDICES, ...nuevasV3, justificacion: null, ...internas });
     // v3: tablas de tutoría, convivencia y comunicados, y "archivo" (binarios de evidencias; solo local, no se sincroniza como fila).
-    this.version(3).stores({ ...INDICES, ...internas, archivo: "id, subido" });
+    this.version(3).stores({ ...INDICES, ...internas, justificacion: null, archivo: "id, subido" });
+    // v4: justificaciones de la familia.
+    this.version(4).stores({ ...INDICES, ...internas, archivo: "id, subido" });
   }
 
   tabla<K extends NombreTabla>(nombre: K): Table<Tablas[K], string> {

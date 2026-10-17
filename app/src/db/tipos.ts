@@ -168,6 +168,17 @@ export interface Asistencia extends Fila {
   motivo_revision?: string | null;
 }
 
+/** Solicitud del apoderado para justificar una falta o tardanza; la revisa el personal. */
+export interface Justificacion extends Fila {
+  asistencia_id: string;
+  estudiante_id: string;
+  solicitante_id: string;
+  motivo: string;
+  estado: "pendiente" | "aprobada" | "rechazada";
+  revisado_por: string | null;
+  respuesta: string | null;
+}
+
 export interface Observacion extends Fila {
   estudiante_id: string;
   autor_id: string;
@@ -219,7 +230,7 @@ export interface ComunicadoLectura extends Fila {
   leido_en: string;
 }
 
-export type EntidadEvidencia = "observacion" | "calificacion" | "incidencia" | "sesion_tutoria" | "entrevista";
+export type EntidadEvidencia = "observacion" | "calificacion" | "incidencia" | "sesion_tutoria" | "entrevista" | "justificacion";
 
 export interface Evidencia extends Fila {
   entidad: EntidadEvidencia;
@@ -269,6 +280,7 @@ export interface Tablas {
   asistencia_sesion: AsistenciaSesion;
   asistencia_secreto: AsistenciaSecreto;
   asistencia: Asistencia;
+  justificacion: Justificacion;
   observacion: Observacion;
   sesion_tutoria: SesionTutoria;
   entrevista: Entrevista;
@@ -301,6 +313,7 @@ export const INDICES: Record<NombreTabla, string> = {
   asistencia_sesion: "id, seccion_id, docente_id, fecha, [seccion_id+fecha]",
   asistencia_secreto: "id, sesion_id",
   asistencia: "id, sesion_id, estudiante_id, [sesion_id+estudiante_id]",
+  justificacion: "id, estudiante_id, asistencia_id, estado",
   observacion: "id, estudiante_id, autor_id",
   sesion_tutoria: "id, seccion_id",
   entrevista: "id, estudiante_id, tutor_id",
