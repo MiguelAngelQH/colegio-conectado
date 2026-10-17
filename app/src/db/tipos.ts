@@ -1,0 +1,255 @@
+// Tipos del dominio. Los nombres de tablas y campos son iguales a los del servidor (Postgres)
+// para que la sincronización no necesite traducciones.
+
+export type Rol =
+  | "ugel"
+  | "director"
+  | "subdirector"
+  | "docente"
+  | "tutor"
+  | "auxiliar"
+  | "estudiante"
+  | "apoderado";
+
+export type Nivel = "primaria" | "secundaria";
+export type NivelLogro = "AD" | "A" | "B" | "C";
+export type EstadoAsistencia = "P" | "T" | "F" | "J";
+
+/** Campos comunes a toda fila sincronizable. */
+export interface Fila {
+  id: string;
+  colegio_id: string | null;
+  /** Lo asigna el servidor. En local solo es referencial. */
+  updated_at?: string;
+  updated_by?: string | null;
+  eliminado?: boolean;
+}
+
+export interface Colegio extends Fila {
+  nombre: string;
+  codigo_modular: string;
+  ugel: string;
+  region: string;
+  distrito: string;
+}
+
+export interface Usuario extends Fila {
+  nombres: string;
+  apellidos: string;
+  dni: string | null;
+  email: string | null;
+  roles: Rol[];
+  activo: boolean;
+}
+
+export interface AnioEscolar extends Fila {
+  anio: number;
+  regimen: "bimestre" | "trimestre";
+  activo: boolean;
+}
+
+export interface Periodo extends Fila {
+  anio_id: string;
+  numero: number;
+  nombre: string;
+  inicio: string;
+  fin: string;
+  estado: "abierto" | "cerrado";
+  /** Motivo de la última reapertura (queda también en la auditoría). */
+  motivo_reapertura?: string | null;
+}
+
+export interface Grado extends Fila {
+  nivel: Nivel;
+  numero: number;
+  nombre: string;
+}
+
+export interface Seccion extends Fila {
+  anio_id: string;
+  grado_id: string;
+  letra: string;
+  tutor_id: string | null;
+}
+
+/** Áreas y competencias del CNEB: colegio_id = null es catálogo oficial. */
+export interface Area extends Fila {
+  nivel: Nivel;
+  codigo: string;
+  nombre: string;
+  opcional: boolean;
+  orden: number;
+}
+
+export interface Competencia extends Fila {
+  area_id: string;
+  numero: number;
+  nombre: string;
+  orden: number;
+}
+
+export interface DocenteAsignacion extends Fila {
+  docente_id: string;
+  seccion_id: string;
+  area_id: string;
+}
+
+export interface Estudiante extends Fila {
+  usuario_id: string | null;
+  dni: string | null;
+  nombres: string;
+  apellidos: string;
+  fecha_nacimiento: string | null;
+  sexo: "M" | "F" | null;
+  /** Código impreso en el carné (QR del modo "escanear carnés"). */
+  codigo_carne: string;
+}
+
+export interface Matricula extends Fila {
+  anio_id: string;
+  seccion_id: string;
+  estudiante_id: string;
+  estado: "matriculado" | "retirado" | "trasladado";
+}
+
+export interface Apoderado extends Fila {
+  usuario_id: string | null;
+  dni: string | null;
+  nombres: string;
+  apellidos: string;
+  telefono: string | null;
+}
+
+export interface EstudianteApoderado extends Fila {
+  estudiante_id: string;
+  apoderado_id: string;
+  parentesco: string;
+  orden: number;
+}
+
+export interface Calificacion extends Fila {
+  estudiante_id: string;
+  competencia_id: string;
+  periodo_id: string;
+  seccion_id: string;
+  nivel_logro: NivelLogro | null;
+  conclusion: string | null;
+}
+
+export interface AsistenciaSesion extends Fila {
+  seccion_id: string;
+  area_id: string | null;
+  docente_id: string;
+  fecha: string;
+  modo: "manual" | "carne" | "qr";
+  /** Secreto HMAC del QR dinámico. Solo lo ven el docente y el servidor. */
+  secreto_qr: string | null;
+  estado: "abierta" | "confirmada";
+}
+
+export interface Asistencia extends Fila {
+  sesion_id: string;
+  estudiante_id: string;
+  estado: EstadoAsistencia;
+  origen: "manual" | "carne" | "qr";
+  marcado_en: string | null;
+  /** Token QR escaneado por el estudiante, validado por el servidor. */
+  token_qr: string | null;
+  por_revisar: boolean;
+}
+
+export interface Observacion extends Fila {
+  estudiante_id: string;
+  autor_id: string;
+  fecha: string;
+  tipo: "academica" | "conducta" | "felicitacion" | "otra";
+  texto: string;
+}
+
+export interface SesionTutoria extends Fila {
+  seccion_id: string;
+  tutor_id: string;
+  fecha: string;
+  tema: string;
+  acuerdos: string | null;
+}
+
+export interface Incidencia extends Fila {
+  estudiante_id: string | null;
+  reportado_por: string;
+  fecha: string;
+  tipo: string;
+  descripcion: string;
+  estado: "abierta" | "en_seguimiento" | "cerrada";
+  codigo_siseve: string | null;
+}
+
+export interface Comunicado extends Fila {
+  autor_id: string;
+  titulo: string;
+  cuerpo: string;
+  destino: "todos" | "seccion";
+  seccion_id: string | null;
+  fecha: string;
+}
+
+export interface ObservacionMonitoreo extends Fila {
+  autor_id: string;
+  fecha: string;
+  texto: string;
+  estado: "pendiente" | "atendida";
+}
+
+/** Mapa tabla -> tipo de fila. Debe coincidir con las tablas del servidor. */
+export interface Tablas {
+  colegio: Colegio;
+  usuario: Usuario;
+  anio_escolar: AnioEscolar;
+  periodo: Periodo;
+  grado: Grado;
+  seccion: Seccion;
+  area: Area;
+  competencia: Competencia;
+  docente_asignacion: DocenteAsignacion;
+  estudiante: Estudiante;
+  matricula: Matricula;
+  apoderado: Apoderado;
+  estudiante_apoderado: EstudianteApoderado;
+  calificacion: Calificacion;
+  asistencia_sesion: AsistenciaSesion;
+  asistencia: Asistencia;
+  observacion: Observacion;
+  sesion_tutoria: SesionTutoria;
+  incidencia: Incidencia;
+  comunicado: Comunicado;
+  observacion_monitoreo: ObservacionMonitoreo;
+}
+
+export type NombreTabla = keyof Tablas;
+
+/** Índices locales de cada tabla (formato Dexie, el primero es la clave). */
+export const INDICES: Record<NombreTabla, string> = {
+  colegio: "id",
+  usuario: "id, colegio_id",
+  anio_escolar: "id, colegio_id, activo",
+  periodo: "id, anio_id",
+  grado: "id, nivel",
+  seccion: "id, anio_id, grado_id, tutor_id",
+  area: "id, nivel",
+  competencia: "id, area_id",
+  docente_asignacion: "id, docente_id, seccion_id",
+  estudiante: "id, usuario_id, codigo_carne",
+  matricula: "id, seccion_id, estudiante_id",
+  apoderado: "id, usuario_id",
+  estudiante_apoderado: "id, estudiante_id, apoderado_id",
+  calificacion: "id, [seccion_id+periodo_id], estudiante_id, [estudiante_id+competencia_id+periodo_id]",
+  asistencia_sesion: "id, seccion_id, docente_id, fecha",
+  asistencia: "id, sesion_id, estudiante_id, [sesion_id+estudiante_id]",
+  observacion: "id, estudiante_id, autor_id",
+  sesion_tutoria: "id, seccion_id",
+  incidencia: "id, estudiante_id, estado",
+  comunicado: "id, fecha, seccion_id",
+  observacion_monitoreo: "id, fecha",
+};
+
+export const TABLAS = Object.keys(INDICES) as NombreTabla[];
