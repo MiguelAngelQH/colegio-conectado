@@ -24,6 +24,14 @@ export interface Sombra {
   fila: Fila;
 }
 
+/** Archivo de una evidencia guardado en el equipo (para verlo y subirlo sin conexión). */
+export interface ArchivoLocal {
+  id: string; // id de la evidencia
+  blob: Blob;
+  /** 1 = ya está en el servidor (Dexie no indexa booleanos). */
+  subido: 0 | 1;
+}
+
 export interface Meta {
   clave: string;
   valor: unknown;
@@ -35,13 +43,17 @@ export class BaseLocal extends Dexie {
   outbox!: Table<EntradaOutbox, number>;
   sombra!: Table<Sombra, string>;
   meta!: Table<Meta, string>;
+  archivo!: Table<ArchivoLocal, string>;
 
   constructor(nombre: string) {
     super(nombre);
     const internas = { outbox: "++id, estado, [tabla+fila_id], proximo_intento", sombra: "clave", meta: "clave" };
+    const nuevasV3 = { entrevista: null, incidencia_accion: null, comunicado_lectura: null, evidencia: null };
     // Al cambiar índices o tablas se agrega una versión nueva; Dexie migra los datos existentes.
-    this.version(1).stores({ ...INDICES, asistencia_sesion: "id, seccion_id, docente_id, fecha", asistencia_secreto: null, ...internas });
-    this.version(2).stores({ ...INDICES, ...internas });
+    this.version(1).stores({ ...INDICES, ...nuevasV3, asistencia_sesion: "id, seccion_id, docente_id, fecha", asistencia_secreto: null, ...internas });
+    this.version(2).stores({ ...INDICES, ...nuevasV3, ...internas });
+    // v3: tablas de tutoría, convivencia y comunicados, y "archivo" (binarios de evidencias; solo local, no se sincroniza como fila).
+    this.version(3).stores({ ...INDICES, ...internas, archivo: "id, subido" });
   }
 
   tabla<K extends NombreTabla>(nombre: K): Table<Tablas[K], string> {

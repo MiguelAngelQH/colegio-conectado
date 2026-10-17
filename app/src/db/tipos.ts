@@ -192,6 +192,46 @@ export interface Incidencia extends Fila {
   descripcion: string;
   estado: "abierta" | "en_seguimiento" | "cerrada";
   codigo_siseve: string | null;
+  /** Violencia o acoso: el colegio debe reportarla en el SíseVe (MINEDU). */
+  requiere_siseve?: boolean;
+}
+
+export interface IncidenciaAccion extends Fila {
+  incidencia_id: string;
+  autor_id: string;
+  fecha: string;
+  texto: string;
+}
+
+export interface Entrevista extends Fila {
+  estudiante_id: string;
+  apoderado_id: string | null;
+  tutor_id: string;
+  fecha: string;
+  motivo: string;
+  acuerdos: string | null;
+  asistio: boolean;
+}
+
+export interface ComunicadoLectura extends Fila {
+  comunicado_id: string;
+  usuario_id: string;
+  leido_en: string;
+}
+
+export type EntidadEvidencia = "observacion" | "calificacion" | "incidencia" | "sesion_tutoria" | "entrevista";
+
+export interface Evidencia extends Fila {
+  entidad: EntidadEvidencia;
+  entidad_id: string;
+  estudiante_id: string | null;
+  autor_id: string;
+  nombre: string;
+  tipo: string;
+  bytes: number;
+  /** Ruta en el almacenamiento; null hasta que el equipo del autor sube el archivo. */
+  ruta: string | null;
+  descripcion: string | null;
 }
 
 export interface Comunicado extends Fila {
@@ -231,8 +271,12 @@ export interface Tablas {
   asistencia: Asistencia;
   observacion: Observacion;
   sesion_tutoria: SesionTutoria;
+  entrevista: Entrevista;
   incidencia: Incidencia;
+  incidencia_accion: IncidenciaAccion;
   comunicado: Comunicado;
+  comunicado_lectura: ComunicadoLectura;
+  evidencia: Evidencia;
   observacion_monitoreo: ObservacionMonitoreo;
 }
 
@@ -259,8 +303,12 @@ export const INDICES: Record<NombreTabla, string> = {
   asistencia: "id, sesion_id, estudiante_id, [sesion_id+estudiante_id]",
   observacion: "id, estudiante_id, autor_id",
   sesion_tutoria: "id, seccion_id",
+  entrevista: "id, estudiante_id, tutor_id",
   incidencia: "id, estudiante_id, estado",
+  incidencia_accion: "id, incidencia_id",
   comunicado: "id, fecha, seccion_id",
+  comunicado_lectura: "id, comunicado_id, usuario_id",
+  evidencia: "id, [entidad+entidad_id], estudiante_id",
   observacion_monitoreo: "id, fecha",
 };
 
