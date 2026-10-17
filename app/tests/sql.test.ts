@@ -351,3 +351,62 @@ describe("asistencia con QR", () => {
     expect(Math.abs(r.hora - Date.now())).toBeLessThan(5_000);
   });
 });
+
+describe("tutoría, convivencia, comunicados y evidencias", () => {
+  const OTRO_DOC = "10000000-0000-4000-8000-000000000008";
+  const INC = "70000000-0000-4000-8000-000000000001";
+  const COMUN = "71000000-0000-4000-8000-000000000001";
+  const OBS = "72000000-0000-4000-8000-000000000001";
+
+  beforeAll(async () => {
+    await db.exec(`
+      insert into auth.users (id) values ('${OTRO_DOC}');
+      insert into usuario (id, colegio_id, nombres, apellidos, roles) values ('${OTRO_DOC}', '${COL}', 'Otro', 'Docente', '{docente}');
+    `);
+  });
+
+  it("solo el tutor del estudiante (y dirección/UGEL) registra y ve entrevistas con la familia", async () => {
+    const ent = { tabla: "entrevista", parche: { id: crypto.randomUUID(), colegio_id: COL, estudiante_id: E1, apoderado_id: null, tutor_id: U.docente, fecha: "2026-10-20", motivo: "Bajo rendimiento", acuerdos: null, asistio: true } };
+    expect((await push(U.docente, [ent]))[0].estado).toBe("ok");
+    const ajena = { tabla: "entrevista", parche: { ...ent.parche, id: crypto.randomUUID(), tutor_id: OTRO_DOC } };
+    expect((await push(OTRO_DOC, [ajena]))[0].estado).toBe("rechazado");
+    expect((await pull(OTRO_DOC)).filas.entrevista).toBeUndefined();
+    expect((await pull(U.estudiante)).filas.entrevista).toBeUndefined();
+    expect((await pull(U.director)).filas.entrevista?.length).toBe(1);
+  });
+
+  it("el seguimiento de una incidencia lo ve quien puede ver la incidencia", async () => {
+    const r = await push(U.docente, [
+      { tabla: "incidencia", parche: { id: INC, colegio_id: COL, estudiante_id: E1, reportado_por: U.docente, fecha: "2026-10-20", tipo: "Ciberacoso", descripcion: "x", estado: "abierta", codigo_siseve: null, requiere_siseve: true } },
+      { tabla: "incidencia_accion", parche: { id: crypto.randomUUID(), colegio_id: COL, incidencia_id: INC, autor_id: U.docente, fecha: "2026-10-20", texto: "Conversación" } },
+    ]);
+    expect(r.map((x) => x.estado)).toEqual(["ok", "ok"]);
+    expect((await pull(U.director)).filas.incidencia_accion?.length).toBe(1);
+    expect((await pull(U.estudiante)).filas.incidencia_accion).toBeUndefined();
+    // Un docente sin relación no puede agregar acciones a una incidencia que no ve.
+    const [x] = await push(OTRO_DOC, [{ tabla: "incidencia_accion", parche: { id: crypto.randomUUID(), colegio_id: COL, incidencia_id: INC, autor_id: OTRO_DOC, fecha: "2026-10-20", texto: "?" } }]);
+    expect(x.estado).toBe("rechazado");
+  });
+
+  it("cada uno confirma su propia lectura; el autor ve quién leyó", async () => {
+    await push(U.director, [{ tabla: "comunicado", parche: { id: COMUN, colegio_id: COL, autor_id: U.director, titulo: "Aviso", cuerpo: "Texto", destino: "todos", seccion_id: null, fecha: "2026-10-20" } }]);
+    const leer = (u: string, comoQuien = u) => ({ tabla: "comunicado_lectura", parche: { id: crypto.randomUUID(), colegio_id: COL, comunicado_id: COMUN, usuario_id: comoQuien, leido_en: new Date().toISOString() } });
+    expect((await push(U.estudiante, [leer(U.estudiante)]))[0].estado).toBe("ok");
+    expect((await push(U.estudiante, [leer(U.estudiante, U.apoderado)]))[0].estado).toBe("rechazado");
+    expect((await pull(U.director)).filas.comunicado_lectura?.map((l) => l.usuario_id)).toEqual([U.estudiante]);
+    expect((await pull(U.apoderado)).filas.comunicado_lectura).toBeUndefined();
+  });
+
+  it("la familia ve evidencias académicas de su hijo, pero no las de convivencia", async () => {
+    const ev = (entidad: string, entidad_id: string) => ({ tabla: "evidencia", parche: {
+      id: crypto.randomUUID(), colegio_id: COL, entidad, entidad_id, estudiante_id: E1, autor_id: U.docente, nombre: "f.jpg", tipo: "image/jpeg", bytes: 1000, ruta: null, descripcion: null,
+    } });
+    const r = await push(U.docente, [ev("observacion", OBS), ev("incidencia", INC)]);
+    expect(r.map((x) => x.estado)).toEqual(["ok", "ok"]);
+    expect((await pull(U.apoderado)).filas.evidencia?.map((e) => e.entidad)).toEqual(["observacion"]);
+    expect((await pull(U.director)).filas.evidencia?.length).toBe(2);
+    // Un estudiante no puede subir evidencias.
+    const [x] = await push(U.estudiante, [{ ...ev("observacion", OBS), parche: { ...ev("observacion", OBS).parche, autor_id: U.estudiante } }]);
+    expect(x.estado).toBe("rechazado");
+  });
+});
