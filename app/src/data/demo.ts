@@ -2,7 +2,7 @@
 import cneb from "./cneb.json";
 import { idCalificacion } from "@/dominio/notas";
 import type {
-  AnioEscolar, Apoderado, Area, Calificacion, Colegio, Comunicado, Competencia, DocenteAsignacion,
+  AnioEscolar, Apoderado, Incidencia, IncidenciaAccion, Observacion, SesionTutoria, Area, Calificacion, Colegio, Comunicado, Competencia, DocenteAsignacion,
   Estudiante, EstudianteApoderado, Fila, Grado, Matricula, NivelLogro, NombreTabla, Periodo, Rol, Seccion, Usuario,
 } from "@/db/tipos";
 
@@ -51,7 +51,7 @@ const CONCLUSIONES: Record<"B" | "C", string[]> = {
 };
 
 /** Cambia este número cuando cambien los datos de demo: los equipos vuelven a sembrar. */
-export const VERSION_DEMO = 2;
+export const VERSION_DEMO = 3;
 
 export async function datosDemo(): Promise<Partial<Record<NombreTabla, Fila[]>>> {
   const r = rng(42);
@@ -139,12 +139,35 @@ export async function datosDemo(): Promise<Partial<Record<NombreTabla, Fila[]>>>
     cuerpo: "Se convoca a los padres de familia a la entrega de informes de progreso el viernes 23 de octubre a las 3:00 p. m.",
     destino: "todos", seccion_id: null, fecha: "2026-10-15",
   }];
+  comunicados.push({
+    id: id("fa000000", 2), colegio_id: CID, autor_id: uRojas.id, titulo: "Salida de estudio al museo",
+    cuerpo: "El jueves 29 de octubre visitaremos el museo regional. Enviar la autorización firmada hasta el martes.",
+    destino: "seccion", seccion_id: secSec.id, fecha: "2026-10-16",
+  });
+  const [e1, e2, e3, e4] = estudiantes;
+  const observaciones: Observacion[] = [
+    { id: id("fb000000", 1), colegio_id: CID, estudiante_id: e1.id, autor_id: uRojas.id, fecha: "2026-10-05", tipo: "felicitacion", texto: "Ayudó a sus compañeros a preparar la feria de ciencias." },
+    { id: id("fb000000", 2), colegio_id: CID, estudiante_id: e4.id, autor_id: uRojas.id, fecha: "2026-10-12", tipo: "conducta", texto: "Llega tarde con frecuencia y se distrae en clase." },
+  ];
+  const sesionesTutoria: SesionTutoria[] = [
+    { id: id("fc000000", 1), colegio_id: CID, seccion_id: secSec.id, tutor_id: uRojas.id, fecha: "2026-10-09", tema: "Prevención del acoso escolar", acuerdos: "Elaborar normas de convivencia del aula." },
+  ];
+  const incidencias: Incidencia[] = [
+    { id: id("fd000000", 1), colegio_id: CID, estudiante_id: e2.id, reportado_por: uRojas.id, fecha: "2026-10-14", tipo: "Acoso escolar (bullying)",
+      descripcion: "Compañeros le ponen apodos de forma reiterada durante el recreo.", estado: "en_seguimiento", codigo_siseve: null, requiere_siseve: true },
+    { id: id("fd000000", 2), colegio_id: CID, estudiante_id: e3.id, reportado_por: USUARIOS_DEMO[4].id, fecha: "2026-10-02", tipo: "Uso indebido del celular",
+      descripcion: "Usó el celular durante la evaluación.", estado: "cerrada", codigo_siseve: null, requiere_siseve: false },
+  ];
+  const acciones: IncidenciaAccion[] = [
+    { id: id("fe000000", 1), colegio_id: CID, incidencia_id: incidencias[0].id, autor_id: uRojas.id, fecha: "2026-10-15", texto: "Conversación con los estudiantes involucrados y compromiso de respeto." },
+  ];
   void uUgel;
 
   return {
     colegio: [colegio], usuario: usuarios, anio_escolar: [anio], periodo: periodos, grado: grados,
     seccion: [secSec, secPri], area: areas, competencia: competencias, docente_asignacion: asignaciones,
     estudiante: estudiantes, matricula: matriculas, apoderado: [apoderado], estudiante_apoderado: [vinculo],
-    calificacion: califs, comunicado: comunicados,
+    calificacion: califs, comunicado: comunicados, observacion: observaciones, sesion_tutoria: sesionesTutoria,
+    incidencia: incidencias, incidencia_accion: acciones,
   };
 }

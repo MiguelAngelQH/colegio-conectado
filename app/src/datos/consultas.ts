@@ -72,3 +72,18 @@ export function usePersonal() {
 }
 
 export const nombreCompleto = (p: { nombres: string; apellidos: string }) => `${p.apellidos}, ${p.nombres}`;
+
+/** Estudiantes matriculados (activos) de una sección, por apellido. */
+export async function estudiantesDeSeccion(seccionId: string) {
+  const mats = vivas(await db.tabla("matricula").where("seccion_id").equals(seccionId).toArray()).filter((m) => m.estado === "matriculado");
+  const ests = await db.tabla("estudiante").bulkGet(mats.map((m) => m.estudiante_id));
+  return vivas(ests.filter((e): e is NonNullable<typeof e> => !!e)).sort((a, b) => a.apellidos.localeCompare(b.apellidos));
+}
+
+/** Secciones que el usuario puede ver en tutoría: las suyas como tutor, o todas para la dirección. */
+export async function seccionesDeTutoria(usuario: Usuario) {
+  const anio = await anioActivo();
+  if (!anio) return [];
+  const todas = await seccionesDetalle(anio.id);
+  return usuario.roles.some((r) => r === "director" || r === "subdirector") ? todas : todas.filter((s) => s.tutor_id === usuario.id);
+}
