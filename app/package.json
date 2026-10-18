@@ -9,9 +9,13 @@
     "preview": "vite preview",
     "typecheck": "tsc -b --noEmit",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "android": "npm run build && npx cap sync android",
+    "apk": "npm run android && cd android && gradlew.bat assembleDebug"
   },
   "dependencies": {
+    "@capacitor/android": "6.1.2",
+    "@capacitor/core": "6.1.2",
     "@fontsource-variable/bricolage-grotesque": "5.1.1",
     "@fontsource-variable/onest": "5.1.1",
     "@supabase/supabase-js": "2.45.4",
@@ -28,6 +32,7 @@
     "xlsx": "https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz"
   },
   "devDependencies": {
+    "@capacitor/cli": "6.1.2",
     "@electric-sql/pglite": "0.2.10",
     "@types/qrcode": "1.5.5",
     "@types/react": "18.3.8",
