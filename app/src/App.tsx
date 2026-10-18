@@ -21,6 +21,8 @@ const Convivencia = lazy(() => import("@/paginas/convivencia/Convivencia").then(
 const MisNotas = lazy(() => import("@/paginas/familia/MisNotas").then((m) => ({ default: m.MisNotas })));
 const MiAsistencia = lazy(() => import("@/paginas/familia/MiAsistencia").then((m) => ({ default: m.MiAsistencia })));
 const Avisos = lazy(() => import("@/paginas/familia/Avisos").then((m) => ({ default: m.Avisos })));
+const Paneles = lazy(() => import("@/paginas/paneles/Paneles").then((m) => ({ default: m.Paneles })));
+const Monitoreo = lazy(() => import("@/paginas/paneles/Monitoreo").then((m) => ({ default: m.Monitoreo })));
 const Comunicados = lazy(() => import("@/paginas/comunicados/Comunicados").then((m) => ({ default: m.Comunicados })));
 
 const IMPLEMENTADAS: Record<string, JSX.Element> = {
@@ -37,6 +39,8 @@ const IMPLEMENTADAS: Record<string, JSX.Element> = {
   "/mis-notas": <MisNotas />,
   "/mi-asistencia": <MiAsistencia />,
   "/avisos": <Avisos />,
+  "/paneles": <Paneles />,
+  "/monitoreo": <Monitoreo />,
 };
 
 /** Rutas con subpáginas propias. */

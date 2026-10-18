@@ -1,5 +1,5 @@
 import { BaseLocal } from "@/db/local";
-import type { Asistencia, AsistenciaSesion, Calificacion, Fila, Justificacion, NombreTabla, Periodo, Usuario } from "@/db/tipos";
+import type { Asistencia, AsistenciaSesion, Calificacion, Fila, Justificacion, NombreTabla, ObservacionMonitoreo, Periodo, Usuario } from "@/db/tipos";
 import { evaluarMarca, firmaValida, leerTokenQr } from "@/dominio/qr";
 import { TABLAS } from "@/db/tipos";
 import type { CambioSalida, RespuestaPull, ResultadoPush, Transporte } from "./motor";
@@ -65,6 +65,19 @@ export class ServidorDemo extends BaseLocal {
         if (actual && (actual as Justificacion).estado !== "pendiente") throw new Error("La justificación ya fue revisada");
       } else if (j.estado !== "pendiente" && (!actual || (actual as Justificacion).estado === "pendiente")) {
         j.revisado_por = usuarioId;
+      }
+    }
+
+    if (validar && tabla === "observacion_monitoreo" && actual) {
+      // Igual que el trigger validar_monitoreo (migración 0010).
+      const u = usuarioId ? ((await this.tabla("usuario").get(usuarioId)) as Usuario | undefined) : undefined;
+      const antes = actual as ObservacionMonitoreo;
+      const o = fila as ObservacionMonitoreo;
+      if (!u?.roles.includes("ugel")) {
+        if (o.texto !== antes.texto || o.categoria !== antes.categoria || o.fecha !== antes.fecha || o.autor_id !== antes.autor_id) {
+          throw new Error("Solo la UGEL puede modificar su observación");
+        }
+        if (o.respuesta !== antes.respuesta) o.respondido_en = new Date().toISOString();
       }
     }
 

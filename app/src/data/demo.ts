@@ -2,7 +2,7 @@
 import cneb from "./cneb.json";
 import { idCalificacion, idDeterministico } from "@/dominio/notas";
 import type {
-  AnioEscolar, Apoderado, Asistencia, AsistenciaSesion, Incidencia, IncidenciaAccion, Observacion, SesionTutoria, Area, Calificacion, Colegio, Comunicado, Competencia, DocenteAsignacion,
+  AnioEscolar, Apoderado, ObservacionMonitoreo, Asistencia, AsistenciaSesion, Incidencia, IncidenciaAccion, Observacion, SesionTutoria, Area, Calificacion, Colegio, Comunicado, Competencia, DocenteAsignacion,
   Estudiante, EstudianteApoderado, Fila, Grado, Matricula, NivelLogro, NombreTabla, Periodo, Rol, Seccion, Usuario,
 } from "@/db/tipos";
 
@@ -51,7 +51,7 @@ const CONCLUSIONES: Record<"B" | "C", string[]> = {
 };
 
 /** Cambia este número cuando cambien los datos de demo: los equipos vuelven a sembrar. */
-export const VERSION_DEMO = 4;
+export const VERSION_DEMO = 6;
 
 export async function datosDemo(): Promise<Partial<Record<NombreTabla, Fila[]>>> {
   const r = rng(42);
@@ -165,18 +165,33 @@ export async function datosDemo(): Promise<Partial<Record<NombreTabla, Fila[]>>>
   const deSec = estudiantes.filter((e) => matriculas.find((m) => m.estudiante_id === e.id)!.seccion_id === secSec.id);
   const sesionesAsis: AsistenciaSesion[] = [];
   const marcasAsis: Asistencia[] = [];
-  const dias = ["2026-10-12", "2026-10-13", "2026-10-14", "2026-10-15", "2026-10-16"];
+  const dias = [
+    "2026-09-28", "2026-09-29", "2026-09-30", "2026-10-01", "2026-10-02",
+    "2026-10-05", "2026-10-06", "2026-10-07", "2026-10-08", "2026-10-09",
+    "2026-10-12", "2026-10-13", "2026-10-14", "2026-10-15", "2026-10-16",
+  ];
+  const azar = rng(7);
   for (const [k, fecha] of dias.entries()) {
     const sid = id("ff000000", k + 1);
     sesionesAsis.push({ id: sid, colegio_id: CID, seccion_id: secSec.id, area_id: null, docente_id: uRojas.id, fecha, modo: "manual", abierta_en: Date.parse(`${fecha}T08:00:00-05:00`), estado: "confirmada" });
     for (const e of deSec) {
       let estado: Asistencia["estado"] = "P";
-      if (e.id === estudiantes[0].id && k === 2) estado = "F";
-      if (e.id === estudiantes[0].id && k === 4) estado = "T";
-      if (e.nombres === "Juan" && k !== 1) estado = "F";
+      // Última semana (k >= 10): Luis faltó el miércoles y llegó tarde el viernes; Juan acumula faltas.
+      if (e.id === estudiantes[0].id && k === 12) estado = "F";
+      if (e.id === estudiantes[0].id && k === 14) estado = "T";
+      if (e.nombres === "Juan" && k >= 10 && k !== 11) estado = "F";
+      // Semanas anteriores: algunas faltas y tardanzas al azar (siempre las mismas).
+      if (k < 10 && e.id !== estudiantes[0].id) {
+        const x = azar();
+        estado = x < 0.06 ? "F" : x < 0.11 ? "T" : "P";
+      }
       marcasAsis.push({ id: await idDeterministico("asistencia", sid, e.id), colegio_id: CID, sesion_id: sid, estudiante_id: e.id, estado, origen: "manual", marcado_en: `${fecha}T13:05:00.000Z`, token_qr: null, por_revisar: false });
     }
   }
+  const monitoreo: ObservacionMonitoreo[] = [{
+    id: id("fe100000", 1), colegio_id: CID, autor_id: uUgel.id, fecha: "2026-10-09", categoria: "pedagogica", estado: "pendiente", respuesta: null,
+    texto: "En la visita de monitoreo se observó que el registro de notas del III Bimestre está atrasado en primaria. Presentar un plan para completarlo antes del cierre.",
+  }];
   void uUgel;
 
   return {
@@ -185,5 +200,6 @@ export async function datosDemo(): Promise<Partial<Record<NombreTabla, Fila[]>>>
     estudiante: estudiantes, matricula: matriculas, apoderado: [apoderado], estudiante_apoderado: [vinculo],
     calificacion: califs, comunicado: comunicados, observacion: observaciones, sesion_tutoria: sesionesTutoria,
     incidencia: incidencias, incidencia_accion: acciones, asistencia_sesion: sesionesAsis, asistencia: marcasAsis,
+    observacion_monitoreo: monitoreo,
   };
 }
