@@ -37,7 +37,7 @@ export const MODULOS: Modulo[] = [
   { id: "comunicados", titulo: "Comunicados", descripcion: "Avisos para la comunidad educativa", icono: Megaphone, ruta: "/comunicados", roles: "todos", fase: 4, enInicio: true, tono: "tono-ambar" },
   { id: "paneles", titulo: "Paneles e indicadores", descripcion: "Avance, logros, asistencia y alertas", icono: ChartColumn, ruta: "/paneles", roles: ["director", "subdirector", "ugel"], fase: 6, enInicio: true, tono: "tono-lila" },
   { id: "monitoreo", titulo: "Monitoreo UGEL", descripcion: "Observaciones de monitoreo al director", icono: Eye, ruta: "/monitoreo", roles: ["ugel", "director"], fase: 6, enInicio: true, tono: "tono-lila" },
-  { id: "siagie", titulo: "Exportar a SIAGIE", descripcion: "Archivo Excel para la carga oficial", icono: FileSpreadsheet, ruta: "/siagie", roles: ["director", "subdirector"], fase: 7, enInicio: true, tono: "tono-musgo" },
+  { id: "siagie", titulo: "Exportar", descripcion: "Excel para el SIAGIE y respaldo del colegio", icono: FileSpreadsheet, ruta: "/siagie", roles: ["director", "subdirector"], fase: 7, enInicio: true, tono: "tono-musgo" },
   { id: "avisos", titulo: "Avisos", descripcion: "Faltas, notas, comunicados y respuestas", icono: Bell, ruta: "/avisos", roles: "todos", fase: 5, tono: "tono-ambar" },
   { id: "sincronizacion", titulo: "Sincronización", descripcion: "Cambios pendientes y estado de la conexión", icono: RefreshCw, ruta: "/sincronizacion", roles: "todos", fase: 0, enInicio: true, tono: "tono-laguna" },
 ];

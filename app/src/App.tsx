@@ -23,6 +23,7 @@ const MiAsistencia = lazy(() => import("@/paginas/familia/MiAsistencia").then((m
 const Avisos = lazy(() => import("@/paginas/familia/Avisos").then((m) => ({ default: m.Avisos })));
 const Paneles = lazy(() => import("@/paginas/paneles/Paneles").then((m) => ({ default: m.Paneles })));
 const Monitoreo = lazy(() => import("@/paginas/paneles/Monitoreo").then((m) => ({ default: m.Monitoreo })));
+const Exportar = lazy(() => import("@/paginas/exportar/Exportar").then((m) => ({ default: m.Exportar })));
 const Comunicados = lazy(() => import("@/paginas/comunicados/Comunicados").then((m) => ({ default: m.Comunicados })));
 
 const IMPLEMENTADAS: Record<string, JSX.Element> = {
@@ -41,6 +42,7 @@ const IMPLEMENTADAS: Record<string, JSX.Element> = {
   "/avisos": <Avisos />,
   "/paneles": <Paneles />,
   "/monitoreo": <Monitoreo />,
+  "/siagie": <Exportar />,
 };
 
 /** Rutas con subpáginas propias. */
