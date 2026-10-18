@@ -464,3 +464,20 @@ describe("justificaciones de la familia", () => {
     expect((await pull(U.otroColegio)).filas.justificacion).toBeUndefined();
   });
 });
+
+describe("monitoreo de la UGEL", () => {
+  const OBS_M = "90000000-0000-4000-8000-000000000001";
+  it("la UGEL registra la observación y el director solo puede responderla", async () => {
+    const r = await push(U.ugel, [{ tabla: "observacion_monitoreo", parche: { id: OBS_M, colegio_id: COL, autor_id: U.ugel, fecha: "2026-10-20", texto: "Revisar el registro de asistencia de 2.º B", estado: "pendiente", categoria: "asistencia", respuesta: null } }]);
+    expect(r[0].estado).toBe("ok");
+    expect((await push(U.docente, [{ tabla: "observacion_monitoreo", parche: { id: crypto.randomUUID(), colegio_id: COL, autor_id: U.docente, fecha: "2026-10-20", texto: "x", estado: "pendiente", categoria: "gestion", respuesta: null } }]))[0].estado).toBe("rechazado");
+
+    const [cambiaTexto] = await push(U.director, [{ tabla: "observacion_monitoreo", parche: { id: OBS_M, texto: "Otro texto" } }]);
+    expect(cambiaTexto).toMatchObject({ estado: "rechazado", motivo: "Solo la UGEL puede modificar su observación" });
+    const [responde] = await push(U.director, [{ tabla: "observacion_monitoreo", parche: { id: OBS_M, respuesta: "Se capacitó al docente", estado: "atendida" } }]);
+    expect(responde.estado).toBe("ok");
+    const f = (await db.query<{ respondido_en: string | null }>("select respondido_en from observacion_monitoreo where id = $1", [OBS_M])).rows[0];
+    expect(f.respondido_en).not.toBeNull();
+    expect((await pull(U.docente)).filas.observacion_monitoreo).toBeUndefined();
+  });
+});
