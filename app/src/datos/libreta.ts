@@ -7,8 +7,12 @@ import { DESCRIPCION_NIVEL, NIVELES, armarLibreta } from "@/dominio/notas";
 import { anioActivo, nombreCompleto, seccionesDetalle } from "./consultas";
 
 const TEAL: [number, number, number] = [11, 110, 106];
-const COLOR_NIVEL: Record<string, [number, number, number]> = {
-  AD: [22, 101, 52], A: [34, 197, 94], B: [245, 158, 11], C: [220, 38, 38],
+// Misma paleta que la app (validada para daltonismo): relleno de la celda + texto legible.
+const COLOR_NIVEL: Record<string, { fondo: [number, number, number]; texto: [number, number, number] }> = {
+  AD: { fondo: [29, 79, 145], texto: [255, 255, 255] },
+  A: { fondo: [91, 155, 213], texto: [11, 46, 51] },
+  B: { fondo: [240, 149, 106], texto: [11, 46, 51] },
+  C: { fondo: [184, 50, 42], texto: [255, 255, 255] },
 };
 
 /** Genera un PDF con la libreta de cada estudiante indicado (una o más páginas por estudiante). */
@@ -97,7 +101,8 @@ export async function descargarLibretas(estudianteIds: string[], nombreArchivo: 
       didParseCell: (d) => {
         const v = String(d.cell.raw ?? "");
         if (d.section === "body" && d.column.index >= 2 && d.column.index < 2 + pers.length && COLOR_NIVEL[v]) {
-          d.cell.styles.textColor = COLOR_NIVEL[v];
+          d.cell.styles.fillColor = COLOR_NIVEL[v].fondo;
+          d.cell.styles.textColor = COLOR_NIVEL[v].texto;
         }
       },
     });

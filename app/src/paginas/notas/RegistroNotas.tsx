@@ -8,23 +8,20 @@ import { guardar, vivas } from "@/db/repositorio";
 import type { Calificacion, Competencia, Estudiante, NivelLogro, Observacion, Periodo } from "@/db/tipos";
 import { DESCRIPCION_NIVEL, NIVELES, PLANTILLAS_CONCLUSION, faltaConclusion, requiereConclusion } from "@/dominio/notas";
 import { textoGuardado, useAvisar } from "@/ui/avisos";
+import { NIVEL_HEX, NIVEL_TEXTO } from "@/ui/graficos";
 import { Aviso, Boton, Contenido, Dialogo, Tarjeta, cx, orden } from "@/ui/componentes";
 import { Campo, Segmentado, Selector, Vacio } from "@/ui/formulario";
 
-const COLOR_NIVEL: Record<NivelLogro, { activo: string; borde: string }> = {
-  AD: { activo: "bg-gradient-to-b from-emerald-600 to-emerald-800 text-white shadow-[0_6px_14px_-6px_rgba(6,95,70,.9)]", borde: "text-emerald-800 ring-emerald-700/40" },
-  A: { activo: "bg-gradient-to-b from-green-400 to-green-600 text-white shadow-[0_6px_14px_-6px_rgba(22,163,74,.9)]", borde: "text-green-700 ring-green-600/40" },
-  B: { activo: "bg-gradient-to-b from-amber-300 to-amber-500 text-amber-950 shadow-[0_6px_14px_-6px_rgba(217,119,6,.9)]", borde: "text-amber-700 ring-amber-500/50" },
-  C: { activo: "bg-gradient-to-b from-red-400 to-red-600 text-white shadow-[0_6px_14px_-6px_rgba(220,38,38,.9)]", borde: "text-red-700 ring-red-500/40" },
-};
-
 export function ChipNivel({ nivel, activo, onClick, deshabilitado, pequeno }: { nivel: NivelLogro; activo: boolean; onClick?: () => void; deshabilitado?: boolean; pequeno?: boolean }) {
-  const c = COLOR_NIVEL[nivel];
+  // Colores de nivel validados para daltonismo (ver ui/graficos.tsx). La letra siempre se muestra.
+  const estilo = activo
+    ? { background: NIVEL_HEX[nivel], color: NIVEL_TEXTO[nivel], boxShadow: `0 6px 14px -6px ${NIVEL_HEX[nivel]}` }
+    : { boxShadow: `inset 0 0 0 2px ${NIVEL_HEX[nivel]}55` };
   return (
-    <button type="button" onClick={onClick} disabled={deshabilitado} aria-pressed={activo} aria-label={`${nivel}: ${DESCRIPCION_NIVEL[nivel].nombre}`}
+    <button type="button" onClick={onClick} disabled={deshabilitado} aria-pressed={activo} aria-label={`${nivel}: ${DESCRIPCION_NIVEL[nivel].nombre}`} style={estilo}
       className={cx("titulo-display shrink-0 rounded-xl font-bold transition active:scale-90 disabled:active:scale-100",
         pequeno ? "h-8 w-8 text-xs" : "h-11 w-11 text-sm",
-        activo ? c.activo : cx("bg-white/60 ring-1", c.borde, !deshabilitado && "hover:bg-white"),
+        !activo && cx("bg-white/60 text-tinta", !deshabilitado && "hover:bg-white"),
         deshabilitado && !activo && "opacity-40")}>
       {nivel}
     </button>
