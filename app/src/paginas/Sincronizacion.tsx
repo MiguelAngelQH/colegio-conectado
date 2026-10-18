@@ -1,10 +1,13 @@
 import { useState } from "react";
 import { useLiveQuery } from "dexie-react-hooks";
-import { CircleCheck, CloudOff, CloudUpload, RefreshCw, RotateCcw, Trash2, TriangleAlert } from "lucide-react";
+import { CircleCheck, CloudOff, CloudUpload, FileDown, FileUp, RefreshCw, RotateCcw, Trash2, TriangleAlert, Usb } from "lucide-react";
 import { db, useApp } from "@/app/contexto";
 import type { EntradaOutbox } from "@/db/local";
 import type { NombreTabla } from "@/db/tipos";
 import { descartarCambio, reintentarRechazado } from "@/sync/motor";
+import { exportarPaquete, importarPaquete } from "@/sync/paquete";
+import { useAvisar } from "@/ui/avisos";
+import { Casilla } from "@/ui/formulario";
 import { Boton, BotonRegresar, Contenido, Dialogo, Encabezado, Gema, Tarjeta, fechaHora, orden } from "@/ui/componentes";
 
 const NOMBRE_TABLA: Partial<Record<NombreTabla, string>> = {
@@ -103,6 +106,8 @@ export function Sincronizacion() {
           </section>
         )}
 
+        <PaqueteArchivo pendientes={pendientes.length} archivos={archivosPendientes} />
+
         <div className="flex justify-center pt-2"><BotonRegresar a="/" /></div>
       </Contenido>
 
@@ -120,5 +125,65 @@ export function Sincronizacion() {
         Se volverá al último valor que tiene el servidor. Esta acción no se puede deshacer.
       </Dialogo>
     </>
+  );
+}
+
+/** Para equipos que pasan mucho tiempo sin señal: llevar los cambios en un archivo (USB o Bluetooth). */
+function PaqueteArchivo({ pendientes, archivos }: { pendientes: number; archivos: number }) {
+  const { usuario, colegioId, sincronizarAhora } = useApp();
+  const avisar = useAvisar();
+  const [conFotos, setConFotos] = useState(true);
+  const [trabajando, setTrabajando] = useState(false);
+
+  const exportar = async () => {
+    setTrabajando(true);
+    try {
+      const paquete = await exportarPaquete(db, { usuarioId: usuario!.id, colegioId, incluirArchivos: conFotos });
+      const url = URL.createObjectURL(new Blob([JSON.stringify(paquete)], { type: "application/json" }));
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `cambios_${usuario!.nombres.split(" ")[0]}_${new Date().toISOString().slice(0, 16).replace(/[:T]/g, "-")}.json`;
+      a.click();
+      setTimeout(() => URL.revokeObjectURL(url), 5000);
+      avisar(`Archivo con ${paquete.cambios.length} cambios${paquete.archivos.length ? ` y ${paquete.archivos.length} fotos` : ""}`);
+    } catch (err) {
+      avisar(err instanceof Error ? err.message : String(err), "error");
+    } finally {
+      setTrabajando(false);
+    }
+  };
+
+  const importar = async (archivo: File | undefined) => {
+    if (!archivo) return;
+    setTrabajando(true);
+    try {
+      const r = await importarPaquete(db, await archivo.text(), { usuarioId: usuario!.id, colegioId });
+      avisar(`Importados ${r.cambios} cambios${r.archivos ? ` y ${r.archivos} fotos` : ""}. Se enviarán al sincronizar.`);
+      void sincronizarAhora();
+    } catch (err) {
+      avisar(err instanceof Error ? err.message : String(err), "error");
+    } finally {
+      setTrabajando(false);
+    }
+  };
+
+  return (
+    <Tarjeta className="aparecer space-y-3 p-5">
+      <div className="flex items-start gap-3">
+        <Gema icono={Usb} tono="tono-pizarra" tam="sm" />
+        <div className="text-sm">
+          <h2 className="font-bold">¿Este equipo pasa semanas sin señal?</h2>
+          <p className="text-tinta-suave">Guarde los cambios en un archivo, cópielo por USB o Bluetooth a otro equipo con internet, ingrese allí con <strong>su misma cuenta</strong> e impórtelo.</p>
+        </div>
+      </div>
+      {archivos > 0 && <Casilla marcada={conFotos} onCambio={setConFotos}>Incluir {archivos} {archivos === 1 ? "foto pendiente" : "fotos pendientes"} (el archivo pesa más)</Casilla>}
+      <div className="flex flex-wrap gap-2">
+        <Boton variante="vidrio" icono={FileDown} onClick={exportar} cargando={trabajando} disabled={!pendientes && !archivos}>Exportar {pendientes} cambios</Boton>
+        <label className={trabajando ? "pointer-events-none opacity-60" : ""}>
+          <input type="file" accept=".json,application/json" className="sr-only" onChange={(e) => { void importar(e.target.files?.[0]); e.target.value = ""; }} />
+          <span className="inline-flex min-h-12 cursor-pointer items-center gap-2 rounded-full px-5 text-sm font-semibold text-tinta transition hover:bg-white/40"><FileUp className="h-[18px] w-[18px]" aria-hidden /> Importar archivo</span>
+        </label>
+      </div>
+    </Tarjeta>
   );
 }
