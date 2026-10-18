@@ -1,8 +1,8 @@
 // Bandeja de avisos. Se calcula en el equipo con lo que trajo la sincronización: no necesita un
 // servidor de notificaciones y funciona sin conexión (los avisos llegan con el siguiente sync).
-import type { Asistencia, Calificacion, Comunicado, Justificacion, Observacion } from "@/db/tipos";
+import type { Asistencia, Calificacion, Comunicado, Justificacion, Observacion, ObservacionMonitoreo } from "@/db/tipos";
 
-export type TipoAviso = "falta" | "tardanza" | "nota" | "comunicado" | "observacion" | "justificacion" | "por_revisar";
+export type TipoAviso = "falta" | "tardanza" | "nota" | "comunicado" | "observacion" | "justificacion" | "por_revisar" | "monitoreo";
 
 export interface Aviso {
   id: string;
@@ -30,6 +30,10 @@ export interface EntradaAvisos {
   leidos: Set<string>;
   observaciones: Observacion[];
   justificaciones: Justificacion[];
+  /** Observaciones de monitoreo: la dirección ve las pendientes y la UGEL las respondidas. */
+  monitoreo?: ObservacionMonitoreo[];
+  esDireccion?: boolean;
+  esUgel?: boolean;
 }
 
 const fechaCorta = (f: string) => new Date(`${f}T12:00:00`).toLocaleDateString("es-PE", { weekday: "short", day: "numeric", month: "short" });
@@ -84,6 +88,18 @@ export function calcularAvisos(e: EntradaAvisos): Aviso[] {
         titulo: `Justificación por revisar: ${e.nombreEstudiante(j.estudiante_id)}`, detalle: j.motivo,
         estudianteId: j.estudiante_id, enlace: "/asistencia/justificaciones", importante: true, nuevo: false,
       });
+    }
+  }
+
+  for (const o of e.monitoreo ?? []) {
+    if (o.eliminado) continue;
+    if (e.esDireccion && o.estado === "pendiente") {
+      res.push({ id: `mon-${o.id}`, tipo: "monitoreo", momento: momento(o), titulo: "Observación de monitoreo de la UGEL", detalle: o.texto,
+        estudianteId: null, enlace: "/monitoreo", importante: true, nuevo: false });
+    }
+    if (e.esUgel && o.estado === "atendida" && o.respuesta) {
+      res.push({ id: `mon-${o.id}`, tipo: "monitoreo", momento: momento(o), titulo: "La dirección respondió una observación", detalle: o.respuesta,
+        estudianteId: null, enlace: "/monitoreo", importante: false, nuevo: false });
     }
   }
 

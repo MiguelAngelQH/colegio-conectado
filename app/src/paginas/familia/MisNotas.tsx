@@ -6,19 +6,12 @@ import { useHijos } from "@/datos/familia";
 import { descargarLibretas } from "@/datos/libreta";
 import { anioActivo } from "@/datos/consultas";
 import { vivas } from "@/db/repositorio";
-import type { NivelLogro } from "@/db/tipos";
 import { DESCRIPCION_NIVEL, NIVELES, armarLibreta } from "@/dominio/notas";
 import { useAvisar } from "@/ui/avisos";
-import { Boton, Contenido, Encabezado, Gema, Tarjeta, cx, orden } from "@/ui/componentes";
+import { Boton, Contenido, Encabezado, Gema, Tarjeta, orden } from "@/ui/componentes";
 import { Segmentado, Vacio } from "@/ui/formulario";
 import { SelectorHijo } from "@/ui/SelectorHijo";
-
-const COLOR: Record<NivelLogro, string> = {
-  AD: "bg-gradient-to-b from-emerald-600 to-emerald-800 text-white",
-  A: "bg-gradient-to-b from-green-400 to-green-600 text-white",
-  B: "bg-gradient-to-b from-amber-300 to-amber-500 text-amber-950",
-  C: "bg-gradient-to-b from-red-400 to-red-600 text-white",
-};
+import { NIVEL_HEX, NIVEL_TEXTO } from "@/ui/graficos";
 
 export function MisNotas() {
   const { usuario } = useApp();
@@ -111,7 +104,7 @@ export function MisNotas() {
                 const texto = conclusion(c.competencia.id);
                 return (
                   <li key={c.competencia.id} className="flex gap-3 px-5 py-3">
-                    <span className={cx("titulo-display flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-sm font-bold shadow-sm", COLOR[n])}
+                    <span className="titulo-display flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-sm font-bold shadow-sm" style={{ background: NIVEL_HEX[n], color: NIVEL_TEXTO[n] }}
                       aria-label={`${n}: ${DESCRIPCION_NIVEL[n].nombre}`}>{n}</span>
                     <div className="min-w-0 text-sm">
                       <p className="font-semibold leading-snug">{c.competencia.nombre}</p>

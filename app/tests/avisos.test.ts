@@ -44,4 +44,12 @@ describe("avisos", () => {
     const r = calcularAvisos(base({ vistosHasta: null, faltas: [{ a: asis("F", "2020-01-01T00:00:00.000Z"), fecha: "2020-01-01", clase: null }] }));
     expect(r[0].nuevo).toBe(true);
   });
+
+  it("avisa al director las observaciones pendientes de la UGEL y a la UGEL las respuestas", () => {
+    const m = (estado: "pendiente" | "atendida") => ({ id: estado, colegio_id: "c", autor_id: "ugel", fecha: "2026-10-09", texto: "Revisar", estado, categoria: "gestion" as const, respuesta: estado === "atendida" ? "Hecho" : null, updated_at: "2026-10-16T00:00:00.000Z" });
+    const dir = calcularAvisos(base({ esFamilia: false, esPersonal: true, esDireccion: true, monitoreo: [m("pendiente"), m("atendida")] }));
+    expect(dir.map((a) => a.titulo)).toEqual(["Observación de monitoreo de la UGEL"]);
+    const ugel = calcularAvisos(base({ esFamilia: false, esUgel: true, monitoreo: [m("pendiente"), m("atendida")] }));
+    expect(ugel.map((a) => a.detalle)).toEqual(["Hecho"]);
+  });
 });

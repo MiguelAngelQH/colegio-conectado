@@ -88,6 +88,9 @@ export function useAvisos(usuario: Usuario | null): { avisos: Aviso[]; nuevos: n
       leidos: new Set(lecturas.map((l) => l.comunicado_id)),
       observaciones,
       justificaciones: esFamilia ? justificaciones.filter((j) => ids.has(j.estudiante_id)) : justificaciones,
+      monitoreo: await db.tabla("observacion_monitoreo").toArray(),
+      esDireccion: usuario.roles.some((r) => r === "director" || r === "subdirector"),
+      esUgel: usuario.roles.includes("ugel"),
     });
     return { avisos, nuevos: avisos.filter((a) => a.nuevo).length };
   }, [usuario?.id]);
