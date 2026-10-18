@@ -124,7 +124,7 @@ export function Escaner({ onLeer, pausado, textoManual = "Escribir el código" }
             </div>
           ) : (
             <>
-              <video ref={video} playsInline muted className="h-full w-full object-cover" aria-label="Vista de la cámara" />
+              <video ref={video} playsInline muted poster="data:image/gif;base64,R0lGODlhAQABAAAAACw=" className="h-full w-full object-cover" aria-label="Vista de la cámara" />
               {/* Marco de enfoque */}
               <div aria-hidden className="pointer-events-none absolute inset-[14%] rounded-3xl shadow-[0_0_0_999px_rgba(11,46,51,.45)]">
                 {["left-0 top-0 border-l-4 border-t-4 rounded-tl-3xl", "right-0 top-0 border-r-4 border-t-4 rounded-tr-3xl",

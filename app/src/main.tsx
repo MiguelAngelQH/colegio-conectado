@@ -8,6 +8,9 @@ import { ProveedorAvisos } from "./ui/avisos";
 import { BarreraErrores } from "./ui/BarreraErrores";
 import "./index.css";
 
+// Dentro del APK la app ya está empaquetada: no se registra el service worker de la PWA.
+const esApp = !!(window as unknown as { Capacitor?: { isNativePlatform?: () => boolean } }).Capacitor?.isNativePlatform?.();
+
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <BarreraErrores>
@@ -15,7 +18,7 @@ createRoot(document.getElementById("root")!).render(
         <ProveedorApp>
           <ProveedorAvisos>
             <App />
-            <ActualizacionPWA />
+            {!esApp && <ActualizacionPWA />}
           </ProveedorAvisos>
         </ProveedorApp>
       </BrowserRouter>
