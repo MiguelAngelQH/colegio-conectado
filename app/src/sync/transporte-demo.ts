@@ -1,5 +1,6 @@
 import { BaseLocal } from "@/db/local";
-import type { Asistencia, AsistenciaSesion, Calificacion, Fila, Justificacion, NombreTabla, ObservacionMonitoreo, Periodo, Usuario } from "@/db/tipos";
+import type { AnioEscolar, Asistencia, AsistenciaSesion, Calificacion, Fila, Justificacion, NombreTabla, ObservacionMonitoreo, Periodo, SolicitudTutoria, Usuario } from "@/db/tipos";
+import { ABIERTAS, puedeVer, validarSolicitud } from "@/dominio/solicitudes";
 import { evaluarMarca, firmaValida, leerTokenQr } from "@/dominio/qr";
 import { TABLAS } from "@/db/tipos";
 import type { CambioSalida, RespuestaPull, ResultadoPush, Transporte } from "./motor";
@@ -85,9 +86,40 @@ export class ServidorDemo extends BaseLocal {
       await this.validarMarcaQr(fila as Asistencia, !!actual, usuarioId);
     }
 
-    fila.updated_at = await this.marcaDeTiempo();
-    fila.updated_by = usuarioId;
-    await t.put(fila as never);
+    let guardar = fila;
+    if (validar && tabla === "solicitud_tutoria" && usuarioId) {
+      guardar = await this.validarSolicitud(actual as SolicitudTutoria | undefined, fila as SolicitudTutoria, usuarioId);
+    }
+
+    guardar.updated_at = await this.marcaDeTiempo();
+    guardar.updated_by = usuarioId;
+    await t.put(guardar as never);
+  }
+
+  /** Estudiantes "propios": el mismo estudiante o los hijos del apoderado (como mis_estudiantes()). */
+  private async misEstudiantes(usuarioId: string): Promise<Set<string>> {
+    const propios = (await this.tabla("estudiante").where("usuario_id").equals(usuarioId).toArray()).filter((e) => !e.eliminado).map((e) => e.id);
+    const apos = (await this.tabla("apoderado").where("usuario_id").equals(usuarioId).toArray()).filter((a) => !a.eliminado).map((a) => a.id);
+    const vinc = (await this.tabla("estudiante_apoderado").toArray()).filter((v) => !v.eliminado && apos.includes(v.apoderado_id)).map((v) => v.estudiante_id);
+    return new Set([...propios, ...vinc]);
+  }
+
+  /** Igual que el trigger validar_solicitud_tutoria (migración 0012). */
+  private async validarSolicitud(antes: SolicitudTutoria | undefined, nueva: SolicitudTutoria, usuarioId: string): Promise<SolicitudTutoria> {
+    const u = (await this.tabla("usuario").get(usuarioId)) as Usuario | undefined;
+    if (!u) throw new Error("Sesión no válida");
+    if (!antes && !(await this.misEstudiantes(usuarioId)).has(nueva.estudiante_id)) throw new Error("Solo puede pedir ayuda para usted o sus hijos.");
+    const anios = (await this.tabla("anio_escolar").toArray()) as AnioEscolar[];
+    const activo = anios.find((a) => a.activo && !a.eliminado)?.id;
+    const mat = (await this.tabla("matricula").where("estudiante_id").equals(nueva.estudiante_id).toArray())
+      .find((m) => !m.eliminado && m.estado === "matriculado" && m.anio_id === activo);
+    const seccion = mat ? await this.tabla("seccion").get(mat.seccion_id) : undefined;
+    const abiertas = (await this.tabla("solicitud_tutoria").where("solicitante_id").equals(nueva.solicitante_id).toArray())
+      .filter((x) => x.id !== nueva.id && !x.eliminado && ABIERTAS.includes(x.estado)).length;
+    return validarSolicitud({
+      antes: antes ?? null, nueva, usuario: u, tutorDelEstudiante: seccion && !seccion.eliminado ? seccion.tutor_id : null,
+      abiertasDelSolicitante: abiertas, ahora: new Date().toISOString(),
+    });
   }
 
   /** Misma regla que el trigger validar_marca_qr (migración 0007). Modifica la fila recibida. */
@@ -167,10 +199,14 @@ export class TransporteDemo implements Transporte {
     if (!this.conectado()) throw new SinConexion();
     const filas: Partial<Record<NombreTabla, Fila[]>> = {};
     let max = cursor ?? "";
+    const id = this.usuarioId();
+    const yo = id ? ((await this.servidor.tabla("usuario").get(id)) as Usuario | undefined) : undefined;
     for (const t of TABLAS) {
-      const cambiadas = (await this.servidor.tabla(t).toArray()).filter(
+      let cambiadas = (await this.servidor.tabla(t).toArray()).filter(
         (f) => !cursor || (f.updated_at ?? "") > cursor,
       ) as Fila[];
+      // Los pedidos de ayuda son privados (como la política leer de la migración 0012).
+      if (t === "solicitud_tutoria") cambiadas = cambiadas.filter((f) => !!yo && puedeVer(f as SolicitudTutoria, yo));
       if (cambiadas.length) filas[t] = cambiadas;
       for (const f of cambiadas) if ((f.updated_at ?? "") > max) max = f.updated_at!;
     }
