@@ -8,7 +8,7 @@ import { guardar, vivas } from "@/db/repositorio";
 import type { Calificacion, Competencia, Estudiante, NivelLogro, Observacion, Periodo } from "@/db/tipos";
 import { DESCRIPCION_NIVEL, NIVELES, PLANTILLAS_CONCLUSION, faltaConclusion, requiereConclusion } from "@/dominio/notas";
 import { textoGuardado, useAvisar } from "@/ui/avisos";
-import { NIVEL_HEX, NIVEL_TEXTO } from "@/ui/graficos";
+import { NIVEL_HEX, NIVEL_TEXTO } from "@/ui/colores-niveles";
 import { Aviso, Boton, Contenido, Dialogo, Tarjeta, cx, orden } from "@/ui/componentes";
 import { Campo, Segmentado, Selector, Vacio } from "@/ui/formulario";
 

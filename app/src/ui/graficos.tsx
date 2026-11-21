@@ -14,9 +14,9 @@ import type { NivelLogro } from "@/db/tipos";
 import { DESCRIPCION_NIVEL, NIVELES } from "@/dominio/notas";
 import { cx } from "./componentes";
 
-export const NIVEL_HEX: Record<NivelLogro, string> = { AD: "#1d4f91", A: "#5b9bd5", B: "#f0956a", C: "#b8322a" };
-/** Texto sobre cada relleno (los claros llevan tinta oscura). */
-export const NIVEL_TEXTO: Record<NivelLogro, string> = { AD: "#ffffff", A: "#0b2e33", B: "#0b2e33", C: "#ffffff" };
+import { NIVEL_HEX, NIVEL_TEXTO } from "./colores-niveles";
+
+export { NIVEL_HEX, NIVEL_TEXTO };
 
 const TINTA = "#0b2e33";
 const SUAVE = "#5b7478";

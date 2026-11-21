@@ -11,7 +11,7 @@ import { useAvisar } from "@/ui/avisos";
 import { Boton, Contenido, Encabezado, Gema, Tarjeta, orden } from "@/ui/componentes";
 import { Segmentado, Vacio } from "@/ui/formulario";
 import { SelectorHijo } from "@/ui/SelectorHijo";
-import { NIVEL_HEX, NIVEL_TEXTO } from "@/ui/graficos";
+import { NIVEL_HEX, NIVEL_TEXTO } from "@/ui/colores-niveles";
 
 export function MisNotas() {
   const { usuario } = useApp();
