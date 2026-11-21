@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { useLiveQuery } from "dexie-react-hooks";
-import { Download, FileDown, FileSpreadsheet, GraduationCap, HeartHandshake, IdCard, LayoutGrid, Phone, Plus, Save, Trash2, UserPlus } from "lucide-react";
+import { Download, FileDown, FileSpreadsheet, GraduationCap, HeartHandshake, IdCard, KeyRound, LayoutGrid, Phone, Plus, Save, Trash2, UserPlus } from "lucide-react";
 import { db, useApp } from "@/app/contexto";
 import { descargarPlantilla } from "@/datos/excel";
 import { descargarLibretas } from "@/datos/libreta";
@@ -14,6 +14,7 @@ import { normalizar, normalizarDni, nombrePropio } from "@/dominio/texto";
 import { textoGuardado, useAvisar } from "@/ui/avisos";
 import { Aviso, Boton, BotonRegresar, Contenido, Dato, Dialogo, Encabezado, Gema, Tarjeta, cx, iniciales, orden } from "@/ui/componentes";
 import { Buscador, Campo, Entrada, FilaLista, Segmentado, Selector, Vacio } from "@/ui/formulario";
+import { AccesoFicha, DialogoCuentasSeccion } from "./CuentasFamilias";
 
 const ESTADO_MATRICULA = { matriculado: "Matriculado", retirado: "Retirado", trasladado: "Trasladado" } as const;
 const PARENTESCOS = ["Madre", "Padre", "Abuelo(a)", "Tío(a)", "Hermano(a)", "Otro"];
@@ -27,6 +28,8 @@ export function EstudiantesPagina() {
   const [params, setParams] = useSearchParams();
   const [busca, setBusca] = useState("");
   const [agregando, setAgregando] = useState(false);
+  const [cuentas, setCuentas] = useState(false);
+  const colegio = useLiveQuery(async () => (await db.tabla("colegio").toArray())[0]?.nombre ?? "", [], "");
   const navegar = useNavigate();
   const seccionId = params.get("seccion") ?? e?.secciones[0]?.id ?? "";
   const seccion = e?.secciones.find((s) => s.id === seccionId);
@@ -67,6 +70,7 @@ export function EstudiantesPagina() {
                 <Boton icono={UserPlus} onClick={() => setAgregando(true)}>Agregar</Boton>
                 <Link to={`importar?seccion=${seccionId}`}><Boton variante="vidrio" icono={FileSpreadsheet}>Importar Excel</Boton></Link>
                 <Boton variante="fantasma" icono={Download} onClick={() => void descargarPlantilla()}>Plantilla</Boton>
+                <Boton variante="vidrio" icono={KeyRound} onClick={() => setCuentas(true)} disabled={!lista?.length}>Cuentas de la sección</Boton>
               </div>
             </Tarjeta>
 
@@ -97,6 +101,7 @@ export function EstudiantesPagina() {
         )}
         <div className="flex justify-center pt-2"><BotonRegresar a="/configuracion" /></div>
       </Contenido>
+      {cuentas && seccion && <DialogoCuentasSeccion seccionId={seccion.id} seccionNombre={seccion.nombreLargo} colegio={colegio} onCerrar={() => setCuentas(false)} />}
       {agregando && seccion && e.anio && <DialogoNuevoEstudiante seccionId={seccion.id} seccionNombre={seccion.nombre} anioId={e.anio.id} onCerrar={() => setAgregando(false)} />}
     </>
   );
@@ -276,6 +281,8 @@ export function FichaEstudiante() {
             </Tarjeta>
           )}
         </section>
+
+        <AccesoFicha estudiante={est} apoderados={datos.vinculos.map(({ v, a }) => ({ a, parentesco: v.parentesco }))} />
 
         <div className="flex justify-center pt-2"><BotonRegresar a={`/configuracion/estudiantes${mat ? `?seccion=${mat.seccion_id}` : ""}`} /></div>
       </Contenido>
