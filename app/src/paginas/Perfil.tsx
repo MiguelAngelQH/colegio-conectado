@@ -1,18 +1,20 @@
 import { useSyncExternalStore } from "react";
 import { useLiveQuery } from "dexie-react-hooks";
-import { CloudOff, MonitorSmartphone, Wifi } from "lucide-react";
+import { CloudOff, KeyRound, MonitorSmartphone, Wifi } from "lucide-react";
 import { db, useApp } from "@/app/contexto";
 import { NOMBRE_ROL, TONO_ROL } from "@/app/modulos";
 import { MODO } from "@/config";
 import { alCambiarConexion, forzarSinConexion, sinConexionForzada } from "@/sync/red";
 import { fijarSoloWifi, soloWifi } from "@/sync/archivos";
 import { useState } from "react";
-import { BotonRegresar, Contenido, Dato, Encabezado, Gema, Tarjeta, cx, iniciales, orden } from "@/ui/componentes";
+import { Boton, BotonRegresar, Contenido, Dato, Encabezado, Gema, Tarjeta, cx, iniciales, orden } from "@/ui/componentes";
+import { DialogoCambiarClave } from "./CambiarClave";
 
 export function Perfil() {
   const { usuario } = useApp();
   const forzado = useSyncExternalStore(alCambiarConexion, sinConexionForzada);
   const [wifi, setWifi] = useState(soloWifi);
+  const [cambiandoClave, setCambiandoClave] = useState(false);
   const colegio = useLiveQuery(() => (usuario?.colegio_id ? db.tabla("colegio").get(usuario.colegio_id) : undefined), [usuario?.colegio_id]);
   if (!usuario) return null;
 
@@ -45,7 +47,19 @@ export function Perfil() {
         </Tarjeta>
         <p className="px-2 text-xs text-tinta-suave">Para cambiar sus datos comuníquese con la dirección del colegio.</p>
 
-        <Tarjeta className="aparecer p-5" style={orden(3)}>
+        <Tarjeta className="aparecer flex flex-col gap-4 p-5 sm:flex-row sm:items-center" style={orden(3)}>
+          <Gema icono={KeyRound} tono="tono-laguna" tam="sm" />
+          <div className="min-w-0 flex-1">
+            <h2 className="font-bold">Acceso a la cuenta</h2>
+            <p className="text-xs text-tinta-suave">
+              Ingresa con su DNI{usuario.dni ? ` (${usuario.dni})` : ""}{usuario.email ? ` o con ${usuario.email}` : ""}. Si olvida su contraseña, la dirección puede darle una nueva.
+            </p>
+          </div>
+          <Boton variante="vidrio" icono={KeyRound} onClick={() => setCambiandoClave(true)}>Cambiar contraseña</Boton>
+        </Tarjeta>
+        {cambiandoClave && <DialogoCambiarClave onCerrar={() => setCambiandoClave(false)} />}
+
+        <Tarjeta className="aparecer p-5" style={orden(4)}>
           <div className="flex items-center gap-3">
             <Gema icono={MonitorSmartphone} tono="tono-pizarra" tam="sm" />
             <div>
