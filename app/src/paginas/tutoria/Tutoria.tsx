@@ -16,7 +16,8 @@ import { MiTutoria } from "./MiTutoria";
 
 export function Tutoria() {
   const { usuario } = useApp();
-  if (usuario?.roles.includes("estudiante") && !usuario.roles.some((r) => ["director", "subdirector", "tutor", "docente"].includes(r))) return <MiTutoria />;
+  // Estudiantes y familias: su tutor(a), pedir ayuda y observaciones.
+  if (usuario?.roles.some((r) => r === "estudiante" || r === "apoderado") && !usuario.roles.some((r) => ["director", "subdirector", "tutor", "docente"].includes(r))) return <MiTutoria />;
   return (
     <Routes>
       <Route index element={<InicioTutoria />} />
