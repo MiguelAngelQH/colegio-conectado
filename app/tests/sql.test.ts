@@ -507,3 +507,58 @@ describe("acceso con DNI", () => {
     expect(rows[0].dni).toBe("41234567");
   });
 });
+
+describe("pedidos de ayuda al tutor", () => {
+  const S = (n: number) => `60000000-0000-4000-8000-${n.toString(16).padStart(12, "0")}`;
+  const pedido = (id: string, solicitante: string, extra: Record<string, unknown> = {}) => ({
+    tabla: "solicitud_tutoria",
+    parche: { id, colegio_id: COL, estudiante_id: E1, solicitante_id: solicitante, motivo: "estudios", mensaje: "Necesito ayuda", modalidad: "presencial", ...extra },
+  });
+  const ver = async (uid: string) => ((await pull(uid)).filas.solicitud_tutoria ?? []).map((f) => f.id).sort();
+
+  it("el pedido llega al tutor de la sección y empieza como enviado", async () => {
+    const r = await push(U.estudiante, [pedido(S(1), U.estudiante, { estado: "atendida", respuesta: "trampa", tutor_id: U.director })]);
+    expect(r[0].estado).toBe("ok");
+    const { rows } = await db.query<{ tutor_id: string; estado: string; respuesta: string | null }>("select tutor_id, estado, respuesta from solicitud_tutoria where id = $1", [S(1)]);
+    expect(rows[0]).toEqual({ tutor_id: U.docente, estado: "enviada", respuesta: null });
+  });
+
+  it("el apoderado pide por su hijo, pero no por otro estudiante", async () => {
+    const r = await push(U.apoderado, [pedido(S(2), U.apoderado), pedido(S(3), U.apoderado, { estudiante_id: E3 })]);
+    expect(r.map((x) => x.estado)).toEqual(["ok", "rechazado"]);
+  });
+
+  it("privacidad: la familia no ve lo que pidió el estudiante; la dirección solo ve los casos de acoso", async () => {
+    await push(U.estudiante, [pedido(S(4), U.estudiante, { motivo: "companeros", mensaje: "Me molestan en el recreo" })]);
+    expect(await ver(U.estudiante)).toEqual([S(1), S(4)]);
+    expect(await ver(U.apoderado)).toEqual([S(2)]);
+    expect(await ver(U.docente)).toEqual([S(1), S(2), S(4)]);
+    expect(await ver(U.director)).toEqual([S(4)]);
+    expect(await ver(U.ugel)).toEqual([]);
+  });
+
+  it("máximo 2 pedidos abiertos por persona", async () => {
+    const [r] = await push(U.estudiante, [pedido(S(5), U.estudiante)]);
+    expect(r).toMatchObject({ estado: "rechazado", motivo: expect.stringContaining("2 pedidos abiertos") });
+  });
+
+  it("el tutor agenda (con fecha) y responde; quien pidió solo puede cancelar", async () => {
+    const t = await push(U.docente, [
+      { tabla: "solicitud_tutoria", parche: { id: S(1), estado: "agendada" } },
+      { tabla: "solicitud_tutoria", parche: { id: S(1), estado: "agendada", cita: "2026-11-24T15:00:00Z", respuesta: "Conversemos el lunes" } },
+      { tabla: "solicitud_tutoria", parche: { id: S(1), mensaje: "cambiado" } },
+    ]);
+    expect(t.map((x) => x.estado)).toEqual(["rechazado", "ok", "rechazado"]);
+    const e = await push(U.estudiante, [
+      { tabla: "solicitud_tutoria", parche: { id: S(1), respuesta: "me respondo" } },
+      { tabla: "solicitud_tutoria", parche: { id: S(1), estado: "cancelada" } },
+      { tabla: "solicitud_tutoria", parche: { id: S(1), estado: "enviada" } },
+    ]);
+    expect(e.map((x) => x.estado)).toEqual(["rechazado", "ok", "rechazado"]);
+  });
+
+  it("la dirección atiende los casos de acoso", async () => {
+    const [r] = await push(U.director, [{ tabla: "solicitud_tutoria", parche: { id: S(4), estado: "vista", respuesta: "Vamos a conversar con tu tutora hoy" } }]);
+    expect(r.estado).toBe("ok");
+  });
+});
