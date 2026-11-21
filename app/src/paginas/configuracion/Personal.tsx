@@ -1,17 +1,17 @@
 import { useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useLiveQuery } from "dexie-react-hooks";
-import { BookOpen, Copy, KeyRound, Plus, Save, Trash2, UserPlus, Users } from "lucide-react";
+import { BookOpen, KeyRound, Plus, Save, Trash2, UserPlus, Users } from "lucide-react";
 import { db, useApp } from "@/app/contexto";
 import { NOMBRE_ROL, TONO_ROL } from "@/app/modulos";
-import { MODO } from "@/config";
-import { crearPersona } from "@/datos/cuentas";
+import { useCuentas } from "@/datos/cuentas";
 import { nombreCompleto, usePersonal, useEstructura } from "@/datos/consultas";
 import { guardar, guardarLote, vivas } from "@/db/repositorio";
 import type { Rol, Usuario } from "@/db/tipos";
 import { normalizar, normalizarDni, nombrePropio } from "@/dominio/texto";
 import { textoGuardado, useAvisar } from "@/ui/avisos";
 import { Aviso, Boton, BotonRegresar, Contenido, Dialogo, Encabezado, Tarjeta, cx, iniciales, orden } from "@/ui/componentes";
+import { DialogoCredencial } from "@/ui/credenciales";
 import { Buscador, Campo, Casilla, Entrada, FilaLista, Selector, Vacio } from "@/ui/formulario";
 
 const ROLES_PERSONAL: Rol[] = ["director", "subdirector", "docente", "tutor", "auxiliar"];
@@ -75,30 +75,30 @@ export function PersonalPagina() {
 }
 
 function DialogoNuevaPersona({ onCerrar }: { onCerrar(): void }) {
-  const { colegioId } = useApp();
   const avisar = useAvisar();
   const navegar = useNavigate();
+  const cuentas = useCuentas();
   const [f, setF] = useState({ nombres: "", apellidos: "", dni: "", email: "" });
   const [roles, setRoles] = useState<Rol[]>(["docente"]);
   const [guardando, setGuardando] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [clave, setClave] = useState<{ id: string; clave: string } | null>(null);
+  const [creada, setCreada] = useState<{ id: string; clave: string; dni: string } | null>(null);
 
-  const dniValido = !f.dni.trim() || normalizarDni(f.dni) !== null;
-  const correoValido = /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(f.email.trim());
-  const listo = f.nombres.trim() && f.apellidos.trim() && roles.length > 0 && dniValido && (MODO === "demo" ? !f.email.trim() || correoValido : correoValido);
+  const dni = normalizarDni(f.dni);
+  const correoValido = !f.email.trim() || /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(f.email.trim());
+  const listo = f.nombres.trim() && f.apellidos.trim() && roles.length > 0 && !!dni && correoValido;
 
   const crear = async () => {
+    if (!dni) return;
     setGuardando(true);
     setError(null);
     try {
-      const r = await crearPersona({
-        nombres: nombrePropio(f.nombres), apellidos: nombrePropio(f.apellidos),
-        dni: normalizarDni(f.dni), email: f.email.trim().toLowerCase(), roles,
-      }, colegioId!);
-      if (r.claveTemporal) setClave({ id: r.id, clave: r.claveTemporal });
+      const r = await cuentas.crear({
+        nombres: nombrePropio(f.nombres), apellidos: nombrePropio(f.apellidos), dni, email: f.email.trim().toLowerCase() || null, roles,
+      });
+      if (r.claveTemporal) setCreada({ id: r.id, clave: r.claveTemporal, dni });
       else {
-        avisar(textoGuardado("Persona registrada"));
+        avisar(textoGuardado(r.existente ? "Esa persona ya tenía cuenta: se le agregó el cargo" : "Persona registrada"));
         navegar(r.id);
       }
     } catch (err) {
@@ -108,35 +108,26 @@ function DialogoNuevaPersona({ onCerrar }: { onCerrar(): void }) {
     }
   };
 
-  if (clave) {
-    return (
-      <Dialogo abierto titulo="Cuenta creada" onCerrar={() => navegar(clave.id)}
-        acciones={<Boton onClick={() => navegar(clave.id)}>Entendido</Boton>}>
-        <p>Entregue estos datos a {f.nombres}. Deberá cambiar la contraseña al ingresar por primera vez.</p>
-        <div className="mt-3 space-y-1 rounded-2xl bg-white/60 p-4 text-tinta ring-1 ring-white">
-          <p><span className="etiqueta">Correo</span><br /><strong>{f.email}</strong></p>
-          <p className="flex items-center gap-2"><KeyRound className="h-4 w-4" aria-hidden /> <strong className="font-mono text-lg tracking-wider">{clave.clave}</strong>
-            <button onClick={() => navigator.clipboard?.writeText(clave.clave)} className="ml-auto rounded-full p-2 hover:bg-white" aria-label="Copiar contraseña"><Copy className="h-4 w-4" aria-hidden /></button>
-          </p>
-        </div>
-        <p className="mt-2 text-xs">Esta contraseña no se volverá a mostrar.</p>
-      </Dialogo>
-    );
+  if (creada) {
+    return <DialogoCredencial titulo="Cuenta creada" nombre={`${nombrePropio(f.nombres)} ${nombrePropio(f.apellidos)}`} dni={creada.dni}
+      email={f.email.trim().toLowerCase() || null} clave={creada.clave} onCerrar={() => navegar(creada.id)} />;
   }
 
   return (
     <Dialogo abierto titulo="Agregar personal" onCerrar={onCerrar}
       acciones={<>
         <Boton variante="fantasma" onClick={onCerrar}>Cancelar</Boton>
-        <Boton icono={UserPlus} onClick={crear} cargando={guardando} disabled={!listo}>Agregar</Boton>
+        <Boton icono={UserPlus} onClick={crear} cargando={guardando} disabled={!listo}>Crear cuenta</Boton>
       </>}>
       <div className="space-y-3 pt-2 text-tinta">
         {error && <Aviso tipo="error">{error}</Aviso>}
         <div className="grid gap-3 sm:grid-cols-2">
           <Campo etiqueta="Nombres"><Entrada value={f.nombres} onChange={(e) => setF({ ...f, nombres: e.target.value })} autoFocus /></Campo>
           <Campo etiqueta="Apellidos"><Entrada value={f.apellidos} onChange={(e) => setF({ ...f, apellidos: e.target.value })} /></Campo>
-          <Campo etiqueta="DNI" error={dniValido ? null : "8 dígitos"}><Entrada inputMode="numeric" value={f.dni} onChange={(e) => setF({ ...f, dni: e.target.value })} /></Campo>
-          <Campo etiqueta={MODO === "demo" ? "Correo (opcional en demo)" : "Correo (para ingresar)"}>
+          <Campo etiqueta="DNI (para ingresar)" error={f.dni.trim() && !dni ? "8 dígitos" : null}>
+            <Entrada inputMode="numeric" value={f.dni} onChange={(e) => setF({ ...f, dni: e.target.value })} />
+          </Campo>
+          <Campo etiqueta="Correo (opcional)" error={correoValido ? null : "Correo no válido"}>
             <Entrada type="email" value={f.email} onChange={(e) => setF({ ...f, email: e.target.value })} />
           </Campo>
         </div>
@@ -148,7 +139,7 @@ function DialogoNuevaPersona({ onCerrar }: { onCerrar(): void }) {
             ))}
           </div>
         </div>
-        {MODO !== "demo" && <p className="text-xs">Crear la cuenta necesita conexión a internet.</p>}
+        <p className="text-xs">Se crea la cuenta con una contraseña temporal. La persona ingresa con su DNI (o su correo) y elige su propia contraseña. Necesita conexión a internet.</p>
       </div>
     </Dialogo>
   );
@@ -169,6 +160,9 @@ export function FichaPersonal() {
   const personal = usePersonal() ?? [];
   const [editando, setEditando] = useState(false);
   const [agregando, setAgregando] = useState(false);
+  const cuentas = useCuentas();
+  const [nuevaClave, setNuevaClave] = useState<string | null>(null);
+  const [ocupado, setOcupado] = useState<"clave" | "estado" | null>(null);
 
   if (!persona || !datos || !e) return null;
   const tutorDe = e.secciones.filter((s) => s.tutor_id === persona.id);
@@ -181,10 +175,21 @@ export function FichaPersonal() {
     await guardar(db, "docente_asignacion", { id: asigId, eliminado: true }, colegioId);
     avisar(textoGuardado("Asignación quitada"));
   };
-  const cambiarActivo = async () => {
-    await guardar(db, "usuario", { id: persona.id, activo: !persona.activo }, colegioId);
-    avisar(textoGuardado(persona.activo ? "Cuenta desactivada" : "Cuenta activada"));
+  const conServidor = async (cual: "clave" | "estado", fn: () => Promise<void>) => {
+    setOcupado(cual);
+    try {
+      await fn();
+    } catch (err) {
+      avisar(err instanceof Error ? err.message : String(err), "error");
+    } finally {
+      setOcupado(null);
+    }
   };
+  const restablecer = () => conServidor("clave", async () => setNuevaClave(await cuentas.restablecer(persona.id)));
+  const cambiarActivo = () => conServidor("estado", async () => {
+    await cuentas.cambiarEstado(persona.id, !persona.activo);
+    avisar(textoGuardado(persona.activo ? "Cuenta desactivada" : "Cuenta activada"));
+  });
 
   return (
     <>
@@ -235,13 +240,28 @@ export function FichaPersonal() {
           </section>
         )}
 
-        {persona.id !== yo?.id && (
-          <Tarjeta className="flex flex-wrap items-center justify-between gap-3 p-4">
-            <p className="text-sm text-tinta-suave">{persona.activo ? "Si la persona deja el colegio, desactive su cuenta. Su historial se conserva." : "La cuenta está desactivada y no puede ingresar."}</p>
-            <Boton variante={persona.activo ? "fantasma" : "vidrio"} className={persona.activo ? "text-red-700" : ""} onClick={cambiarActivo}>
-              {persona.activo ? "Desactivar cuenta" : "Activar cuenta"}
-            </Boton>
+        {persona.id !== yo?.id && !persona.roles.includes("ugel") && (
+          <Tarjeta className="divide-y divide-white/70">
+            <div className="flex flex-wrap items-center justify-between gap-3 p-4">
+              <p className="min-w-0 flex-1 text-sm text-tinta-suave">
+                Ingresa con su DNI{persona.dni ? ` ${persona.dni}` : ""}{persona.email ? ` o con ${persona.email}` : ""}. Si olvidó su contraseña, genere una temporal.
+              </p>
+              <Boton variante="vidrio" icono={KeyRound} onClick={restablecer} cargando={ocupado === "clave"} disabled={!persona.activo || ocupado !== null}>
+                Restablecer contraseña
+              </Boton>
+            </div>
+            <div className="flex flex-wrap items-center justify-between gap-3 p-4">
+              <p className="min-w-0 flex-1 text-sm text-tinta-suave">{persona.activo ? "Si la persona deja el colegio, desactive su cuenta. Su historial se conserva." : "La cuenta está desactivada y no puede ingresar."}</p>
+              <Boton variante={persona.activo ? "fantasma" : "vidrio"} className={persona.activo ? "text-red-700" : ""} onClick={cambiarActivo}
+                cargando={ocupado === "estado"} disabled={ocupado !== null}>
+                {persona.activo ? "Desactivar cuenta" : "Activar cuenta"}
+              </Boton>
+            </div>
           </Tarjeta>
+        )}
+        {nuevaClave && (
+          <DialogoCredencial titulo="Contraseña restablecida" nombre={`${persona.nombres} ${persona.apellidos}`} dni={persona.dni}
+            email={persona.email} clave={nuevaClave} onCerrar={() => setNuevaClave(null)} />
         )}
         <div className="flex justify-center pt-2"><BotonRegresar a="/configuracion/personal" /></div>
       </Contenido>
@@ -284,7 +304,9 @@ function DialogoEditarPersona({ persona, esYo, onCerrar }: { persona: Usuario; e
         <div className="grid gap-3 sm:grid-cols-2">
           <Campo etiqueta="Nombres"><Entrada value={f.nombres} onChange={(e) => setF({ ...f, nombres: e.target.value })} /></Campo>
           <Campo etiqueta="Apellidos"><Entrada value={f.apellidos} onChange={(e) => setF({ ...f, apellidos: e.target.value })} /></Campo>
-          <Campo etiqueta="DNI" error={dniValido ? null : "8 dígitos"}><Entrada inputMode="numeric" value={f.dni} onChange={(e) => setF({ ...f, dni: e.target.value })} /></Campo>
+          <Campo etiqueta="DNI" error={dniValido ? null : "8 dígitos"} ayuda={persona.dni ? "Es su usuario de ingreso: no se cambia desde la app." : undefined}>
+            <Entrada inputMode="numeric" value={f.dni} disabled={!!persona.dni} onChange={(e) => setF({ ...f, dni: e.target.value })} />
+          </Campo>
         </div>
         <div className="grid gap-2 sm:grid-cols-2">
           {ROLES_PERSONAL.map((r) => (
