@@ -11,22 +11,25 @@ const id = (pref: string, n: number) => `${pref}-0000-4000-8000-${n.toString(16)
 export const COLEGIO_DEMO = id("d0000000", 1);
 const CID = COLEGIO_DEMO;
 
-export const USUARIOS_DEMO: { id: string; nombres: string; apellidos: string; roles: Rol[]; descripcion: string }[] = [
-  { id: id("e0000000", 1), nombres: "Patricia", apellidos: "Salas Vera", roles: ["ugel"], descripcion: "Especialista de la UGEL" },
-  { id: id("e0000000", 2), nombres: "Roberto", apellidos: "Paredes Luna", roles: ["director"], descripcion: "Director de la I.E." },
-  { id: id("e0000000", 3), nombres: "Carmen", apellidos: "Rojas Medina", roles: ["docente", "tutor"], descripcion: "Docente de Matemática y tutora de 2.º B secundaria" },
-  { id: id("e0000000", 4), nombres: "Jorge", apellidos: "Flores Ticona", roles: ["docente", "tutor"], descripcion: "Docente de 3.º A primaria" },
-  { id: id("e0000000", 5), nombres: "Marta", apellidos: "Huamán Cruz", roles: ["auxiliar"], descripcion: "Auxiliar de educación" },
-  { id: id("e0000000", 6), nombres: "Luis", apellidos: "Mamani Quispe", roles: ["estudiante"], descripcion: "Estudiante de 2.º B secundaria" },
-  { id: id("e0000000", 7), nombres: "Rosa", apellidos: "Quispe Apaza", roles: ["apoderado"], descripcion: "Madre de Luis Mamani" },
+/** Contraseña de todas las cuentas de prueba (se muestra en la pantalla de ingreso del demo). */
+export const CLAVE_DEMO = "Colegio2026";
+
+export const USUARIOS_DEMO: { id: string; nombres: string; apellidos: string; dni: string; email: string | null; roles: Rol[]; descripcion: string }[] = [
+  { id: id("e0000000", 1), nombres: "Patricia", apellidos: "Salas Vera", dni: "41000001", email: null, roles: ["ugel"], descripcion: "Especialista de la UGEL" },
+  { id: id("e0000000", 2), nombres: "Roberto", apellidos: "Paredes Luna", dni: "41000002", email: "director@demo.edu.pe", roles: ["director"], descripcion: "Director de la I.E." },
+  { id: id("e0000000", 3), nombres: "Carmen", apellidos: "Rojas Medina", dni: "41000003", email: "crojas@demo.edu.pe", roles: ["docente", "tutor"], descripcion: "Docente de Matemática y tutora de 2.º B secundaria" },
+  { id: id("e0000000", 4), nombres: "Jorge", apellidos: "Flores Ticona", dni: "41000004", email: null, roles: ["docente", "tutor"], descripcion: "Docente de 3.º A primaria" },
+  { id: id("e0000000", 5), nombres: "Marta", apellidos: "Huamán Cruz", dni: "41000005", email: null, roles: ["auxiliar"], descripcion: "Auxiliar de educación" },
+  { id: id("e0000000", 6), nombres: "Luis", apellidos: "Mamani Quispe", dni: "72000001", email: null, roles: ["estudiante"], descripcion: "Estudiante de 2.º B secundaria" },
+  { id: id("e0000000", 7), nombres: "Rosa", apellidos: "Quispe Apaza", dni: "41000007", email: null, roles: ["apoderado"], descripcion: "Madre de Luis Mamani" },
 ];
 
 /** Resto del personal (aparece en listas y paneles; no se ofrece como cuenta de ingreso). */
-const PERSONAL_EXTRA: { id: string; nombres: string; apellidos: string }[] = [
-  { id: id("e0000000", 8), nombres: "Ana", apellidos: "Gutiérrez Pinto" },
-  { id: id("e0000000", 9), nombres: "Carlos", apellidos: "Núñez Arce" },
-  { id: id("e0000000", 10), nombres: "Silvia", apellidos: "Paz Chávez" },
-  { id: id("e0000000", 11), nombres: "Julia", apellidos: "Vargas Soto" },
+const PERSONAL_EXTRA: { id: string; nombres: string; apellidos: string; dni: string }[] = [
+  { id: id("e0000000", 8), nombres: "Ana", apellidos: "Gutiérrez Pinto", dni: "41000008" },
+  { id: id("e0000000", 9), nombres: "Carlos", apellidos: "Núñez Arce", dni: "41000009" },
+  { id: id("e0000000", 10), nombres: "Silvia", apellidos: "Paz Chávez", dni: "41000010" },
+  { id: id("e0000000", 11), nombres: "Julia", apellidos: "Vargas Soto", dni: "41000011" },
 ];
 
 const NOMBRES_SEC = [
@@ -85,7 +88,7 @@ const hoyLocal = () => {
 };
 
 /** Cambia este número cuando cambien los datos de demo: los equipos vuelven a sembrar. */
-export const VERSION_DEMO = 10;
+export const VERSION_DEMO = 11;
 
 export async function datosDemo(hoyReal = hoyLocal()): Promise<Partial<Record<NombreTabla, Fila[]>>> {
   const r = rng(42);
@@ -99,8 +102,8 @@ export async function datosDemo(hoyReal = hoyLocal()): Promise<Partial<Record<No
     ugel: "UGEL de ejemplo", region: "Arequipa", distrito: "Cayma",
   };
   const usuarios: Usuario[] = [
-    ...USUARIOS_DEMO.map((u) => ({ id: u.id, colegio_id: CID, nombres: u.nombres, apellidos: u.apellidos, dni: null, email: null, roles: u.roles, activo: true })),
-    ...PERSONAL_EXTRA.map((u) => ({ id: u.id, colegio_id: CID, nombres: u.nombres, apellidos: u.apellidos, dni: null, email: null, roles: ["docente", "tutor"] as Rol[], activo: true })),
+    ...USUARIOS_DEMO.map((u) => ({ id: u.id, colegio_id: CID, nombres: u.nombres, apellidos: u.apellidos, dni: u.dni, email: u.email, roles: u.roles, activo: true })),
+    ...PERSONAL_EXTRA.map((u) => ({ id: u.id, colegio_id: CID, nombres: u.nombres, apellidos: u.apellidos, dni: u.dni, email: null, roles: ["docente", "tutor"] as Rol[], activo: true })),
   ];
 
   const anio: AnioEscolar = { id: id("f0000000", 1), colegio_id: CID, anio: anioNum, regimen: "bimestre", activo: true };
@@ -156,7 +159,7 @@ export async function datosDemo(hoyReal = hoyLocal()): Promise<Partial<Record<No
     lista.forEach(([nombres, apellidos, sexo], i) => {
       const eid = id("f5000000", base + i);
       const e: Estudiante = {
-        id: eid, colegio_id: CID, usuario_id: base === 1 && i === 0 ? uLuis.id : null, dni: null,
+        id: eid, colegio_id: CID, usuario_id: base === 1 && i === 0 ? uLuis.id : null, dni: `7${String(2_000_000 + base + i).padStart(7, "0")}`,
         nombres, apellidos, fecha_nacimiento: null, sexo: sexo as "M" | "F", codigo_carne: `CC-${(base + i).toString().padStart(5, "0")}`,
       };
       estudiantes.push(e);
@@ -178,7 +181,7 @@ export async function datosDemo(hoyReal = hoyLocal()): Promise<Partial<Record<No
   crear(inventar(11, 13), sec6p, 401);
   crear(inventar(12, 14), sec1p, 501);
 
-  const apoderado: Apoderado = { id: id("f7000000", 1), colegio_id: CID, usuario_id: uRosa.id, dni: null, nombres: "Rosa", apellidos: "Quispe Apaza", telefono: null };
+  const apoderado: Apoderado = { id: id("f7000000", 1), colegio_id: CID, usuario_id: uRosa.id, dni: uRosa.dni, nombres: "Rosa", apellidos: "Quispe Apaza", telefono: null };
   const vinculo: EstudianteApoderado = { id: id("f8000000", 1), colegio_id: CID, estudiante_id: estudiantes[0].id, apoderado_id: apoderado.id, parentesco: "Madre", orden: 1 };
 
   // ------------------------------------------------------------------ notas
