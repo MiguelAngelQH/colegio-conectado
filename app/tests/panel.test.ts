@@ -60,10 +60,35 @@ describe("panel del colegio", () => {
       { area: "Comunicación", conteo: { AD: 0, A: 0, B: 1, C: 1 }, total: 2 },
       { area: "Matemática", conteo: { AD: 1, A: 0, B: 0, C: 1 }, total: 2 },
     ]);
-    expect(p.semanas).toHaveLength(8);
-    expect(p.semanas.at(-1)).toMatchObject({ semana: "2026-10-12", registros: 9, porcentaje: 63 });
+    expect(p.semanas).toHaveLength(14);
+    expect(p.semanas.at(-1)).toMatchObject({ semana: "2026-10-12", registros: 9, porcentaje: 63, P: 4, T: 1, F: 3, J: 1 });
     expect(p.semanas[0].porcentaje).toBeNull();
     expect(p.incidenciasPorTipo).toEqual([{ tipo: "Ciberacoso", n: 2 }]);
+  });
+
+  it("calcula la serie diaria, la asistencia por sección y los totales de logro", () => {
+    const p = calcularPanel(entrada());
+    expect(p.dias.map((d) => d.fecha)).toEqual(["2026-08-01", "2026-10-12", "2026-10-14", "2026-10-15"]);
+    expect(p.dias.at(-1)).toEqual({ fecha: "2026-10-15", porcentaje: 67, registros: 3 });
+    expect(p.porSeccion).toEqual([{ seccionId: "s1", seccion: "2.º B", porcentaje: 63, registros: 9 }]);
+    expect(p.distribucionTotal).toEqual({ AD: 1, A: 0, B: 1, C: 2 });
+  });
+
+  it("compara la asistencia con los 30 días anteriores", () => {
+    const base = entrada();
+    expect(calcularPanel(base).asistenciaAnterior).toBeNull();
+    const p = calcularPanel(entrada({
+      sesiones: [...base.sesiones, ses("s-ant", "2026-09-10")],
+      asistencias: [...base.asistencias, asis("s-ant", "e1", "F"), asis("s-ant", "e2", "P")],
+    }));
+    expect(p.asistenciaAnterior).toBe(50);
+  });
+
+  it("cuenta las incidencias por mes, incluidos los meses sin casos", () => {
+    const p = calcularPanel(entrada());
+    expect(p.incidenciasPorMes.map((m) => m.mes)).toEqual(["2026-05", "2026-06", "2026-07", "2026-08", "2026-09", "2026-10"]);
+    expect(p.incidenciasPorMes.at(-1)).toEqual({ mes: "2026-10", n: 2, tipos: { Ciberacoso: 2 } });
+    expect(p.incidenciasPorMes[4].n).toBe(0);
   });
 
   it("filtra por sección: los indicadores solo cuentan a sus estudiantes", () => {
