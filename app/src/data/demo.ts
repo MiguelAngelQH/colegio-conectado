@@ -85,7 +85,7 @@ const hoyLocal = () => {
 };
 
 /** Cambia este número cuando cambien los datos de demo: los equipos vuelven a sembrar. */
-export const VERSION_DEMO = 7;
+export const VERSION_DEMO = 10;
 
 export async function datosDemo(hoyReal = hoyLocal()): Promise<Partial<Record<NombreTabla, Fila[]>>> {
   const r = rng(42);
@@ -186,10 +186,12 @@ export async function datosDemo(hoyReal = hoyLocal()): Promise<Partial<Record<No
   const dificultad: Record<string, number> = { MAT: 0.12, CYT: 0.06, COM: 0.02, CCSS: -0.02, PS: -0.04, AYC: -0.1 };
   const elegir = (sesgo: number): NivelLogro => {
     const x = r() + sesgo;
-    return x < 0.16 ? "AD" : x < 0.62 ? "A" : x < 0.9 ? "B" : "C";
+    return x < 0.18 ? "AD" : x < 0.66 ? "A" : x < 0.95 ? "B" : "C";
   };
   // Avance del último periodo terminado por docente (la UGEL observó atraso en primaria).
   const avanceUltimo: Record<string, number> = { [uFlores.id]: 0.55, [uNunez.id]: 0.8, [uVargas.id]: 0.7 };
+  // Cada estudiante tiene su propio nivel: unos pocos necesitan más apoyo y concentran los C.
+  const habilidad = new Map(estudiantes.map((e, i) => [e.id, i % 6 === 2 ? 0.1 : -0.16 + r() * 0.08]));
   const pendientes: Calificacion[] = [];
   periodos.forEach((p, ip) => {
     const enCurso = p.inicio <= hoy && hoy <= p.fin;
@@ -205,7 +207,7 @@ export async function datosDemo(hoyReal = hoyLocal()): Promise<Partial<Record<No
       const cuantos = Math.round(ests.length * fraccion);
       ests.slice(0, cuantos).forEach((e) => {
         for (const c of competencias.filter((k) => k.area_id === ar.id)) {
-          const n = elegir(sesgo);
+          const n = elegir(sesgo + (habilidad.get(e.id) ?? 0));
           const textos = ar.codigo === "MAT" ? CONCLUSIONES : CONCLUSIONES_GENERALES;
           pendientes.push({
             id: "", colegio_id: CID, estudiante_id: e.id, competencia_id: c.id, periodo_id: p.id, seccion_id: s.id, nivel_logro: n,
@@ -240,18 +242,18 @@ export async function datosDemo(hoyReal = hoyLocal()): Promise<Partial<Record<No
   for (const s of secciones) {
     const ests = porSeccion.get(s.id)!;
     // Propensión a faltar de cada estudiante: la mayoría baja, uno o dos más altos por sección.
-    const propension = new Map(ests.map((e, i) => [e.id, i % 7 === 3 ? 0.13 : 0.015 + azar() * 0.04]));
-    const sesgoSeccion = s === sec1 ? 0.03 : s === sec1p ? 0.02 : 0;
+    const propension = new Map(ests.map((e, i) => [e.id, i % 9 === 4 ? 0.09 : 0.004 + azar() * 0.014]));
+    const sesgoSeccion = s === sec1 ? 0.035 : s === sec1p ? 0.02 : 0;
     for (const fecha of dias) {
       const sid = id("ff000000", sesionesAsis.length + 1);
       sesionesAsis.push({ id: sid, colegio_id: CID, seccion_id: s.id, area_id: null, docente_id: s.tutor_id!, fecha, modo: "manual", abierta_en: Date.parse(`${fecha}T08:00:00-05:00`), estado: "confirmada" });
-      const extra = sesgoSeccion + (diaSemana(fecha) === 1 ? 0.025 : 0) + (diasBajos.has(fecha) ? 0.18 : 0);
+      const extra = sesgoSeccion + (diaSemana(fecha) === 1 ? 0.02 : 0) + (diasBajos.has(fecha) ? 0.12 : 0);
       for (const e of ests) {
         const x = azar();
         const pFalta = propension.get(e.id)! + extra;
         let estado: Asistencia["estado"] = x < pFalta ? "F" : x < pFalta + 0.05 ? "T" : "P";
         // Faltas antiguas: una parte ya fue justificada por la familia.
-        if (estado === "F" && fecha < hace(21) && azar() < 0.3) estado = "J";
+        if (estado === "F" && fecha < hace(14) && azar() < 0.6) estado = "J";
         if (e.id === luis.id) {
           estado = fecha === ultimaSemana[2] ? "F" : fecha === ultimaSemana[4] ? "T" : "P";
         }
