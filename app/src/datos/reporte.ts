@@ -41,7 +41,8 @@ export async function descargarReporte(p: {
     head: [["Indicador", "Valor"]],
     body: [
       ["Estudiantes matriculados", String(panel.matriculados)],
-      ["Asistencia de los últimos 30 días", panel.asistencia30 === null ? "Sin registros" : `${panel.asistencia30}%`],
+      ["Asistencia de los últimos 30 días", panel.asistencia30 === null ? "Sin registros"
+        : `${panel.asistencia30}%${panel.asistenciaAnterior === null ? "" : ` (${panel.asistencia30 - panel.asistenciaAnterior >= 0 ? "+" : ""}${panel.asistencia30 - panel.asistenciaAnterior} pts frente a los 30 días previos)`}`],
       [`Notas registradas (${p.periodo})`, panel.avanceNotas === null ? "-" : `${panel.avanceNotas}%`],
       ["Estudiantes con alertas", String(panel.enRiesgo.length)],
       ["Incidencias abiertas", `${panel.incidenciasAbiertas}${panel.sisevePendientes ? ` (${panel.sisevePendientes} sin reporte en SíseVe)` : ""}`],
@@ -62,8 +63,25 @@ export async function descargarReporte(p: {
   y = titulo("Asistencia por semana", fin() + 9);
   autoTable(doc, {
     ...tabla, startY: y,
-    head: [["Semana del", "Asistencia", "Registros"]],
-    body: panel.semanas.map((s) => [new Date(`${s.semana}T12:00:00`).toLocaleDateString("es-PE", { day: "numeric", month: "long" }), s.porcentaje === null ? "-" : `${s.porcentaje}%`, String(s.registros)]),
+    head: [["Semana del", "Asistencia", "Presentes", "Tardanzas", "Faltas", "Justificadas"]],
+    body: panel.semanas.filter((s) => s.registros > 0).map((s) => [new Date(`${s.semana}T12:00:00`).toLocaleDateString("es-PE", { day: "numeric", month: "long" }),
+      s.porcentaje === null ? "-" : `${s.porcentaje}%`, String(s.P), String(s.T), String(s.F), String(s.J)]),
+  });
+
+  if (panel.porSeccion.length > 1) {
+    y = titulo("Asistencia por sección (últimos 30 días)", fin() + 9);
+    autoTable(doc, {
+      ...tabla, startY: y, head: [["Sección", "Asistencia", "Registros"]],
+      body: panel.porSeccion.map((s) => [s.seccion, s.porcentaje === null ? "-" : `${s.porcentaje}%`, String(s.registros)]),
+    });
+  }
+
+  y = titulo("Incidencias por mes", fin() + 9);
+  autoTable(doc, {
+    ...tabla, startY: y, head: [["Mes", "Casos", "Tipos"]],
+    body: panel.incidenciasPorMes.map((m) => [new Date(`${m.mes}-15T12:00:00`).toLocaleDateString("es-PE", { month: "long", year: "numeric" }), String(m.n),
+      Object.entries(m.tipos).map(([t, n]) => `${t} (${n})`).join("; ") || "-"]),
+    columnStyles: { 0: { cellWidth: 35 }, 1: { cellWidth: 18 } },
   });
 
   if (p.avanceDocentes.length) {
