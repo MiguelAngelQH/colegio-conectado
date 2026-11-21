@@ -3,6 +3,8 @@ import { createRoot } from "react-dom/client";
 import { BrowserRouter } from "react-router-dom";
 import { App } from "./App";
 import { ProveedorApp } from "./app/contexto";
+import { MODO } from "./config";
+import { SinConfigurar } from "./paginas/SinConfigurar";
 import { ActualizacionPWA } from "./ui/ActualizacionPWA";
 import { ProveedorAvisos } from "./ui/avisos";
 import { BarreraErrores } from "./ui/BarreraErrores";
@@ -14,14 +16,16 @@ const esApp = !!(window as unknown as { Capacitor?: { isNativePlatform?: () => b
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <BarreraErrores>
-      <BrowserRouter>
-        <ProveedorApp>
-          <ProveedorAvisos>
-            <App />
-            {!esApp && <ActualizacionPWA />}
-          </ProveedorAvisos>
-        </ProveedorApp>
-      </BrowserRouter>
+      {MODO === "sin-configurar" ? <SinConfigurar /> : (
+        <BrowserRouter>
+          <ProveedorApp>
+            <ProveedorAvisos>
+              <App />
+              {!esApp && <ActualizacionPWA />}
+            </ProveedorAvisos>
+          </ProveedorApp>
+        </BrowserRouter>
+      )}
     </BarreraErrores>
   </StrictMode>,
 );

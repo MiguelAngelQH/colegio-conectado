@@ -3,8 +3,13 @@ import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 const url = import.meta.env.VITE_SUPABASE_URL as string | undefined;
 const clave = import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined;
 
-/** "demo": todo local con datos de ejemplo. "supabase": servidor real. */
-export const MODO: "demo" | "supabase" = url && clave ? "supabase" : "demo";
+/**
+ * "supabase": servidor real. "demo": datos de ejemplo en este equipo, solo al programar (npm run dev)
+ * o en una versión hecha para presentaciones (npm run build:demo). Una versión publicada sin servidor
+ * y sin VITE_DEMO queda "sin-configurar": no se puede entrar (nunca se publica un demo por error).
+ */
+const demoPermitido = import.meta.env.DEV || import.meta.env.VITE_DEMO === "1";
+export const MODO: "demo" | "supabase" | "sin-configurar" = url && clave ? "supabase" : demoPermitido ? "demo" : "sin-configurar";
 
 export const supabase: SupabaseClient | null =
   MODO === "supabase" ? createClient(url!, clave!, { auth: { persistSession: true, autoRefreshToken: true } }) : null;
