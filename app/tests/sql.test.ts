@@ -481,3 +481,29 @@ describe("monitoreo de la UGEL", () => {
     expect((await pull(U.docente)).filas.observacion_monitoreo).toBeUndefined();
   });
 });
+
+describe("acceso con DNI", () => {
+  const usuario = (id: string, extra: Record<string, unknown>) => ({ tabla: "usuario", parche: { id, ...extra } });
+
+  it("la dirección registra el DNI de una cuenta (8 dígitos)", async () => {
+    const r = await push(U.director, [usuario(U.docente, { dni: "41234567" }), usuario(U.estudiante, { dni: "123" })]);
+    expect(r[0].estado).toBe("ok");
+    expect(r[1]).toMatchObject({ estado: "rechazado" });
+  });
+
+  it("no puede haber dos cuentas con el mismo DNI ni con el mismo correo", async () => {
+    const r = await push(U.director, [
+      usuario(U.estudiante, { dni: "41234567" }),
+      usuario(U.apoderado, { email: "Rosa@Correo.pe" }),
+      usuario(U.estudiante, { email: "rosa@correo.pe" }),
+    ]);
+    expect(r.map((x) => x.estado)).toEqual(["rechazado", "ok", "rechazado"]);
+  });
+
+  it("el DNI de una cuenta no se cambia desde la app (dejaría a la persona sin acceso)", async () => {
+    const [r] = await push(U.director, [usuario(U.docente, { dni: "49999999" })]);
+    expect(r).toMatchObject({ estado: "rechazado", motivo: expect.stringContaining("no se puede cambiar") });
+    const { rows } = await db.query<{ dni: string }>("select dni from usuario where id = $1", [U.docente]);
+    expect(rows[0].dni).toBe("41234567");
+  });
+});
