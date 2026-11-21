@@ -19,6 +19,19 @@ export function useCuentas() {
     };
     return {
       crear: (d: NuevaCuenta) => conServidor((por) => autenticacion.crearCuenta(d, por)),
+      /** Varias cuentas seguidas (una sección): un error no detiene a las demás y se sincroniza una sola vez. */
+      crearVarias: (lista: NuevaCuenta[], alAvanzar?: (hechas: number) => void) => conServidor(async (por) => {
+        const resultados: (ResultadoCuenta | { error: string })[] = [];
+        for (const d of lista) {
+          try {
+            resultados.push(await autenticacion.crearCuenta(d, por));
+          } catch (e) {
+            resultados.push({ error: e instanceof Error ? e.message : String(e) });
+          }
+          alAvanzar?.(resultados.length);
+        }
+        return resultados;
+      }),
       restablecer: (usuarioId: string) => conServidor((por) => autenticacion.restablecerClave(usuarioId, por)),
       cambiarEstado: (usuarioId: string, activo: boolean) => conServidor((por) => autenticacion.cambiarEstado(usuarioId, activo, por)),
     };
