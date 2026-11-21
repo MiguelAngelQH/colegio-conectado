@@ -9,15 +9,23 @@ import { TransporteSupabase } from "@/sync/transporte-supabase";
 import { alCambiarConexion, hayConexion } from "@/sync/red";
 import { fijarDesfase } from "@/sync/reloj";
 import { AlmacenDemo, AlmacenSupabase, subirPendientes, type AlmacenArchivos } from "@/sync/archivos";
-import { datosDemo, USUARIOS_DEMO, VERSION_DEMO } from "@/data/demo";
+import { CLAVE_DEMO, datosDemo, USUARIOS_DEMO, VERSION_DEMO } from "@/data/demo";
+import { AuthDemo } from "@/sync/auth-demo";
+import { AuthSupabase } from "@/sync/auth-supabase";
+import { MENSAJE_DESACTIVADA, type Autenticacion } from "@/sync/autenticacion";
 
 const CLAVE_SESION = "cc.sesion";
+/** Motivo por el que se cerró la sesión (lo muestra la pantalla de ingreso una vez). */
+export const CLAVE_MOTIVO_SALIDA = "cc.motivo-salida";
 
 export const db = new BaseLocal("colegio-local");
 const servidorDemo = MODO === "demo" ? new ServidorDemo() : null;
 
 /** Dónde se suben los archivos de evidencias (servidor demo o Supabase Storage). */
 export const almacen: AlmacenArchivos = servidorDemo ? new AlmacenDemo(servidorDemo) : new AlmacenSupabase(supabase!);
+
+/** Ingreso y administración de cuentas (demo o Supabase Auth). */
+export const autenticacion: Autenticacion = servidorDemo ? new AuthDemo(servidorDemo) : new AuthSupabase(supabase!);
 
 // Solo en desarrollo: acceso desde la consola para pruebas manuales.
 if (import.meta.env.DEV) {
@@ -28,6 +36,8 @@ if (import.meta.env.DEV) {
 
 interface Sesion {
   usuarioId: string;
+  /** Primer ingreso o contraseña restablecida: debe elegir una contraseña propia antes de seguir. */
+  debeCambiarClave?: boolean;
 }
 
 export interface EstadoSync {
@@ -44,9 +54,9 @@ interface ContextoApp {
   usuario: Usuario | null;
   colegioId: string | null;
   cargandoPerfil: boolean;
-  iniciarDemo(usuarioId: string): Promise<void>;
-  iniciarConCorreo(correo: string, clave: string): Promise<void>;
-  cerrarSesion(): Promise<void>;
+  iniciarSesion(identificador: string, clave: string): Promise<void>;
+  cambiarClave(nueva: string): Promise<void>;
+  cerrarSesion(motivo?: string): Promise<void>;
   sync: EstadoSync;
   sincronizarAhora(): Promise<ResumenSync | null>;
 }
@@ -73,14 +83,20 @@ function guardarSesion(s: Sesion | null) {
 
 async function prepararServidorDemo() {
   if (!servidorDemo) return;
+  const sembrarCuentas = () => (autenticacion as AuthDemo).sembrar(USUARIOS_DEMO.map((u) => ({ usuarioId: u.id, clave: CLAVE_DEMO })));
   const version = await servidorDemo.leerMeta<number | boolean>("sembrado", 0);
-  if (version === VERSION_DEMO) return;
+  if (version === VERSION_DEMO) {
+    // Datos al día pero sin contraseñas (sembrados por una versión anterior de la app).
+    if (!(await servidorDemo.leerMeta<object | null>("credenciales", null))) await sembrarCuentas();
+    return;
+  }
   // Datos de demo de una versión anterior: se reinicia todo (solo afecta al modo demo).
   if (version) {
     await servidorDemo.vaciar();
     await db.vaciar();
   }
   await servidorDemo.sembrar(await datosDemo());
+  await sembrarCuentas();
   await servidorDemo.guardarMeta("sembrado", VERSION_DEMO);
 }
 
@@ -168,36 +184,71 @@ export function ProveedorApp({ children }: { children: ReactNode }) {
     }
   }, [motor]);
 
-  const iniciarDemo = useCallback(async (usuarioId: string) => {
-    if (!USUARIOS_DEMO.some((u) => u.id === usuarioId)) throw new Error("Usuario de demo desconocido");
-    if (!hayConexion()) throw new Error("La primera vez se necesita conexión para descargar los datos.");
-    await prepararServidorDemo();
-    await entrar({ usuarioId });
-  }, [entrar]);
-
-  const iniciarConCorreo = useCallback(async (correo: string, clave: string) => {
-    if (!supabase) throw new Error("El servidor no está configurado.");
-    if (!hayConexion()) throw new Error("El primer inicio de sesión necesita conexión a internet.");
-    const { data, error } = await supabase.auth.signInWithPassword({ email: correo, password: clave });
-    if (error) throw new Error(error.message === "Invalid login credentials" ? "Correo o contraseña incorrectos." : error.message);
-    await entrar({ usuarioId: data.user.id });
-  }, [entrar]);
-
-  const cerrarSesion = useCallback(async () => {
+  const cerrarSesion = useCallback(async (motivo?: string) => {
     // Se borran los datos locales para que otra persona no los vea en un equipo compartido.
     await db.vaciar();
-    if (supabase) await supabase.auth.signOut().catch(() => undefined);
+    await autenticacion.salir();
     guardarSesion(null);
+    try {
+      // Puede llegar un evento de clic (onClick={cerrarSesion}): solo se guarda si es texto.
+      if (typeof motivo === "string") sessionStorage.setItem(CLAVE_MOTIVO_SALIDA, motivo);
+    } catch {
+      /* sin almacenamiento: no se muestra el motivo */
+    }
     setSesion(null);
   }, []);
+
+  const iniciarSesion = useCallback(async (identificador: string, clave: string) => {
+    if (!hayConexion()) throw new Error("El primer ingreso necesita conexión a internet. Después la app funciona sin señal.");
+    await prepararServidorDemo();
+    const r = await autenticacion.ingresar(identificador, clave);
+    await entrar({ usuarioId: r.usuarioId, debeCambiarClave: r.debeCambiarClave });
+  }, [entrar]);
+
+  const cambiarClave = useCallback(async (nueva: string) => {
+    const actual = sesionRef.current;
+    if (!actual) return;
+    if (!hayConexion()) throw new Error("Cambiar la contraseña necesita conexión a internet.");
+    await autenticacion.cambiarClave(actual.usuarioId, nueva);
+    const s = { ...actual, debeCambiarClave: false };
+    guardarSesion(s);
+    setSesion(s);
+  }, []);
+
+  // La sesión sigue vigente en el servidor? Se revisa al abrir la app y al recuperar la conexión.
+  // Sin conexión no se puede saber y la sesión se mantiene (la app funciona offline).
+  useEffect(() => {
+    if (!sesion || !conectado) return;
+    let vigente = true;
+    void autenticacion.sesionVigente(sesion.usuarioId).then((ok) => {
+      if (vigente && ok === false) void cerrarSesion("Su sesión terminó o la cuenta fue desactivada. Ingrese de nuevo.");
+    });
+    return () => {
+      vigente = false;
+    };
+  }, [sesion?.usuarioId, conectado, cerrarSesion]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Si la sesión se cierra en el servidor (token revocado), también se cierra aquí.
+  useEffect(() => {
+    if (!supabase) return;
+    const { data } = supabase.auth.onAuthStateChange((evento) => {
+      if (evento === "SIGNED_OUT" && sesionRef.current) void cerrarSesion("Su sesión terminó. Ingrese de nuevo.");
+    });
+    return () => data.subscription.unsubscribe();
+  }, [cerrarSesion]);
+
+  // La dirección desactivó la cuenta: al sincronizar llega el perfil inactivo.
+  useEffect(() => {
+    if (usuario && usuario.activo === false) void cerrarSesion(MENSAJE_DESACTIVADA);
+  }, [usuario, cerrarSesion]);
 
   const valor: ContextoApp = {
     sesion,
     usuario,
     colegioId: usuario?.colegio_id ?? null,
     cargandoPerfil,
-    iniciarDemo,
-    iniciarConCorreo,
+    iniciarSesion,
+    cambiarClave,
     cerrarSesion,
     sync: { conectado, sincronizando, ...contadores, ultimoError },
     sincronizarAhora,

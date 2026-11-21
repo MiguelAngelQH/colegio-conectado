@@ -4,6 +4,7 @@ import { LoaderCircle } from "lucide-react";
 import { useApp } from "@/app/contexto";
 import { modulosPara } from "@/app/modulos";
 import { Inicio } from "@/paginas/Inicio";
+import { CambiarClaveObligatorio } from "@/paginas/CambiarClave";
 import { Login } from "@/paginas/Login";
 import { Perfil } from "@/paginas/Perfil";
 import { Proximamente } from "@/paginas/Proximamente";
@@ -52,6 +53,8 @@ export function App() {
   const { sesion, usuario, cargandoPerfil, sync, cerrarSesion } = useApp();
 
   if (!sesion) return <Login />;
+  // Primer ingreso o contraseña restablecida: antes de usar la app elige una contraseña propia.
+  if (sesion.debeCambiarClave) return <CambiarClaveObligatorio />;
 
   if (!usuario) {
     return (
@@ -67,7 +70,7 @@ export function App() {
               {sync.ultimoError ? `Detalle: ${sync.ultimoError}. ` : ""}
               Conéctese a internet para descargarlo. Si el problema continúa, la dirección debe registrar su usuario.
             </Aviso>
-            <Boton variante="vidrio" className="w-full" onClick={cerrarSesion}>Volver al inicio de sesión</Boton>
+            <Boton variante="vidrio" className="w-full" onClick={() => cerrarSesion()}>Volver al inicio de sesión</Boton>
           </Contenido>
         )}
       </div>
