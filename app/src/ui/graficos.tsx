@@ -1,9 +1,15 @@
-// Gráficos del panel. Reglas (skill dataviz): un solo eje, marcas finas con extremos redondeados de
-// 4 px y separación de 2 px, etiquetas directas selectivas, leyenda, tooltip y vista de tabla.
+// Gráficos de los paneles, sobre Recharts. Reglas (skill dataviz): un solo eje de valores, marcas finas
+// con extremos redondeados de 4 px y respiro de 2 px entre rellenos, cuadrícula tenue, leyenda,
+// etiquetas directas selectivas, tooltip en cada gráfico y vista de tabla.
 // Los niveles AD/A/B/C usan un par divergente azul / rojo-anaranjado validado para daltonismo
 // (protan ΔE 16,9); el contraste bajo de A y B se compensa con etiquetas y la tabla.
-import { useEffect, useRef, useState, type ReactNode } from "react";
-import { Table2 } from "lucide-react";
+import { useEffect, useId, useRef, useState, type ReactNode } from "react";
+import { Link } from "react-router-dom";
+import {
+  Area, AreaChart, Bar, BarChart, CartesianGrid, Cell, LabelList, Pie, PieChart, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis,
+  type TooltipProps,
+} from "recharts";
+import { ArrowDownRight, ArrowUpRight, Minus, Table2, type LucideIcon } from "lucide-react";
 import type { NivelLogro } from "@/db/tipos";
 import { DESCRIPCION_NIVEL, NIVELES } from "@/dominio/notas";
 import { cx } from "./componentes";
@@ -11,239 +17,550 @@ import { cx } from "./componentes";
 export const NIVEL_HEX: Record<NivelLogro, string> = { AD: "#1d4f91", A: "#5b9bd5", B: "#f0956a", C: "#b8322a" };
 /** Texto sobre cada relleno (los claros llevan tinta oscura). */
 export const NIVEL_TEXTO: Record<NivelLogro, string> = { AD: "#ffffff", A: "#0b2e33", B: "#0b2e33", C: "#ffffff" };
-const MARCA = "#0f8f84"; // un solo tono para series únicas
+
+const TINTA = "#0b2e33";
+const SUAVE = "#5b7478";
+const REJILLA = "rgba(11, 46, 51, 0.08)";
+const SUPERFICIE = "#ffffff";
+/** Serie única (asistencia, avance, conteos). */
+export const MARCA = "#0f8f84";
+/** Estado: por debajo de la meta (siempre acompañado de texto). */
+const BAJO_META = "#c2410c";
+/** Rampa secuencial de un solo tono para la inasistencia diaria (claro = poca, oscuro = mucha). */
+const RAMPA = ["#fdf1ea", "#fbd3bd", "#f5a982", "#e0703f", "#a63a17"];
+
+const eje = { fontSize: 11, fill: SUAVE };
+const idSeguro = (id: string) => id.replace(/[^a-zA-Z0-9_-]/g, "");
+
+// ------------------------------------------------------------------ marco común
 
 function BotonTabla({ activa, onClick }: { activa: boolean; onClick(): void }) {
   return (
     <button type="button" onClick={onClick} aria-pressed={activa}
-      className={cx("inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold ring-1 transition",
-        activa ? "bg-white text-tinta ring-white" : "text-tinta-suave ring-white/70 hover:bg-white/50")}>
+      className={cx("inline-flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold ring-1 transition",
+        activa ? "bg-tinta text-white ring-tinta" : "text-tinta-suave ring-slate-200 hover:bg-slate-50")}>
       <Table2 className="h-3.5 w-3.5" aria-hidden /> {activa ? "Ver gráfico" : "Ver tabla"}
     </button>
   );
 }
 
-export function MarcoGrafico({ titulo, subtitulo, children, tabla, leyenda }: {
-  titulo: string; subtitulo?: string; children: ReactNode; tabla: ReactNode; leyenda?: ReactNode;
+export function MarcoGrafico({ titulo, subtitulo, children, tabla, leyenda, acciones, className }: {
+  titulo: string; subtitulo?: string; children: ReactNode; tabla: ReactNode; leyenda?: ReactNode; acciones?: ReactNode; className?: string;
 }) {
   const [verTabla, setVerTabla] = useState(false);
   return (
-    <figure className="vidrio space-y-3 p-4 sm:p-5">
+    <figure className={cx("vidrio-solido flex min-w-0 flex-col gap-4 p-4 sm:p-5", className)}>
       <figcaption className="flex flex-wrap items-start justify-between gap-2">
-        <span>
-          <span className="block font-bold">{titulo}</span>
-          {subtitulo && <span className="block text-xs text-tinta-suave">{subtitulo}</span>}
+        <span className="min-w-0">
+          <span className="block text-[0.95rem] font-bold leading-tight text-tinta">{titulo}</span>
+          {subtitulo && <span className="mt-0.5 block text-xs text-tinta-suave">{subtitulo}</span>}
         </span>
-        <BotonTabla activa={verTabla} onClick={() => setVerTabla(!verTabla)} />
+        <span className="flex flex-wrap items-center gap-2">
+          {!verTabla && acciones}
+          <BotonTabla activa={verTabla} onClick={() => setVerTabla(!verTabla)} />
+        </span>
       </figcaption>
       {!verTabla && leyenda}
-      {verTabla ? <div className="overflow-x-auto">{tabla}</div> : children}
+      {verTabla ? <div className="max-h-80 overflow-auto">{tabla}</div> : children}
     </figure>
   );
 }
 
-const claseTabla = "w-full text-left text-sm [&_td]:px-2 [&_td]:py-1.5 [&_th]:px-2 [&_th]:py-1.5 [&_th]:text-xs [&_th]:font-semibold [&_th]:text-tinta-suave [&_tbody_tr]:border-t [&_tbody_tr]:border-white/70";
+export const claseTabla = "w-full text-left text-sm [&_td]:px-2 [&_td]:py-1.5 [&_th]:sticky [&_th]:top-0 [&_th]:bg-white [&_th]:px-2 [&_th]:py-1.5 [&_th]:text-xs [&_th]:font-semibold [&_th]:text-tinta-suave [&_tbody_tr]:border-t [&_tbody_tr]:border-slate-100";
 
-// ------------------------------------------------------------------ barras 100% por nivel de logro
+/** Caja del tooltip: oscura, con muestra de color por fila; el texto nunca usa el color de la serie. */
+function Caja({ titulo, filas, pie }: { titulo: ReactNode; filas: { color?: string; etiqueta: ReactNode; valor: ReactNode }[]; pie?: ReactNode }) {
+  return (
+    <div className="min-w-40 rounded-xl bg-tinta px-3 py-2 text-xs text-white shadow-xl">
+      <p className="mb-1 font-semibold">{titulo}</p>
+      <ul className="space-y-0.5">
+        {filas.map((f, i) => (
+          <li key={i} className="flex items-center gap-2">
+            {f.color && <span className="h-2.5 w-2.5 shrink-0 rounded-[3px]" style={{ background: f.color }} aria-hidden />}
+            <span className="text-white/80">{f.etiqueta}</span>
+            <span className="ml-auto pl-3 font-semibold tabular-nums">{f.valor}</span>
+          </li>
+        ))}
+      </ul>
+      {pie && <p className="mt-1.5 border-t border-white/15 pt-1.5 text-white/70">{pie}</p>}
+    </div>
+  );
+}
 
-export interface FilaNiveles { etiqueta: string; conteo: Record<NivelLogro, number>; total: number }
-
-export function LeyendaNiveles() {
+export function Leyenda({ items }: { items: { color: string; texto: ReactNode; trazo?: "linea" | "discontinua" }[] }) {
   return (
     <ul className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-tinta-suave" aria-label="Leyenda">
-      {NIVELES.map((n) => (
-        <li key={n} className="flex items-center gap-1.5">
-          <span className="h-3 w-3 rounded-[4px]" style={{ background: NIVEL_HEX[n] }} aria-hidden />
-          <span><strong className="text-tinta">{n}</strong> {DESCRIPCION_NIVEL[n].nombre}</span>
+      {items.map((it, i) => (
+        <li key={i} className="flex items-center gap-1.5">
+          {it.trazo ? (
+            <svg width="16" height="8" aria-hidden><line x1="0" x2="16" y1="4" y2="4" stroke={it.color} strokeWidth={2} strokeDasharray={it.trazo === "discontinua" ? "3 3" : undefined} /></svg>
+          ) : (
+            <span className="h-3 w-3 rounded-[4px]" style={{ background: it.color }} aria-hidden />
+          )}
+          <span>{it.texto}</span>
         </li>
       ))}
     </ul>
   );
 }
 
-export function BarrasNiveles({ titulo, subtitulo, filas }: { titulo: string; subtitulo?: string; filas: FilaNiveles[] }) {
-  const [foco, setFoco] = useState<{ fila: number; nivel: NivelLogro } | null>(null);
-  const pct = (f: FilaNiveles, n: NivelLogro) => (f.total ? Math.round((f.conteo[n] / f.total) * 100) : 0);
+// ------------------------------------------------------------------ KPI con variación y mini gráfico
 
+export function Sparkline({ valores, color = MARCA, alto = 36 }: { valores: (number | null)[]; color?: string; alto?: number }) {
+  const gid = idSeguro(useId());
+  const datos = valores.map((v, i) => ({ i, v }));
+  if (valores.filter((v) => v !== null).length < 2) return <div style={{ height: alto }} aria-hidden />;
   return (
-    <MarcoGrafico titulo={titulo} subtitulo={subtitulo} leyenda={<LeyendaNiveles />}
+    <div style={{ height: alto }} aria-hidden>
+      <ResponsiveContainer width="100%" height="100%">
+        <AreaChart data={datos} margin={{ top: 3, right: 2, bottom: 0, left: 2 }}>
+          <defs>
+            <linearGradient id={gid} x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor={color} stopOpacity={0.28} />
+              <stop offset="100%" stopColor={color} stopOpacity={0} />
+            </linearGradient>
+          </defs>
+          <YAxis hide domain={["dataMin - 2", "dataMax + 2"]} />
+          <Area type="monotone" dataKey="v" stroke={color} strokeWidth={2} fill={`url(#${gid})`} connectNulls dot={false} isAnimationActive={false} />
+        </AreaChart>
+      </ResponsiveContainer>
+    </div>
+  );
+}
+
+export interface Variacion {
+  /** Diferencia respecto al periodo anterior, en las unidades del indicador. */
+  delta: number;
+  unidad: string;
+  /** Si subir es bueno (asistencia) o malo (incidencias). */
+  mejorSiSube: boolean;
+  referencia: string;
+}
+
+function ChipVariacion({ v }: { v: Variacion }) {
+  const igual = v.delta === 0;
+  const bueno = igual ? null : (v.delta > 0) === v.mejorSiSube;
+  const Icono = igual ? Minus : v.delta > 0 ? ArrowUpRight : ArrowDownRight;
+  return (
+    <span className="inline-flex flex-wrap items-center gap-1 text-[0.72rem]">
+      <span className={cx("inline-flex items-center gap-0.5 rounded-full px-1.5 py-0.5 font-semibold tabular-nums",
+        bueno === null ? "bg-slate-100 text-slate-700" : bueno ? "bg-emerald-50 text-emerald-800" : "bg-red-50 text-red-800")}>
+        <Icono className="h-3.5 w-3.5" aria-hidden />
+        {igual ? "Sin cambio" : `${v.delta > 0 ? "+" : "−"}${Math.abs(v.delta)}${v.unidad}`}
+      </span>
+      <span className="text-tinta-suave">{v.referencia}</span>
+    </span>
+  );
+}
+
+export function TarjetaKpi({ icono: Icono, titulo, valor, unidad, variacion, estado, serie, colorSerie, enlace, pie, className }: {
+  icono: LucideIcon; titulo: string; valor: string | number; unidad?: string; variacion?: Variacion | null;
+  estado?: { texto: string; tipo: "alerta" | "ok" } | null; serie?: (number | null)[]; colorSerie?: string; enlace?: string; pie?: ReactNode; className?: string;
+}) {
+  const contenido = (
+    <>
+      <p className="flex min-h-[2rem] min-w-0 items-start gap-2 text-xs font-semibold leading-tight text-tinta-suave">
+        <Icono className="mt-px h-4 w-4 shrink-0" aria-hidden /> <span>{titulo}</span>
+      </p>
+      <div className="mt-2 flex flex-wrap items-center justify-between gap-x-2 gap-y-1">
+        <p className="flex items-baseline gap-1">
+          <span className="titulo-display text-[2rem] font-bold leading-none tabular-nums text-tinta">{valor}</span>
+          {unidad && <span className="text-sm font-semibold text-tinta-suave">{unidad}</span>}
+        </p>
+        {estado && (
+          <span className={cx("shrink-0 rounded-full px-2 py-0.5 text-[0.68rem] font-bold",
+            estado.tipo === "alerta" ? "bg-red-50 text-red-800 ring-1 ring-red-200" : "bg-emerald-50 text-emerald-800 ring-1 ring-emerald-200")}>
+            {estado.texto}
+          </span>
+        )}
+      </div>
+      <div className="mt-2 min-h-[1.25rem]">{variacion ? <ChipVariacion v={variacion} /> : pie && <span className="text-[0.72rem] text-tinta-suave">{pie}</span>}</div>
+      {serie && <div className="-mx-1 mt-2"><Sparkline valores={serie} color={colorSerie} /></div>}
+    </>
+  );
+  const clase = cx("vidrio-solido block p-4 transition", className);
+  return enlace ? <Link to={enlace} className={cx(clase, "hover:-translate-y-0.5 hover:shadow-lg")}>{contenido}</Link> : <div className={clase}>{contenido}</div>;
+}
+
+// ------------------------------------------------------------------ asistencia en el tiempo
+
+export interface PuntoAsistencia { etiqueta: string; detalle: string; porcentaje: number | null; P: number; T: number; F: number; J: number }
+
+export function AreaAsistencia({ titulo, subtitulo, puntos, meta, acciones , className }: { className?: string; 
+  titulo: string; subtitulo?: string; puntos: PuntoAsistencia[]; meta: number; acciones?: ReactNode;
+}) {
+  const gid = idSeguro(useId());
+  const valores = puntos.map((p) => p.porcentaje).filter((v): v is number => v !== null);
+  // Área (no barras): el eje puede no empezar en cero para que se vean las variaciones.
+  const minimo = Math.max(0, Math.floor((Math.min(meta, ...valores) - 6) / 5) * 5);
+  const paso = Math.max(5, Math.ceil((100 - minimo) / 4 / 5) * 5);
+  const marcasY = Array.from({ length: Math.floor((100 - minimo) / paso) + 1 }, (_, i) => 100 - i * paso).reverse();
+  const Tip = ({ active, payload }: TooltipProps<number, string>) => {
+    if (!active || !payload?.length) return null;
+    const p = payload[0].payload as PuntoAsistencia;
+    return (
+      <Caja titulo={p.detalle} pie={p.porcentaje === null ? "Sin registros" : p.porcentaje < meta ? `Bajo la meta de ${meta}%` : `En la meta de ${meta}%`}
+        filas={[
+          { color: MARCA, etiqueta: "Asistencia", valor: p.porcentaje === null ? "-" : `${p.porcentaje}%` },
+          { etiqueta: "Presentes", valor: p.P }, { etiqueta: "Tardanzas", valor: p.T },
+          { etiqueta: "Faltas", valor: p.F }, { etiqueta: "Justificadas", valor: p.J },
+        ]} />
+    );
+  };
+  return (
+    <MarcoGrafico className={className} titulo={titulo} subtitulo={subtitulo} acciones={acciones}
+      leyenda={<Leyenda items={[{ color: MARCA, texto: "Asistencia semanal", trazo: "linea" }, { color: SUAVE, texto: `Meta ${meta}%`, trazo: "discontinua" }]} />}
       tabla={
         <table className={claseTabla}>
-          <thead><tr><th>Área</th>{NIVELES.map((n) => <th key={n} className="text-right">{n}</th>)}<th className="text-right">Notas</th></tr></thead>
-          <tbody>
-            {filas.map((f) => (
-              <tr key={f.etiqueta}><td className="font-semibold">{f.etiqueta}</td>
-                {NIVELES.map((n) => <td key={n} className="text-right tabular-nums">{f.conteo[n]} <span className="text-tinta-suave">({pct(f, n)}%)</span></td>)}
-                <td className="text-right tabular-nums">{f.total}</td></tr>
-            ))}
-          </tbody>
+          <thead><tr><th>Semana</th><th className="text-right">Asistencia</th><th className="text-right">P</th><th className="text-right">T</th><th className="text-right">F</th><th className="text-right">J</th></tr></thead>
+          <tbody>{puntos.map((p) => (
+            <tr key={p.etiqueta}><td>{p.detalle}</td><td className="text-right font-semibold tabular-nums">{p.porcentaje === null ? "-" : `${p.porcentaje}%`}</td>
+              {(["P", "T", "F", "J"] as const).map((k) => <td key={k} className="text-right tabular-nums text-tinta-suave">{p[k]}</td>)}</tr>
+          ))}</tbody>
         </table>
       }>
-      <div className="space-y-3" onMouseLeave={() => setFoco(null)}>
-        {filas.map((f, i) => {
-          const visibles = NIVELES.filter((n) => f.conteo[n] > 0);
-          return (
-            <div key={f.etiqueta}>
-              <div className="mb-1 flex justify-between text-xs">
-                <span className="font-semibold">{f.etiqueta}</span>
-                <span className="tabular-nums text-tinta-suave">{f.total} notas</span>
-              </div>
-              <div className="relative">
-                {/* gap-[2px] deja el respiro de 2 px entre segmentos */}
-                <div className="flex h-7 gap-[2px]">
-                  {visibles.map((n, k) => {
-                    const p = pct(f, n);
-                    const activo = foco?.fila === i && foco.nivel === n;
-                    return (
-                      <button key={n} type="button" style={{ width: `${(f.conteo[n] / f.total) * 100}%`, background: NIVEL_HEX[n], color: NIVEL_TEXTO[n] }}
-                        aria-label={`${f.etiqueta}, ${n} ${DESCRIPCION_NIVEL[n].nombre}: ${f.conteo[n]} (${p}%)`}
-                        onMouseEnter={() => setFoco({ fila: i, nivel: n })} onFocus={() => setFoco({ fila: i, nivel: n })} onBlur={() => setFoco(null)}
-                        onClick={() => setFoco(activo ? null : { fila: i, nivel: n })}
-                        className={cx("flex min-w-[3px] items-center justify-center text-[0.7rem] font-bold tabular-nums transition-[filter] focus:outline-none",
-                          k === 0 && "rounded-l-[4px]", k === visibles.length - 1 && "rounded-r-[4px]",
-                          foco && !activo && "brightness-[1.15] saturate-[.6]")}>
-                        {p >= 12 && `${p}%`}
-                      </button>
-                    );
-                  })}
-                </div>
-                {foco?.fila === i && (
-                  <div role="tooltip" className="pointer-events-none absolute bottom-full left-1/2 z-10 mb-2 -translate-x-1/2 whitespace-nowrap rounded-xl bg-tinta px-3 py-1.5 text-xs text-white shadow-lg">
-                    <span className="mr-1.5 inline-block h-2.5 w-2.5 rounded-[3px] align-middle" style={{ background: NIVEL_HEX[foco.nivel] }} />
-                    {foco.nivel} {DESCRIPCION_NIVEL[foco.nivel].nombre}: <strong>{f.conteo[foco.nivel]}</strong> ({pct(f, foco.nivel)}%)
-                  </div>
-                )}
-              </div>
-            </div>
-          );
-        })}
+      {valores.length === 0 ? <p className="py-16 text-center text-sm text-tinta-suave">Aún no hay registros de asistencia en estas semanas.</p> : (
+        <div className="h-64 sm:h-72" role="img" aria-label={`${titulo}: ${puntos.map((p) => `${p.detalle} ${p.porcentaje ?? "sin datos"}`).join(", ")}`}>
+          <ResponsiveContainer width="100%" height="100%">
+            <AreaChart data={puntos} margin={{ top: 12, right: 8, bottom: 0, left: -8 }}>
+              <defs>
+                <linearGradient id={gid} x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor={MARCA} stopOpacity={0.3} />
+                  <stop offset="100%" stopColor={MARCA} stopOpacity={0.02} />
+                </linearGradient>
+              </defs>
+              <CartesianGrid vertical={false} stroke={REJILLA} />
+              <XAxis dataKey="etiqueta" tick={eje} tickLine={false} axisLine={{ stroke: REJILLA }} minTickGap={18} tickMargin={8} />
+              <YAxis domain={[minimo, 100]} ticks={marcasY} tick={eje} tickLine={false} axisLine={false} tickFormatter={(v: number) => `${v}%`} width={44} />
+              <ReferenceLine y={meta} stroke={SUAVE} strokeDasharray="4 4" strokeOpacity={0.8}
+                label={{ value: `Meta ${meta}%`, position: "insideTopRight", fill: SUAVE, fontSize: 11 }} />
+              <Tooltip content={<Tip />} cursor={{ stroke: TINTA, strokeOpacity: 0.25, strokeWidth: 1 }} />
+              <Area type="monotone" dataKey="porcentaje" stroke={MARCA} strokeWidth={2} fill={`url(#${gid})`}
+                dot={{ r: 3, fill: MARCA, stroke: SUPERFICIE, strokeWidth: 2 }} activeDot={{ r: 6, fill: MARCA, stroke: SUPERFICIE, strokeWidth: 2 }}
+                connectNulls={false} animationDuration={500} />
+            </AreaChart>
+          </ResponsiveContainer>
+        </div>
+      )}
+    </MarcoGrafico>
+  );
+}
+
+// ------------------------------------------------------------------ logros por área (barras divergentes)
+
+export interface FilaNiveles { etiqueta: string; conteo: Record<NivelLogro, number>; total: number }
+
+const pct = (f: FilaNiveles, n: NivelLogro) => (f.total ? Math.round((f.conteo[n] / f.total) * 100) : 0);
+
+/** Leyenda en el mismo orden en que se leen las barras: de izquierda (inicio) a derecha (destacado). */
+export function LeyendaNiveles() {
+  return <Leyenda items={(["C", "B", "A", "AD"] as const).map((n) => ({ color: NIVEL_HEX[n], texto: <><strong className="text-tinta">{n}</strong> {DESCRIPCION_NIVEL[n].nombre}</> }))} />;
+}
+
+function TablaNiveles({ filas, primera }: { filas: FilaNiveles[]; primera: string }) {
+  return (
+    <table className={claseTabla}>
+      <thead><tr><th>{primera}</th>{NIVELES.map((n) => <th key={n} className="text-right">{n}</th>)}<th className="text-right">Notas</th></tr></thead>
+      <tbody>
+        {filas.map((f) => (
+          <tr key={f.etiqueta}><td className="font-semibold">{f.etiqueta}</td>
+            {NIVELES.map((n) => <td key={n} className="text-right tabular-nums">{f.conteo[n]} <span className="text-tinta-suave">({pct(f, n)}%)</span></td>)}
+            <td className="text-right tabular-nums">{f.total}</td></tr>
+        ))}
+      </tbody>
+    </table>
+  );
+}
+
+export function BarrasDivergentesNiveles({ titulo, subtitulo, filas , className }: { className?: string;  titulo: string; subtitulo?: string; filas: FilaNiveles[] }) {
+  // Logrado (A, AD) hacia la derecha; en proceso o inicio (B, C) hacia la izquierda.
+  const datos = filas.map((f) => ({ etiqueta: f.etiqueta, A: pct(f, "A"), AD: pct(f, "AD"), B: -pct(f, "B"), C: -pct(f, "C"), fila: f }));
+  const alto = Math.max(140, datos.length * 40 + 40);
+  const anchoEtiquetas = typeof window !== "undefined" && window.innerWidth < 640 ? 104 : 150;
+  const Tip = ({ active, payload }: TooltipProps<number, string>) => {
+    if (!active || !payload?.length) return null;
+    const f = (payload[0].payload as { fila: FilaNiveles }).fila;
+    return (
+      <Caja titulo={f.etiqueta} pie={`${f.total} calificaciones · logrado ${pct(f, "AD") + pct(f, "A")}%`}
+        filas={(["AD", "A", "B", "C"] as const).map((n) => ({ color: NIVEL_HEX[n], etiqueta: `${n} ${DESCRIPCION_NIVEL[n].nombre}`, valor: `${f.conteo[n]} (${pct(f, n)}%)` }))} />
+    );
+  };
+  const etiqueta = (n: NivelLogro) => (props: { x?: number | string; y?: number | string; width?: number | string; height?: number | string; value?: number | string }) => {
+    const v = Math.abs(Number(props.value ?? 0));
+    const w = Math.abs(Number(props.width ?? 0));
+    if (v < 9 || w < 26) return null;
+    const x = Number(props.x) + Number(props.width) / 2;
+    const y = Number(props.y) + Number(props.height) / 2;
+    return <text x={x} y={y} dy={4} textAnchor="middle" fontSize={11} fontWeight={700} fill={NIVEL_TEXTO[n]} className="tabular-nums">{v}%</text>;
+  };
+  return (
+    <MarcoGrafico className={className} titulo={titulo} subtitulo={subtitulo} leyenda={<LeyendaNiveles />} tabla={<TablaNiveles filas={filas} primera="Área" />}>
+      <div>
+        <div className="mb-1 flex justify-between text-[0.7rem] font-semibold text-tinta-suave" style={{ paddingLeft: anchoEtiquetas }} aria-hidden>
+          <span>En proceso o inicio</span><span>Logrado</span>
+        </div>
+        <div style={{ height: alto }} role="img" aria-label={`${titulo}: ${filas.map((f) => `${f.etiqueta} logrado ${pct(f, "AD") + pct(f, "A")}%`).join(", ")}`}>
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart data={datos} layout="vertical" stackOffset="sign" barCategoryGap={10} margin={{ top: 0, right: 8, bottom: 0, left: 0 }}>
+              <CartesianGrid horizontal={false} stroke={REJILLA} />
+              <XAxis type="number" domain={[-100, 100]} ticks={[-100, -50, 0, 50, 100]} tick={eje} tickLine={false} axisLine={false} tickFormatter={(v: number) => `${Math.abs(v)}%`} />
+              <YAxis type="category" dataKey="etiqueta" width={anchoEtiquetas} tick={{ ...eje, fill: TINTA, fontWeight: 600 }} tickLine={false} axisLine={false} />
+              <Tooltip content={<Tip />} cursor={{ fill: "rgba(11,46,51,0.04)" }} />
+              <ReferenceLine x={0} stroke={TINTA} strokeOpacity={0.35} />
+              {(["A", "AD", "B", "C"] as const).map((n) => (
+                <Bar key={n} dataKey={n} stackId="n" fill={NIVEL_HEX[n]} stroke={SUPERFICIE} strokeWidth={1}
+                  radius={n === "AD" ? [0, 4, 4, 0] : n === "C" ? [4, 0, 0, 4] : 0} animationDuration={500}>
+                  <LabelList dataKey={n} content={etiqueta(n)} />
+                </Bar>
+              ))}
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
       </div>
     </MarcoGrafico>
   );
 }
 
-// ------------------------------------------------------------------ línea semanal
+// ------------------------------------------------------------------ distribución total (dona)
 
-export interface PuntoLinea { etiqueta: string; detalle: string; valor: number | null }
+export function DonaNiveles({ titulo, subtitulo, conteo , className }: { className?: string;  titulo: string; subtitulo?: string; conteo: Record<NivelLogro, number> }) {
+  const total = NIVELES.reduce((s, n) => s + conteo[n], 0);
+  const datos = NIVELES.map((n) => ({ nivel: n, valor: conteo[n] })).filter((d) => d.valor > 0);
+  const p = (n: NivelLogro) => (total ? Math.round((conteo[n] / total) * 100) : 0);
+  const fila: FilaNiveles = { etiqueta: "Total", conteo, total };
+  const Tip = ({ active, payload }: TooltipProps<number, string>) => {
+    if (!active || !payload?.length) return null;
+    const n = (payload[0].payload as { nivel: NivelLogro }).nivel;
+    return <Caja titulo={`${n} ${DESCRIPCION_NIVEL[n].nombre}`} filas={[{ color: NIVEL_HEX[n], etiqueta: "Calificaciones", valor: `${conteo[n]} (${p(n)}%)` }]} />;
+  };
+  return (
+    <MarcoGrafico className={className} titulo={titulo} subtitulo={subtitulo} tabla={<TablaNiveles filas={[fila]} primera="" />}>
+      {total === 0 ? <p className="py-16 text-center text-sm text-tinta-suave">Sin calificaciones en este periodo.</p> : (
+        <div className="flex flex-col items-center gap-5 sm:flex-row lg:flex-col">
+          <div className="relative h-48 w-48 shrink-0" role="img" aria-label={`${titulo}: ${NIVELES.map((n) => `${n} ${p(n)}%`).join(", ")}`}>
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Tooltip content={<Tip />} />
+                <Pie data={datos} dataKey="valor" nameKey="nivel" innerRadius="68%" outerRadius="100%" paddingAngle={1.5} cornerRadius={4}
+                  stroke={SUPERFICIE} strokeWidth={2} startAngle={90} endAngle={-270} animationDuration={500}>
+                  {datos.map((d) => <Cell key={d.nivel} fill={NIVEL_HEX[d.nivel]} />)}
+                </Pie>
+              </PieChart>
+            </ResponsiveContainer>
+            <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
+              <span className="titulo-display text-3xl font-bold tabular-nums text-tinta">{total.toLocaleString("es-PE")}</span>
+              <span className="text-[0.7rem] text-tinta-suave">calificaciones</span>
+            </div>
+          </div>
+          <ul className="w-full min-w-0 space-y-2">
+            {NIVELES.map((n) => (
+              <li key={n} className="flex items-center gap-2 text-sm">
+                <span className="h-3 w-3 shrink-0 rounded-[4px]" style={{ background: NIVEL_HEX[n] }} aria-hidden />
+                <span className="font-bold text-tinta">{n}</span>
+                <span className="truncate text-tinta-suave">{DESCRIPCION_NIVEL[n].nombre}</span>
+                <span className="ml-auto font-semibold tabular-nums text-tinta">{p(n)}%</span>
+                <span className="w-10 text-right text-xs tabular-nums text-tinta-suave">{conteo[n]}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </MarcoGrafico>
+  );
+}
+
+// ------------------------------------------------------------------ ranking con meta (barras horizontales)
+
+export interface ItemRanking { etiqueta: string; valor: number | null; detalle?: string }
+
+export function BarrasRanking({ titulo, subtitulo, items, meta, sufijo = "", maximo, nombreValor , className }: { className?: string; 
+  titulo: string; subtitulo?: string; items: ItemRanking[]; meta?: { valor: number; etiqueta: string }; sufijo?: string; maximo?: number; nombreValor: string;
+}) {
+  const conValor = items.filter((i): i is ItemRanking & { valor: number } => i.valor !== null);
+  const max = maximo ?? Math.max(1, ...conValor.map((i) => i.valor));
+  const bajo = (v: number) => !!meta && v < meta.valor;
+  const alto = Math.max(120, conValor.length * 36 + 30);
+  const Tip = ({ active, payload }: TooltipProps<number, string>) => {
+    if (!active || !payload?.length) return null;
+    const it = payload[0].payload as ItemRanking & { valor: number };
+    return <Caja titulo={it.etiqueta} pie={meta ? (bajo(it.valor) ? `Bajo la ${meta.etiqueta.toLowerCase()}` : `Cumple la ${meta.etiqueta.toLowerCase()}`) : undefined}
+      filas={[{ color: bajo(it.valor) ? BAJO_META : MARCA, etiqueta: nombreValor, valor: `${it.valor}${sufijo}` }, ...(it.detalle ? [{ etiqueta: "Detalle", valor: it.detalle }] : [])]} />;
+  };
+  return (
+    <MarcoGrafico className={className} titulo={titulo} subtitulo={subtitulo}
+      leyenda={meta ? <Leyenda items={[{ color: MARCA, texto: "Cumple la meta" }, { color: BAJO_META, texto: "Bajo la meta" }, { color: SUAVE, texto: meta.etiqueta, trazo: "discontinua" }]} /> : undefined}
+      tabla={
+        <table className={claseTabla}>
+          <thead><tr><th></th><th className="text-right">{nombreValor}</th><th>Detalle</th></tr></thead>
+          <tbody>{items.map((i) => (
+            <tr key={i.etiqueta}><td className="font-semibold">{i.etiqueta}</td>
+              <td className="text-right tabular-nums">{i.valor === null ? "-" : `${i.valor}${sufijo}`}{i.valor !== null && bajo(i.valor) && <span className="ml-1 text-xs font-semibold text-red-800">bajo la meta</span>}</td>
+              <td className="text-tinta-suave">{i.detalle}</td></tr>
+          ))}</tbody>
+        </table>
+      }>
+      {conValor.length === 0 ? <p className="py-12 text-center text-sm text-tinta-suave">Sin datos.</p> : (
+        <div style={{ height: alto }} role="img" aria-label={`${titulo}: ${conValor.map((i) => `${i.etiqueta} ${i.valor}${sufijo}`).join(", ")}`}>
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart data={conValor} layout="vertical" barCategoryGap={12} margin={{ top: 0, right: 40, bottom: 0, left: 0 }}>
+              <CartesianGrid horizontal={false} stroke={REJILLA} />
+              <XAxis type="number" domain={[0, max]} tick={eje} tickLine={false} axisLine={false} tickFormatter={(v: number) => `${v}${sufijo}`} tickCount={5} />
+              <YAxis type="category" dataKey="etiqueta" width={128} tick={{ ...eje, fill: TINTA, fontWeight: 600 }} tickLine={false} axisLine={false} />
+              <Tooltip content={<Tip />} cursor={{ fill: "rgba(11,46,51,0.04)" }} />
+              {meta && <ReferenceLine x={meta.valor} stroke={SUAVE} strokeDasharray="4 4" />}
+              <Bar dataKey="valor" radius={[0, 4, 4, 0]} maxBarSize={18} animationDuration={500}>
+                {conValor.map((i) => <Cell key={i.etiqueta} fill={bajo(i.valor) ? BAJO_META : MARCA} />)}
+                <LabelList dataKey="valor" position="right" formatter={(v: number) => `${v}${sufijo}`} style={{ fontSize: 11, fontWeight: 700, fill: TINTA }} />
+              </Bar>
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+      )}
+    </MarcoGrafico>
+  );
+}
+
+// ------------------------------------------------------------------ columnas por mes
+
+export interface PuntoColumna { etiqueta: string; detalle: string; valor: number; desglose: Record<string, number> }
+
+export function ColumnasConteo({ titulo, subtitulo, puntos, nombreValor , className }: { className?: string;  titulo: string; subtitulo?: string; puntos: PuntoColumna[]; nombreValor: string }) {
+  const Tip = ({ active, payload }: TooltipProps<number, string>) => {
+    if (!active || !payload?.length) return null;
+    const p = payload[0].payload as PuntoColumna;
+    const partes = Object.entries(p.desglose).sort((a, b) => b[1] - a[1]);
+    return <Caja titulo={p.detalle} filas={[{ color: MARCA, etiqueta: nombreValor, valor: p.valor }, ...partes.map(([k, v]) => ({ etiqueta: k, valor: v }))]} />;
+  };
+  return (
+    <MarcoGrafico className={className} titulo={titulo} subtitulo={subtitulo}
+      tabla={
+        <table className={claseTabla}>
+          <thead><tr><th>Mes</th><th className="text-right">{nombreValor}</th><th>Tipos</th></tr></thead>
+          <tbody>{puntos.map((p) => (
+            <tr key={p.etiqueta}><td>{p.detalle}</td><td className="text-right tabular-nums">{p.valor}</td>
+              <td className="text-tinta-suave">{Object.entries(p.desglose).map(([k, v]) => `${k} (${v})`).join(", ") || "-"}</td></tr>
+          ))}</tbody>
+        </table>
+      }>
+      <div className="h-56" role="img" aria-label={`${titulo}: ${puntos.map((p) => `${p.detalle} ${p.valor}`).join(", ")}`}>
+        <ResponsiveContainer width="100%" height="100%">
+          <BarChart data={puntos} margin={{ top: 18, right: 4, bottom: 0, left: -18 }}>
+            <CartesianGrid vertical={false} stroke={REJILLA} />
+            <XAxis dataKey="etiqueta" tick={eje} tickLine={false} axisLine={{ stroke: REJILLA }} tickMargin={8} />
+            <YAxis allowDecimals={false} tick={eje} tickLine={false} axisLine={false} width={40} />
+            <Tooltip content={<Tip />} cursor={{ fill: "rgba(11,46,51,0.04)" }} />
+            <Bar dataKey="valor" fill={MARCA} radius={[4, 4, 0, 0]} maxBarSize={36} animationDuration={500}>
+              <LabelList dataKey="valor" position="top" style={{ fontSize: 11, fontWeight: 700, fill: TINTA }} formatter={(v: number) => (v ? v : "")} />
+            </Bar>
+          </BarChart>
+        </ResponsiveContainer>
+      </div>
+    </MarcoGrafico>
+  );
+}
+
+// ------------------------------------------------------------------ mapa de calor de inasistencia diaria
+
+export interface PuntoDiaCalor { fecha: string; porcentaje: number | null; registros: number }
 
 function useAncho<T extends HTMLElement>() {
   const ref = useRef<T>(null);
-  const [ancho, setAncho] = useState(320);
+  const [ancho, setAncho] = useState(600);
   useEffect(() => {
     if (!ref.current) return;
-    const ro = new ResizeObserver(([e]) => setAncho(Math.max(240, Math.round(e.contentRect.width))));
+    const ro = new ResizeObserver(([e]) => setAncho(Math.max(260, Math.round(e.contentRect.width))));
     ro.observe(ref.current);
     return () => ro.disconnect();
   }, []);
   return [ref, ancho] as const;
 }
 
-export function LineaPorcentaje({ titulo, subtitulo, puntos, umbral, nombreValor }: {
-  titulo: string; subtitulo?: string; puntos: PuntoLinea[]; umbral?: { valor: number; etiqueta: string }; nombreValor: string;
-}) {
+const CORTES = [5, 10, 15, 25]; // % de inasistencia que separan los 5 tonos
+const tono = (inasistencia: number) => RAMPA[CORTES.findIndex((c) => inasistencia < c) === -1 ? 4 : CORTES.findIndex((c) => inasistencia < c)];
+const DIAS = ["Lun", "Mar", "Mié", "Jue", "Vie"];
+const fechaLarga = (f: string) => new Date(`${f}T12:00:00`).toLocaleDateString("es-PE", { weekday: "long", day: "numeric", month: "long" });
+
+export function MapaCalor({ titulo, subtitulo, dias, desde, hasta , className }: { className?: string;  titulo: string; subtitulo?: string; dias: PuntoDiaCalor[]; desde: string; hasta: string }) {
   const [ref, ancho] = useAncho<HTMLDivElement>();
-  const [foco, setFoco] = useState<number | null>(null);
-  const alto = 200;
-  const m = { izq: 34, der: 12, arr: 14, aba: 26 };
-  const valores = puntos.map((p) => p.valor).filter((v): v is number => v !== null);
-  // Línea (no barras): el eje puede no empezar en cero para que se vean las variaciones.
-  const minimo = Math.max(0, Math.floor((Math.min(...valores, umbral?.valor ?? 100) - 10) / 10) * 10);
-  const x = (i: number) => m.izq + (puntos.length === 1 ? 0 : (i / (puntos.length - 1)) * (ancho - m.izq - m.der));
-  const y = (v: number) => m.arr + (1 - (v - minimo) / (100 - minimo)) * (alto - m.arr - m.aba);
-  const ticks = [minimo, Math.round((minimo + 100) / 2), 100];
-
-  // Los huecos (semanas sin registros) cortan la línea en tramos.
-  const tramos: string[] = [];
-  let actual = "";
-  puntos.forEach((p, i) => {
-    if (p.valor === null) { if (actual) tramos.push(actual); actual = ""; return; }
-    actual += `${actual ? "L" : "M"}${x(i).toFixed(1)},${y(p.valor).toFixed(1)}`;
-  });
-  if (actual) tramos.push(actual);
-
-  const mover = (clientX: number, rect: DOMRect) => {
-    const px = clientX - rect.left;
-    let mejor = 0;
-    puntos.forEach((_, i) => { if (Math.abs(x(i) - px) < Math.abs(x(mejor) - px)) mejor = i; });
-    setFoco(mejor);
-  };
-  const p = foco !== null ? puntos[foco] : null;
+  const [foco, setFoco] = useState<{ d: PuntoDiaCalor | string; x: number; y: number } | null>(null);
+  const porFecha = new Map(dias.map((d) => [d.fecha, d]));
+  // Columnas = semanas (lunes), filas = lunes a viernes.
+  const lunes: string[] = [];
+  const inicio = new Date(`${desde}T12:00:00Z`);
+  inicio.setUTCDate(inicio.getUTCDate() - ((inicio.getUTCDay() + 6) % 7));
+  for (let d = inicio; d.toISOString().slice(0, 10) <= hasta; d = new Date(d.getTime() + 7 * 86_400_000)) lunes.push(d.toISOString().slice(0, 10));
+  const izq = 30, arr = 18, hueco = 3;
+  const celda = Math.min(40, Math.floor((ancho - izq - (lunes.length - 1) * hueco) / Math.max(1, lunes.length)));
+  const altoSvg = arr + 5 * celda + 4 * hueco;
+  const fechaDe = (col: number, fila: number) => new Date(Date.parse(`${lunes[col]}T12:00:00Z`) + fila * 86_400_000).toISOString().slice(0, 10);
+  const mes = (f: string) => new Date(`${f}T12:00:00`).toLocaleDateString("es-PE", { month: "short" }).replace(".", "");
+  const conDatos = dias.filter((d) => d.porcentaje !== null);
 
   return (
-    <MarcoGrafico titulo={titulo} subtitulo={subtitulo}
+    <MarcoGrafico className={className} titulo={titulo} subtitulo={subtitulo}
+      leyenda={
+        <div className="flex flex-wrap items-center gap-2 text-xs text-tinta-suave" aria-label="Leyenda">
+          <span>Menos faltas</span>
+          {RAMPA.map((c, i) => <span key={c} className="h-3 w-5 rounded-[3px] ring-1 ring-black/5" style={{ background: c }} title={["0-5%", "5-10%", "10-15%", "15-25%", "25% o más"][i]} />)}
+          <span>Más faltas</span>
+          <span className="ml-2 inline-flex items-center gap-1"><span className="h-3 w-3 rounded-[3px] border border-dashed border-slate-300" /> Sin clases o sin registro</span>
+        </div>
+      }
       tabla={
         <table className={claseTabla}>
-          <thead><tr><th>Semana</th><th className="text-right">{nombreValor}</th><th>Detalle</th></tr></thead>
-          <tbody>{puntos.map((q) => <tr key={q.etiqueta}><td>{q.etiqueta}</td><td className="text-right tabular-nums">{q.valor === null ? "-" : `${q.valor}%`}</td><td className="text-tinta-suave">{q.detalle}</td></tr>)}</tbody>
+          <thead><tr><th>Día</th><th className="text-right">Asistencia</th><th className="text-right">Inasistencia</th><th className="text-right">Registros</th></tr></thead>
+          <tbody>{[...conDatos].reverse().map((d) => (
+            <tr key={d.fecha}><td className="capitalize">{fechaLarga(d.fecha)}</td><td className="text-right tabular-nums">{d.porcentaje}%</td>
+              <td className="text-right tabular-nums">{100 - (d.porcentaje ?? 0)}%</td><td className="text-right tabular-nums text-tinta-suave">{d.registros}</td></tr>
+          ))}</tbody>
         </table>
       }>
-      <div ref={ref} className="relative">
-        {valores.length === 0 ? <p className="py-10 text-center text-sm text-tinta-suave">Aún no hay registros en estas semanas.</p> : (
-          <svg width={ancho} height={alto} role="img" aria-label={`${titulo}: ${puntos.map((q) => `${q.etiqueta} ${q.valor ?? "sin datos"}`).join(", ")}`}
-            onMouseMove={(e) => mover(e.clientX, e.currentTarget.getBoundingClientRect())}
-            onTouchStart={(e) => mover(e.touches[0].clientX, e.currentTarget.getBoundingClientRect())}
-            onMouseLeave={() => setFoco(null)}>
-            {ticks.map((t) => (
-              <g key={t}>
-                <line x1={m.izq} x2={ancho - m.der} y1={y(t)} y2={y(t)} stroke="rgba(11,46,51,.10)" strokeWidth={1} />
-                <text x={m.izq - 6} y={y(t) + 4} textAnchor="end" className="fill-[#3f5f63] text-[10px] tabular-nums">{t}%</text>
-              </g>
+      <div ref={ref} className="relative" onMouseLeave={() => setFoco(null)}>
+        {conDatos.length === 0 ? <p className="py-12 text-center text-sm text-tinta-suave">Aún no hay registros diarios.</p> : (
+          <svg width={ancho} height={altoSvg} role="img" aria-label={`${titulo}. Use Ver tabla para leer cada día.`}>
+            {DIAS.map((d, fila) => (
+              <text key={d} x={0} y={arr + fila * (celda + hueco) + celda / 2 + 4} fontSize={10} fill={SUAVE}>{d}</text>
             ))}
-            {umbral && (
-              <g>
-                <line x1={m.izq} x2={ancho - m.der} y1={y(umbral.valor)} y2={y(umbral.valor)} stroke="#3f5f63" strokeWidth={1} strokeDasharray="4 4" opacity={0.6} />
-                <text x={ancho - m.der} y={y(umbral.valor) - 5} textAnchor="end" className="fill-[#3f5f63] text-[10px]">{umbral.etiqueta}</text>
-              </g>
-            )}
-            {puntos.map((q, i) => (i % Math.ceil(puntos.length / 6) === 0 || i === puntos.length - 1) && (
-              <text key={q.etiqueta} x={x(i)} y={alto - 6} textAnchor="middle" className="fill-[#3f5f63] text-[10px]">{q.etiqueta}</text>
-            ))}
-            {foco !== null && <line x1={x(foco)} x2={x(foco)} y1={m.arr} y2={alto - m.aba} stroke="rgba(11,46,51,.35)" strokeWidth={1} />}
-            {tramos.map((d) => <path key={d} d={d} fill="none" stroke={MARCA} strokeWidth={2} strokeLinejoin="round" strokeLinecap="round" />)}
-            {puntos.map((q, i) => q.valor !== null && (
-              <circle key={q.etiqueta} cx={x(i)} cy={y(q.valor)} r={foco === i ? 6 : 4} fill={MARCA} stroke="#fcfcfb" strokeWidth={2} />
-            ))}
+            {lunes.map((l, col) => {
+              const x = izq + col * (celda + hueco);
+              const cambioMes = col === 0 || mes(l) !== mes(lunes[col - 1]);
+              return (
+                <g key={l}>
+                  {cambioMes && <text x={x} y={11} fontSize={10} fill={SUAVE} className="capitalize">{mes(l)}</text>}
+                  {DIAS.map((_, fila) => {
+                    const f = fechaDe(col, fila);
+                    const d = porFecha.get(f);
+                    const y = arr + fila * (celda + hueco);
+                    if (f > hasta || f < desde) return null;
+                    const conValor = d && d.porcentaje !== null;
+                    return (
+                      <rect key={f} x={x} y={y} width={celda} height={celda} rx={4}
+                        fill={conValor ? tono(100 - d.porcentaje!) : "transparent"}
+                        stroke={conValor ? (foco && typeof foco.d !== "string" && foco.d.fecha === f ? TINTA : "rgba(0,0,0,0.05)") : "#cbd5e1"}
+                        strokeDasharray={conValor ? undefined : "2 2"} strokeWidth={conValor && foco && typeof foco.d !== "string" && foco.d.fecha === f ? 2 : 1}
+                        onMouseEnter={() => setFoco({ d: d ?? f, x: x + celda / 2, y })} onClick={() => setFoco({ d: d ?? f, x: x + celda / 2, y })} />
+                    );
+                  })}
+                </g>
+              );
+            })}
           </svg>
         )}
-        {p && foco !== null && (
-          <div role="tooltip" className="pointer-events-none absolute top-0 z-10 -translate-x-1/2 whitespace-nowrap rounded-xl bg-tinta px-3 py-1.5 text-xs text-white shadow-lg"
-            style={{ left: Math.min(Math.max(x(foco), 70), ancho - 70) }}>
-            <strong>{p.etiqueta}</strong>: {p.valor === null ? "sin registros" : `${p.valor}%`}
-            <span className="block text-white/75">{p.detalle}</span>
+        {foco && (
+          <div className="pointer-events-none absolute z-10 -translate-x-1/2 -translate-y-full" style={{ left: Math.min(Math.max(foco.x, 90), ancho - 90), top: foco.y - 6 }}>
+            {typeof foco.d === "string" ? (
+              <Caja titulo={<span className="capitalize">{fechaLarga(foco.d)}</span>} filas={[{ etiqueta: "Sin clases o sin registro", valor: "" }]} />
+            ) : (
+              <Caja titulo={<span className="capitalize">{fechaLarga(foco.d.fecha)}</span>}
+                filas={[
+                  { color: tono(100 - (foco.d.porcentaje ?? 0)), etiqueta: "Inasistencia", valor: `${100 - (foco.d.porcentaje ?? 0)}%` },
+                  { etiqueta: "Asistencia", valor: `${foco.d.porcentaje}%` },
+                  { etiqueta: "Registros", valor: foco.d.registros },
+                ]} />
+            )}
           </div>
         )}
       </div>
-    </MarcoGrafico>
-  );
-}
-
-// ------------------------------------------------------------------ barras simples
-
-export function BarrasSimples({ titulo, subtitulo, items, sufijo = "", maximo }: {
-  titulo: string; subtitulo?: string; items: { etiqueta: string; valor: number; detalle?: string }[]; sufijo?: string; maximo?: number;
-}) {
-  const max = maximo ?? Math.max(1, ...items.map((i) => i.valor));
-  const [foco, setFoco] = useState<number | null>(null);
-  return (
-    <MarcoGrafico titulo={titulo} subtitulo={subtitulo}
-      tabla={
-        <table className={claseTabla}>
-          <tbody>{items.map((i) => <tr key={i.etiqueta}><td>{i.etiqueta}</td><td className="text-right tabular-nums">{i.valor}{sufijo}</td><td className="text-tinta-suave">{i.detalle}</td></tr>)}</tbody>
-        </table>
-      }>
-      <ul className="space-y-2.5" onMouseLeave={() => setFoco(null)}>
-        {items.map((i, k) => (
-          <li key={i.etiqueta} onMouseEnter={() => setFoco(k)} title={i.detalle}>
-            <div className="mb-1 flex justify-between gap-2 text-xs">
-              <span className={cx("truncate", foco === k ? "font-bold" : "font-semibold")}>{i.etiqueta}</span>
-              <span className="shrink-0 tabular-nums text-tinta">{i.valor}{sufijo}{i.detalle && foco === k && <span className="ml-1 text-tinta-suave">· {i.detalle}</span>}</span>
-            </div>
-            <div className="h-2.5 rounded-[4px] bg-white/55">
-              <div className="h-full rounded-[4px] transition-all" style={{ width: `${Math.max(i.valor > 0 ? 2 : 0, (i.valor / max) * 100)}%`, background: MARCA }} />
-            </div>
-          </li>
-        ))}
-      </ul>
     </MarcoGrafico>
   );
 }

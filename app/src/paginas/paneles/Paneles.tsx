@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { useLiveQuery } from "dexie-react-hooks";
-import { CalendarCheck, ClipboardList, FileDown, FileCheck, GraduationCap, ShieldAlert, TriangleAlert, type LucideIcon } from "lucide-react";
+import { CalendarCheck, ClipboardList, FileDown, FileCheck, GraduationCap, ShieldAlert, TriangleAlert } from "lucide-react";
 import { db, useApp } from "@/app/contexto";
 import { anioActivo, nombreCompleto, seccionesDetalle } from "@/datos/consultas";
 import { descargarReporte } from "@/datos/reporte";
@@ -11,31 +11,28 @@ import { calcularAvance } from "@/dominio/notas";
 import { calcularPanel } from "@/dominio/panel";
 import { UMBRAL_ASISTENCIA } from "@/dominio/seguimiento";
 import { useAvisar } from "@/ui/avisos";
-import { Boton, Contenido, Encabezado, Gema, Tarjeta, cx, orden } from "@/ui/componentes";
+import { Boton, Contenido, Encabezado, Tarjeta, cx, orden } from "@/ui/componentes";
 import { Campo, Segmentado, Selector, Vacio } from "@/ui/formulario";
-import { BarrasNiveles, BarrasSimples, LineaPorcentaje } from "@/ui/graficos";
+import { AreaAsistencia, BarrasDivergentesNiveles, BarrasRanking, ColumnasConteo, DonaNiveles, MapaCalor, TarjetaKpi } from "@/ui/graficos";
 
 const hoyISO = () => new Date().toISOString().slice(0, 10);
-const fechaCorta = (f: string) => new Date(`${f}T12:00:00`).toLocaleDateString("es-PE", { day: "numeric", month: "short" });
+const fechaCorta = (f: string) => new Date(`${f}T12:00:00`).toLocaleDateString("es-PE", { day: "numeric", month: "short" }).replace(".", "");
+const fechaMedia = (f: string) => new Date(`${f}T12:00:00`).toLocaleDateString("es-PE", { day: "numeric", month: "long" });
+const nombreMes = (m: string, formato: "short" | "long") =>
+  new Date(`${m}-15T12:00:00`).toLocaleDateString("es-PE", formato === "long" ? { month: "long", year: "numeric" } : { month: "short" }).replace(".", "");
+const RANGOS = [4, 8, 14] as const;
 
-function Kpi({ icono, tono, valor, etiqueta, alerta, enlace, i }: {
-  icono: LucideIcon; tono: string; valor: string | number; etiqueta: string; alerta?: string | null; enlace?: string; i: number;
-}) {
-  const contenido = (
-    <>
-      <div className="flex items-start justify-between gap-2">
-        <Gema icono={icono} tono={alerta ? "tono-coral" : tono} tam="sm" />
-        {alerta && <TriangleAlert className="h-4 w-4 text-red-600" aria-hidden />}
-      </div>
-      <p className="titulo-display mt-2 text-3xl font-bold tabular-nums">{valor}</p>
-      <p className="text-xs text-tinta-suave">{etiqueta}</p>
-      {alerta && <p className="mt-1 text-[0.7rem] font-semibold text-red-700">{alerta}</p>}
-    </>
+function SelectorRango({ valor, onCambio }: { valor: number; onCambio(v: (typeof RANGOS)[number]): void }) {
+  return (
+    <span className="inline-flex rounded-full bg-slate-100 p-0.5" role="group" aria-label="Semanas a mostrar">
+      {RANGOS.map((r) => (
+        <button key={r} type="button" onClick={() => onCambio(r)} aria-pressed={valor === r}
+          className={cx("rounded-full px-2.5 py-1 text-xs font-semibold tabular-nums transition", valor === r ? "bg-white text-tinta shadow-sm" : "text-tinta-suave hover:text-tinta")}>
+          {r} sem.
+        </button>
+      ))}
+    </span>
   );
-  const clase = "vidrio aparecer block p-4 transition";
-  return enlace
-    ? <Link to={enlace} className={cx(clase, "hover:bg-white/55")} style={orden(i)}>{contenido}</Link>
-    : <div className={clase} style={orden(i)}>{contenido}</div>;
 }
 
 export function Paneles() {
@@ -46,6 +43,7 @@ export function Paneles() {
   const [seccionId, setSeccionId] = useState("");
   const [periodoId, setPeriodoId] = useState("");
   const [generando, setGenerando] = useState(false);
+  const [rango, setRango] = useState<(typeof RANGOS)[number]>(8);
 
   const base = useLiveQuery(async () => {
     const anio = await anioActivo();
@@ -69,15 +67,17 @@ export function Paneles() {
     return {
       anio, periodos: vivas(periodos).sort((a, b) => a.numero - b.numero), secciones, estudiantes: vivas(estudiantes),
       matriculas: matriculas.filter((m) => m.anio_id === anio.id), sesiones, asistencias, calificaciones, competencias,
-      areas: new Map(areas.map((a) => [a.id, a.nombre])), asignaciones, incidencias, justificaciones,
+      areas: new Map(areas.map((a) => [a.id, a])), asignaciones, incidencias, justificaciones,
       usuarios: new Map(usuarios.map((u) => [u.id, u])), colegio: colegios[0],
     };
   });
 
-  // Periodo por defecto: el último que ya tiene notas.
+  // Periodo por defecto: el último ya terminado que tiene notas (el que está en curso suele estar casi vacío).
   useEffect(() => {
     if (!base || periodoId) return;
-    const conNotas = [...base.periodos].reverse().find((p) => base.calificaciones.some((c) => c.periodo_id === p.id && c.nivel_logro));
+    const tieneNotas = (id: string) => base.calificaciones.some((c) => c.periodo_id === id && c.nivel_logro);
+    const recientes = [...base.periodos].reverse();
+    const conNotas = recientes.find((p) => p.fin < hoyISO() && tieneNotas(p.id)) ?? recientes.find((p) => tieneNotas(p.id));
     setPeriodoId((conNotas ?? base.periodos[0])?.id ?? "");
   }, [base, periodoId]);
 
@@ -92,9 +92,14 @@ export function Paneles() {
       matriculas: base.matriculas.filter((m) => visibles.has(m.seccion_id)),
       seccionNombre: (id) => base.secciones.find((s) => s.id === id)?.nombre ?? "",
       sesiones: base.sesiones, asistencias: base.asistencias, calificaciones: base.calificaciones, competencias: base.competencias,
-      areaNombre: (id) => base.areas.get(id) ?? "Área", asignaciones: base.asignaciones, incidencias: base.incidencias, justificaciones: base.justificaciones,
+      areaNombre: (id) => {
+        const a = base.areas.get(id);
+        if (!a) return "Área";
+        // Con ambos niveles a la vista, la misma área aparece dos veces: se indica el nivel.
+        return nivel === "todos" ? `${a.nombre} · ${a.nivel === "primaria" ? "Prim." : "Sec."}` : a.nombre;
+      }, asignaciones: base.asignaciones, incidencias: base.incidencias, justificaciones: base.justificaciones,
     });
-  }, [base, seccionesFiltradas, seccionId, periodoId]);
+  }, [base, seccionesFiltradas, seccionId, periodoId, nivel]);
 
   const avanceDocentes = useMemo(() => {
     if (!base || !periodoId) return [];
@@ -110,6 +115,9 @@ export function Paneles() {
       return { etiqueta: u ? nombreCompleto(u) : "Docente", valor: x.e ? Math.round((x.r / x.e) * 100) : 0, detalle: `${x.r} de ${x.e} notas` };
     }).sort((a, b) => a.valor - b.valor);
   }, [base, seccionesFiltradas, seccionId, periodoId]);
+
+  const incMes = panel && panel.incidenciasPorMes.length >= 2
+    ? { actual: panel.incidenciasPorMes.at(-1)!.n, anterior: panel.incidenciasPorMes.at(-2)!.n } : null;
 
   if (base === null) return <Contenido><Vacio icono={ClipboardList} titulo="Aún no hay un año escolar configurado" /></Contenido>;
   if (!base || !panel) return null;
@@ -129,7 +137,7 @@ export function Paneles() {
 
   return (
     <>
-      <Encabezado etiqueta={esUgel ? "Supervisión UGEL" : "Dirección"} titulo="Indicadores" subtitulo={`${base.colegio?.nombre ?? ""} · Año ${base.anio.anio}`}
+      <Encabezado etiqueta={esUgel ? "Supervisión UGEL" : "Dirección"} titulo="Indicadores" subtitulo={`${base.colegio?.nombre ?? ""} · Año ${base.anio.anio} · ${panel.matriculados} estudiantes matriculados`}
         accion={<Boton variante="vidrio" icono={FileDown} onClick={reporte} cargando={generando} className="hidden sm:inline-flex">Reporte PDF</Boton>} />
       <Contenido ancho="max-w-6xl">
         {/* Filtros: una sola fila sobre los gráficos */}
@@ -151,34 +159,52 @@ export function Paneles() {
           <Boton variante="vidrio" icono={FileDown} onClick={reporte} cargando={generando} className="sm:hidden">Reporte PDF</Boton>
         </Tarjeta>
 
-        <section className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6" aria-label="Indicadores principales">
-          <Kpi i={2} icono={GraduationCap} tono="tono-musgo" valor={panel.matriculados} etiqueta="estudiantes matriculados" />
-          <Kpi i={3} icono={CalendarCheck} tono="tono-laguna" valor={panel.asistencia30 === null ? "-" : `${panel.asistencia30}%`} etiqueta="asistencia (30 días)"
-            alerta={panel.asistencia30 !== null && panel.asistencia30 < UMBRAL_ASISTENCIA ? `Bajo la meta de ${UMBRAL_ASISTENCIA}%` : null} />
-          <Kpi i={4} icono={ClipboardList} tono="tono-cielo" valor={panel.avanceNotas === null ? "-" : `${panel.avanceNotas}%`} etiqueta={`notas registradas · ${periodo?.nombre ?? ""}`}
-            enlace={esUgel ? undefined : "/notas"} />
-          <Kpi i={5} icono={TriangleAlert} tono="tono-ambar" valor={panel.enRiesgo.length} etiqueta="estudiantes con alertas" />
-          <Kpi i={6} icono={ShieldAlert} tono="tono-ambar" valor={panel.incidenciasAbiertas} etiqueta="incidencias abiertas"
-            alerta={panel.sisevePendientes ? `${panel.sisevePendientes} sin reporte SíseVe` : null} enlace={esUgel ? undefined : "/convivencia"} />
-          <Kpi i={7} icono={FileCheck} tono="tono-lila" valor={panel.justificacionesPendientes} etiqueta="justificaciones por revisar" enlace={esUgel ? undefined : "/asistencia/justificaciones"} />
+        <section className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-5" aria-label="Indicadores principales">
+          <TarjetaKpi className="aparecer" icono={CalendarCheck} titulo="Asistencia · 30 días"
+            valor={panel.asistencia30 ?? "-"} unidad={panel.asistencia30 === null ? undefined : "%"}
+            estado={panel.asistencia30 === null ? null : panel.asistencia30 < UMBRAL_ASISTENCIA ? { texto: "Bajo la meta", tipo: "alerta" } : { texto: "En la meta", tipo: "ok" }}
+            variacion={panel.asistencia30 !== null && panel.asistenciaAnterior !== null
+              ? { delta: panel.asistencia30 - panel.asistenciaAnterior, unidad: " pts", mejorSiSube: true, referencia: "vs. 30 días previos" } : null}
+            serie={panel.semanas.slice(-8).map((s) => s.porcentaje)} />
+          <TarjetaKpi className="aparecer" icono={ClipboardList} titulo="Notas registradas"
+            valor={panel.avanceNotas ?? "-"} unidad={panel.avanceNotas === null ? undefined : "%"} pie={periodo?.nombre}
+            estado={panel.avanceNotas === 100 ? { texto: "Completo", tipo: "ok" } : null} enlace={esUgel ? undefined : "/notas"} />
+          <TarjetaKpi className="aparecer" icono={TriangleAlert} titulo="Estudiantes con alertas"
+            valor={panel.enRiesgo.length} pie={`de ${panel.matriculados} matriculados`} />
+          <TarjetaKpi className="aparecer" icono={ShieldAlert} titulo="Incidencias abiertas" valor={panel.incidenciasAbiertas}
+            estado={panel.sisevePendientes ? { texto: `${panel.sisevePendientes} sin SíseVe`, tipo: "alerta" } : null}
+            variacion={incMes ? { delta: incMes.actual - incMes.anterior, unidad: "", mejorSiSube: false, referencia: "casos vs. mes anterior" } : null}
+            serie={panel.incidenciasPorMes.map((m) => m.n)} colorSerie="#c2410c" enlace={esUgel ? undefined : "/convivencia"} />
+          <TarjetaKpi className="aparecer col-span-2 md:col-span-1" icono={FileCheck} titulo="Justificaciones por revisar" valor={panel.justificacionesPendientes}
+            pie={panel.justificacionesPendientes ? "Revíselas para actualizar la asistencia" : "Todo al día"} enlace={esUgel ? undefined : "/asistencia/justificaciones"} />
         </section>
 
-        <div className="grid gap-4 lg:grid-cols-2">
+        <div className="grid gap-4 lg:grid-cols-12">
+          <AreaAsistencia className="lg:col-span-8" titulo="Asistencia semanal" subtitulo={`Últimas ${rango} semanas · ${alcance}`} meta={UMBRAL_ASISTENCIA}
+            acciones={<SelectorRango valor={rango} onCambio={setRango} />}
+            puntos={panel.semanas.slice(-rango).map((s) => ({ etiqueta: fechaCorta(s.semana), detalle: `Semana del ${fechaMedia(s.semana)}`, porcentaje: s.porcentaje, P: s.P, T: s.T, F: s.F, J: s.J }))} />
+          <DonaNiveles className="lg:col-span-4" titulo="Niveles de logro" subtitulo={`${periodo?.nombre ?? ""} · ${alcance}`} conteo={panel.distribucionTotal} />
+
           {panel.distribucion.length ? (
-            <BarrasNiveles titulo="Logros por área" subtitulo={`${periodo?.nombre ?? ""} · ${alcance}`}
-              filas={panel.distribucion.map((d) => ({ etiqueta: d.area, conteo: d.conteo, total: d.total }))} />
+            <BarrasDivergentesNiveles className="lg:col-span-7" titulo="Logros por área" subtitulo={`${periodo?.nombre ?? ""} · ${alcance}`}
+              filas={[...panel.distribucion].sort((a, b) => (b.conteo.AD + b.conteo.A) / b.total - (a.conteo.AD + a.conteo.A) / a.total)
+                .map((d) => ({ etiqueta: d.area, conteo: d.conteo, total: d.total }))} />
           ) : (
-            <Vacio icono={ClipboardList} tono="tono-cielo" titulo="Sin notas en este periodo" />
+            <div className="lg:col-span-7"><Vacio icono={ClipboardList} tono="tono-cielo" titulo="Sin notas en este periodo" /></div>
           )}
-          <LineaPorcentaje titulo="Asistencia por semana" subtitulo={`Últimas 8 semanas · ${alcance}`} nombreValor="Asistencia"
-            umbral={{ valor: UMBRAL_ASISTENCIA, etiqueta: `Meta ${UMBRAL_ASISTENCIA}%` }}
-            puntos={panel.semanas.map((s) => ({ etiqueta: fechaCorta(s.semana), valor: s.porcentaje, detalle: s.registros ? `${s.registros} registros` : "sin registros" }))} />
+          <BarrasRanking className="lg:col-span-5" titulo="Asistencia por sección" subtitulo="Últimos 30 días" nombreValor="Asistencia" sufijo="%" maximo={100}
+            meta={{ valor: UMBRAL_ASISTENCIA, etiqueta: `Meta ${UMBRAL_ASISTENCIA}%` }}
+            items={panel.porSeccion.map((s) => ({ etiqueta: s.seccion, valor: s.porcentaje, detalle: `${s.registros} registros` }))} />
+
+          <MapaCalor className="lg:col-span-12" titulo="Inasistencia por día" subtitulo={`Últimas 14 semanas · ${alcance}`}
+            dias={panel.dias} desde={panel.semanas[0]?.semana ?? hoyISO()} hasta={hoyISO()} />
+
           {avanceDocentes.length > 0 && (
-            <BarrasSimples titulo="Avance del registro de notas por docente" subtitulo={periodo?.nombre} items={avanceDocentes} sufijo="%" maximo={100} />
+            <BarrasRanking className="lg:col-span-6" titulo="Avance del registro de notas" subtitulo={`Por docente · ${periodo?.nombre ?? ""}`} nombreValor="Avance"
+              sufijo="%" maximo={100} items={avanceDocentes} />
           )}
-          {panel.incidenciasPorTipo.length > 0 && (
-            <BarrasSimples titulo="Incidencias por tipo" subtitulo="Año escolar" items={panel.incidenciasPorTipo.map((t) => ({ etiqueta: t.tipo, valor: t.n }))} />
-          )}
+          <ColumnasConteo className={avanceDocentes.length > 0 ? "lg:col-span-6" : "lg:col-span-12"} titulo="Incidencias por mes" subtitulo="Últimos 6 meses" nombreValor="Incidencias"
+            puntos={panel.incidenciasPorMes.map((m) => ({ etiqueta: nombreMes(m.mes, "short"), detalle: nombreMes(m.mes, "long"), valor: m.n, desglose: m.tipos }))} />
         </div>
 
         <section className="space-y-2">
