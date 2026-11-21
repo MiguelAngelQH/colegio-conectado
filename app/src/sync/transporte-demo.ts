@@ -122,9 +122,18 @@ export class ServidorDemo extends BaseLocal {
 
   /** Carga inicial de datos (semilla) directamente en el servidor. */
   async sembrar(filas: Partial<Record<NombreTabla, Fila[]>>) {
+    // En bloque por tabla: miles de filas de asistencia y notas se cargan en segundos.
     for (const t of TABLAS) {
-      for (const f of filas[t] ?? []) await this.aplicar(t, f as unknown as Record<string, unknown>, null, false);
+      const lote = filas[t];
+      if (!lote?.length) continue;
+      if (this.reloj === 0) this.reloj = await this.leerMeta<number>("reloj", 0);
+      const conHora = lote.map((f) => {
+        this.reloj = Math.max(Date.now(), this.reloj + 1);
+        return { ...f, updated_at: new Date(this.reloj).toISOString(), updated_by: null };
+      });
+      await this.tabla(t).bulkPut(conHora as never[]);
     }
+    await this.guardarMeta("reloj", this.reloj);
   }
 }
 
