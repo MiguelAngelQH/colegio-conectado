@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { calcularAvisos, type EntradaAvisos } from "@/dominio/avisos";
-import type { Asistencia, Calificacion, Comunicado, Justificacion } from "@/db/tipos";
+import type { Asistencia, Calificacion, Comunicado, Justificacion, SolicitudTutoria } from "@/db/tipos";
 
 const base = (extra: Partial<EntradaAvisos> = {}): EntradaAvisos => ({
   usuarioId: "apo", esFamilia: true, esPersonal: false, vistosHasta: "2026-10-15T00:00:00.000Z",
@@ -51,5 +51,19 @@ describe("avisos", () => {
     expect(dir.map((a) => a.titulo)).toEqual(["Observación de monitoreo de la UGEL"]);
     const ugel = calcularAvisos(base({ esFamilia: false, esUgel: true, monitoreo: [m("pendiente"), m("atendida")] }));
     expect(ugel.map((a) => a.detalle)).toEqual(["Hecho"]);
+  });
+
+  it("avisa al tutor los pedidos de ayuda nuevos y a quien pidió la respuesta o la cita", () => {
+    const sol = (extra: Partial<SolicitudTutoria>): SolicitudTutoria => ({ id: "s", colegio_id: "c", estudiante_id: "e", solicitante_id: "est", tutor_id: "tut",
+      motivo: "companeros", mensaje: "Me molestan", modalidad: "presencial", estado: "enviada", cita: null, respuesta: null, entrevista_id: null,
+      creada_en: "2026-10-16T00:00:00.000Z", updated_at: "2026-10-16T00:00:00.000Z", ...extra });
+    const paraTutor = calcularAvisos(base({ usuarioId: "tut", esFamilia: false, esPersonal: true, solicitudes: [sol({})] }));
+    expect(paraTutor[0]).toMatchObject({ tipo: "tutoria", titulo: "Pedido de ayuda: Luis", importante: true, enlace: "/tutoria/pedidos" });
+    // La dirección recibe los casos de acoso aunque no sea la tutora.
+    expect(calcularAvisos(base({ usuarioId: "dir", esFamilia: false, esDireccion: true, solicitudes: [sol({})] }))).toHaveLength(1);
+    expect(calcularAvisos(base({ usuarioId: "dir", esFamilia: false, esDireccion: true, solicitudes: [sol({ motivo: "estudios" })] }))).toHaveLength(0);
+    const paraEst = calcularAvisos(base({ usuarioId: "est", solicitudes: [sol({ estado: "agendada", cita: "2026-10-19T15:00:00.000Z", respuesta: "Hablemos" })] }));
+    expect(paraEst[0].titulo).toMatch(/^Cita con tu tutor/);
+    expect(calcularAvisos(base({ usuarioId: "est", solicitudes: [sol({})] }))).toHaveLength(0);
   });
 });

@@ -4,6 +4,7 @@ import { db } from "@/app/contexto";
 import { vivas } from "@/db/repositorio";
 import type { Estudiante, Usuario } from "@/db/tipos";
 import { calcularAvisos, type Aviso } from "@/dominio/avisos";
+import { puedeVer } from "@/dominio/solicitudes";
 
 /** Estudiantes que el usuario ve como "suyos": él mismo (estudiante) o sus hijos (apoderado). */
 export async function hijosDe(usuario: Usuario): Promise<Estudiante[]> {
@@ -66,9 +67,10 @@ export function useAvisos(usuario: Usuario | null): { avisos: Aviso[]; nuevos: n
     const sesiones = new Map((await db.tabla("asistencia_sesion").bulkGet([...new Set(asistencias.map((a) => a.sesion_id))])).filter(Boolean).map((s) => [s!.id, s!]));
     const areas = new Map((await db.tabla("area").toArray()).map((a) => [a.id, a]));
     const comps = new Map((await db.tabla("competencia").toArray()).map((c) => [c.id, c]));
+    const solicitudes = (await db.tabla("solicitud_tutoria").toArray()).filter((x) => puedeVer(x, usuario));
     let nombresPersonal = new Map<string, string>();
     if (esPersonal) {
-      const ests = await db.tabla("estudiante").bulkGet([...new Set(justificaciones.map((j) => j.estudiante_id))]);
+      const ests = await db.tabla("estudiante").bulkGet([...new Set([...justificaciones, ...solicitudes].map((j) => j.estudiante_id))]);
       nombresPersonal = new Map(ests.filter(Boolean).map((e) => [e!.id, `${e!.nombres} ${e!.apellidos.split(" ")[0]}`]));
     }
 
@@ -91,6 +93,7 @@ export function useAvisos(usuario: Usuario | null): { avisos: Aviso[]; nuevos: n
       monitoreo: await db.tabla("observacion_monitoreo").toArray(),
       esDireccion: usuario.roles.some((r) => r === "director" || r === "subdirector"),
       esUgel: usuario.roles.includes("ugel"),
+      solicitudes,
     });
     return { avisos, nuevos: avisos.filter((a) => a.nuevo).length };
   }, [usuario?.id]);

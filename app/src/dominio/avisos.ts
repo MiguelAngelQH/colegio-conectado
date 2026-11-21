@@ -1,8 +1,9 @@
 // Bandeja de avisos. Se calcula en el equipo con lo que trajo la sincronización: no necesita un
 // servidor de notificaciones y funciona sin conexión (los avisos llegan con el siguiente sync).
-import type { Asistencia, Calificacion, Comunicado, Justificacion, Observacion, ObservacionMonitoreo } from "@/db/tipos";
+import type { Asistencia, Calificacion, Comunicado, Justificacion, Observacion, ObservacionMonitoreo, SolicitudTutoria } from "@/db/tipos";
+import { esSensible, MOTIVOS } from "./solicitudes";
 
-export type TipoAviso = "falta" | "tardanza" | "nota" | "comunicado" | "observacion" | "justificacion" | "por_revisar" | "monitoreo";
+export type TipoAviso = "falta" | "tardanza" | "nota" | "comunicado" | "observacion" | "justificacion" | "por_revisar" | "monitoreo" | "tutoria";
 
 export interface Aviso {
   id: string;
@@ -34,6 +35,8 @@ export interface EntradaAvisos {
   monitoreo?: ObservacionMonitoreo[];
   esDireccion?: boolean;
   esUgel?: boolean;
+  /** Pedidos de ayuda que el usuario puede ver (ya filtrados por privacidad). */
+  solicitudes?: SolicitudTutoria[];
 }
 
 const fechaCorta = (f: string) => new Date(`${f}T12:00:00`).toLocaleDateString("es-PE", { weekday: "short", day: "numeric", month: "short" });
@@ -100,6 +103,26 @@ export function calcularAvisos(e: EntradaAvisos): Aviso[] {
     if (e.esUgel && o.estado === "atendida" && o.respuesta) {
       res.push({ id: `mon-${o.id}`, tipo: "monitoreo", momento: momento(o), titulo: "La dirección respondió una observación", detalle: o.respuesta,
         estudianteId: null, enlace: "/monitoreo", importante: false, nuevo: false });
+    }
+  }
+
+  const horaCita = (c: string) => new Date(c).toLocaleString("es-PE", { weekday: "long", day: "numeric", month: "long", hour: "2-digit", minute: "2-digit" });
+  for (const s of e.solicitudes ?? []) {
+    if (s.eliminado) continue;
+    const atiende = s.tutor_id === e.usuarioId || (esSensible(s.motivo) && !!e.esDireccion);
+    if (atiende && s.estado === "enviada") {
+      res.push({
+        id: `sol-${s.id}`, tipo: "tutoria", momento: s.updated_at ?? s.creada_en,
+        titulo: `Pedido de ayuda: ${e.nombreEstudiante(s.estudiante_id)}`,
+        detalle: `${MOTIVOS[s.motivo].estudiante}. ${s.mensaje.length > 120 ? `${s.mensaje.slice(0, 120)}...` : s.mensaje}`,
+        estudianteId: s.estudiante_id, enlace: "/tutoria/pedidos", importante: true, nuevo: false,
+      });
+    } else if (s.solicitante_id === e.usuarioId && (s.estado === "agendada" || s.estado === "atendida" || (s.estado === "vista" && s.respuesta))) {
+      res.push({
+        id: `sol-${s.id}`, tipo: "tutoria", momento: s.updated_at ?? s.creada_en,
+        titulo: s.estado === "agendada" && s.cita ? `Cita con tu tutor(a): ${horaCita(s.cita)}` : s.estado === "atendida" ? "Tu pedido de ayuda fue atendido" : "Tu tutor(a) respondió tu pedido",
+        detalle: s.respuesta ?? MOTIVOS[s.motivo].estudiante, estudianteId: s.estudiante_id, enlace: "/tutoria", importante: s.estado === "agendada", nuevo: false,
+      });
     }
   }
 
