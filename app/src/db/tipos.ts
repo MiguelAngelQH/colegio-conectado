@@ -224,6 +224,24 @@ export interface Entrevista extends Fila {
   asistio: boolean;
 }
 
+/** Pedido de ayuda del estudiante o su apoderado al tutor de la sección. */
+export interface SolicitudTutoria extends Fila {
+  estudiante_id: string;
+  solicitante_id: string;
+  /** Lo fija el servidor: el tutor de la sección del estudiante al momento de enviar. */
+  tutor_id: string | null;
+  motivo: "estudios" | "personal" | "companeros" | "familia" | "vocacional" | "otro";
+  mensaje: string;
+  modalidad: "presencial" | "app";
+  estado: "enviada" | "vista" | "agendada" | "atendida" | "cancelada";
+  /** Fecha y hora de la cita (ISO). */
+  cita: string | null;
+  respuesta: string | null;
+  /** Entrevista registrada al atender el pedido. */
+  entrevista_id: string | null;
+  creada_en: string;
+}
+
 export interface ComunicadoLectura extends Fila {
   comunicado_id: string;
   usuario_id: string;
@@ -286,6 +304,7 @@ export interface Tablas {
   asistencia_secreto: AsistenciaSecreto;
   asistencia: Asistencia;
   justificacion: Justificacion;
+  solicitud_tutoria: SolicitudTutoria;
   observacion: Observacion;
   sesion_tutoria: SesionTutoria;
   entrevista: Entrevista;
@@ -319,6 +338,7 @@ export const INDICES: Record<NombreTabla, string> = {
   asistencia_secreto: "id, sesion_id",
   asistencia: "id, sesion_id, estudiante_id, [sesion_id+estudiante_id]",
   justificacion: "id, estudiante_id, asistencia_id, estado",
+  solicitud_tutoria: "id, estudiante_id, solicitante_id, tutor_id, estado",
   observacion: "id, estudiante_id, autor_id",
   sesion_tutoria: "id, seccion_id",
   entrevista: "id, estudiante_id, tutor_id",
