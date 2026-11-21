@@ -16,8 +16,10 @@ export function ChipEstado({ estado }: { estado: SolicitudTutoria["estado"] }) {
   return <span className={cx("shrink-0 rounded-full px-2.5 py-0.5 text-[0.7rem] font-bold ring-1", TONO_ESTADO[estado])}>{ESTADOS[estado]}</span>;
 }
 
-export const fechaHoraCita = (iso: string) =>
-  new Date(iso).toLocaleString("es-PE", { weekday: "long", day: "numeric", month: "long", hour: "2-digit", minute: "2-digit" });
+export const fechaHoraCita = (iso: string) => {
+  const t = new Date(iso).toLocaleString("es-PE", { weekday: "long", day: "numeric", month: "long", hour: "2-digit", minute: "2-digit" });
+  return t.charAt(0).toUpperCase() + t.slice(1);
+};
 export const fechaPedido = (iso: string) => new Date(iso).toLocaleString("es-PE", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
 
 /** Un pedido de ayuda con su estado, la respuesta y la cita. "quien" es el estudiante o quién lo pidió. */
@@ -42,7 +44,7 @@ export function TarjetaPedido({ s, quien, para = "estudiante", acciones }: {
       <p className="whitespace-pre-line rounded-2xl bg-white/60 px-3 py-2 text-sm text-tinta ring-1 ring-white">{s.mensaje}</p>
       {s.cita && s.estado !== "cancelada" && (
         <p className="flex items-center gap-1.5 text-sm font-semibold text-amber-900">
-          <CalendarClock className="h-4 w-4" aria-hidden /> Cita: <span className="capitalize">{fechaHoraCita(s.cita)}</span>
+          <CalendarClock className="h-4 w-4" aria-hidden /> Cita: {fechaHoraCita(s.cita)}
         </p>
       )}
       {s.respuesta && (

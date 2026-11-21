@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Route, Routes, useNavigate } from "react-router-dom";
 import { useLiveQuery } from "dexie-react-hooks";
-import { CalendarDays, HandHeart, MessagesSquare, Plus, Save, TriangleAlert, UserRound, Users } from "lucide-react";
+import { CalendarDays, ChevronRight, HandHeart, LifeBuoy, MessagesSquare, Plus, Save, TriangleAlert, UserRound, Users } from "lucide-react";
 import { db, useApp } from "@/app/contexto";
 import { estudiantesDeSeccion, nombreCompleto, seccionesDeTutoria, anioActivo } from "@/datos/consultas";
 import { guardar, vivas } from "@/db/repositorio";
@@ -13,6 +13,8 @@ import { Evidencias } from "@/ui/Evidencias";
 import { Campo, Casilla, Entrada, Segmentado, Selector, Vacio } from "@/ui/formulario";
 import { FichaSeguimiento } from "./FichaSeguimiento";
 import { MiTutoria } from "./MiTutoria";
+import { Pedidos, pedidosParaAtender } from "./Pedidos";
+import { ABIERTAS } from "@/dominio/solicitudes";
 
 export function Tutoria() {
   const { usuario } = useApp();
@@ -22,6 +24,7 @@ export function Tutoria() {
     <Routes>
       <Route index element={<InicioTutoria />} />
       <Route path="estudiante/:id" element={<FichaSeguimiento />} />
+      <Route path="pedidos" element={<Pedidos />} />
     </Routes>
   );
 }
@@ -61,6 +64,10 @@ function InicioTutoria() {
   const [nuevaEntrevista, setNuevaEntrevista] = useState(false);
 
   const secciones = useLiveQuery(async () => (usuario ? seccionesDeTutoria(usuario) : []), [usuario?.id]);
+  const pedidos = useLiveQuery(async () => {
+    const lista = usuario ? await pedidosParaAtender(usuario) : [];
+    return { abiertos: lista.filter((s) => ABIERTAS.includes(s.estado)).length, nuevos: lista.filter((s) => s.estado === "enviada").length, total: lista.length };
+  }, [usuario?.id]);
   useEffect(() => { if (secciones?.[0] && !seccionId) setSeccionId(secciones[0].id); }, [secciones, seccionId]);
 
   const datos = useLiveQuery(async () => {
@@ -81,6 +88,20 @@ function InicioTutoria() {
     <>
       <Encabezado etiqueta="Tutoría y orientación educativa" titulo="Tutoría" subtitulo="Seguimiento de cada estudiante, sesiones de tutoría y entrevistas con las familias." />
       <Contenido ancho="max-w-4xl">
+        {pedidos && (pedidos.total > 0 || secciones.length > 0) && (
+          <button onClick={() => navegar("pedidos")}
+            className={cx("vidrio aparecer flex w-full items-center gap-4 p-4 text-left transition hover:bg-white/55", pedidos.nuevos > 0 && "ring-2 ring-sky-300")}>
+            <Gema icono={LifeBuoy} tono="tono-rosa" tam="sm" />
+            <span className="min-w-0 flex-1">
+              <span className="block font-bold">Pedidos de ayuda</span>
+              <span className="block text-sm text-tinta-suave">
+                {pedidos.abiertos === 0 ? "No hay pedidos por atender" : `${pedidos.abiertos} por atender${pedidos.nuevos ? `, ${pedidos.nuevos} sin leer` : ""}`}
+              </span>
+            </span>
+            {pedidos.nuevos > 0 && <span className="rounded-full bg-sky-600 px-2.5 py-0.5 text-xs font-bold text-white">{pedidos.nuevos}</span>}
+            <ChevronRight className="h-5 w-5 text-tinta-suave" aria-hidden />
+          </button>
+        )}
         {secciones.length === 0 ? (
           <Vacio icono={HandHeart} tono="tono-rosa" titulo="No es tutor(a) de ninguna sección">La dirección asigna tutores en Configuración, paso 2.</Vacio>
         ) : (
