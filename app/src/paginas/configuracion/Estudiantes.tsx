@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { useLiveQuery } from "dexie-react-hooks";
-import { Download, FileDown, FileSpreadsheet, GraduationCap, HeartHandshake, IdCard, KeyRound, LayoutGrid, Phone, Plus, Save, Trash2, UserPlus } from "lucide-react";
+import { Download, FileDown, FileSpreadsheet, GraduationCap, HeartHandshake, History, IdCard, KeyRound, LayoutGrid, Phone, Plus, Save, Trash2, UserPlus } from "lucide-react";
 import { db, useApp } from "@/app/contexto";
 import { descargarPlantilla } from "@/datos/excel";
 import { descargarLibretas } from "@/datos/libreta";
@@ -227,6 +227,7 @@ export function FichaEstudiante() {
           </div>
           <div className="flex gap-2">
             <Boton variante="vidrio" icono={FileDown} onClick={() => descargarLibretas([est.id], `libreta_${est.apellidos}_${est.nombres}.pdf`.replace(/\s+/g, "_")).catch((err) => avisar(String(err), "error"))}>Libreta</Boton>
+            <Link to={`/estudiantes/${est.id}`}><Boton variante="vidrio" icono={History}>Historial</Boton></Link>
             <Boton variante="vidrio" onClick={() => setEditando(true)}>Editar</Boton>
           </div>
         </Tarjeta>

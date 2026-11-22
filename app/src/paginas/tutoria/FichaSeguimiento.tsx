@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { useLiveQuery } from "dexie-react-hooks";
-import { CalendarX, MessageSquarePlus, MessagesSquare, Phone, ShieldAlert, StickyNote, TriangleAlert } from "lucide-react";
+import { CalendarX, History, MessageSquarePlus, MessagesSquare, Phone, ShieldAlert, StickyNote, TriangleAlert } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { db, useApp } from "@/app/contexto";
 import { estudiantesDeSeccion, matriculaActual, nombreCompleto, nombreSeccion } from "@/datos/consultas";
@@ -125,6 +125,7 @@ export function FichaSeguimiento() {
           <Boton icono={MessageSquarePlus} onClick={() => setObservando(true)}>Observación</Boton>
           <Boton variante="vidrio" icono={MessagesSquare} onClick={() => setEntrevistando(true)}>Entrevista</Boton>
           <Link to={`/convivencia?estudiante=${est.id}`}><Boton variante="vidrio" icono={ShieldAlert}>Incidencia</Boton></Link>
+          <Link to={`/estudiantes/${est.id}`}><Boton variante="fantasma" icono={History}>Historial completo</Boton></Link>
         </div>
 
         <TarjetaInforme estudianteId={est.id} />

@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useLiveQuery } from "dexie-react-hooks";
+import { Link } from "react-router-dom";
 import { BookOpenCheck, ClipboardList, Lock, MessageSquarePlus, PenLine, Save } from "lucide-react";
 import { db, useApp } from "@/app/contexto";
 import { nombreCompleto, seccionesDetalle, anioActivo } from "@/datos/consultas";
@@ -225,7 +226,7 @@ function FilaEstudiante({ n, estudiante, competencia, nota, periodoId, seccionId
       <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
         <span className="w-5 shrink-0 text-right text-xs text-tinta-suave">{n}</span>
         <div className="min-w-0 flex-1">
-          <p className="truncate text-sm font-semibold">{nombreCompleto(estudiante)}</p>
+          <Link to={`/estudiantes/${estudiante.id}`} className="block truncate text-sm font-semibold hover:underline" title="Ver historial del estudiante">{nombreCompleto(estudiante)}</Link>
           {falta && <p className="text-[0.7rem] font-semibold text-amber-700">Falta la conclusión descriptiva</p>}
         </div>
         <button onClick={() => setObservando(true)} className="rounded-full p-2 text-tinta-suave hover:bg-white/60" aria-label={`Observación sobre ${estudiante.nombres}`}>
