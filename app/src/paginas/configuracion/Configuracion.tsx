@@ -1,5 +1,5 @@
 import { Link, Route, Routes } from "react-router-dom";
-import { ArrowRight, CalendarRange, CircleCheck, LayoutGrid, Users, GraduationCap } from "lucide-react";
+import { ArrowRight, CalendarRange, CircleCheck, ClipboardCheck, LayoutGrid, Users, GraduationCap } from "lucide-react";
 import { useLiveQuery } from "dexie-react-hooks";
 import { db } from "@/app/contexto";
 import { useEstructura } from "@/datos/consultas";
@@ -10,6 +10,7 @@ import { SeccionesPagina } from "./Secciones";
 import { PersonalPagina, FichaPersonal } from "./Personal";
 import { EstudiantesPagina, FichaEstudiante } from "./Estudiantes";
 import { ImportarPagina } from "./Importar";
+import { CierreAnio } from "./CierreAnio";
 
 export function Configuracion() {
   return (
@@ -22,6 +23,7 @@ export function Configuracion() {
       <Route path="estudiantes" element={<EstudiantesPagina />} />
       <Route path="estudiantes/importar" element={<ImportarPagina />} />
       <Route path="estudiantes/:id" element={<FichaEstudiante />} />
+      <Route path="cierre" element={<CierreAnio />} />
     </Routes>
   );
 }
@@ -88,6 +90,19 @@ function Centro() {
             </Link>
           ))}
         </div>
+
+        {e?.anio && (
+          <Link to="cierre" className="vidrio aparecer group flex items-center gap-4 p-4 transition hover:bg-white/55">
+            <Gema icono={ClipboardCheck} tono="tono-coral" />
+            <span className="min-w-0 flex-1">
+              <span className="block font-bold">Cierre del año {e.anio.anio}</span>
+              <span className="block text-sm text-tinta-suave">
+                {e.anio.cerrado_en ? "Año cerrado: ya puede iniciar el siguiente." : "Situación final, actas, libretas anuales y cierre."}
+              </span>
+            </span>
+            <ArrowRight className="h-5 w-5 text-tinta-suave transition group-hover:translate-x-0.5" aria-hidden />
+          </Link>
+        )}
       </Contenido>
     </>
   );
