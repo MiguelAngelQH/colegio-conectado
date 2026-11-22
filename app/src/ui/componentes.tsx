@@ -1,3 +1,4 @@
+import { createPortal } from "react-dom";
 import type { ButtonHTMLAttributes, CSSProperties, ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, LoaderCircle, type LucideIcon } from "lucide-react";
@@ -117,14 +118,16 @@ export function Dialogo({ abierto, titulo, children, acciones, onCerrar }: {
   abierto: boolean; titulo: string; children: ReactNode; acciones: ReactNode; onCerrar(): void;
 }) {
   if (!abierto) return null;
-  return (
+  // En el body: dentro de una tarjeta de vidrio (contexto de apilamiento propio) quedaría tapado.
+  return createPortal(
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-tinta/30 p-3 backdrop-blur-[2px] sm:items-center" onClick={onCerrar}>
       <div role="dialog" aria-modal="true" aria-label={titulo} className="vidrio-solido hoja max-h-[90dvh] w-full max-w-md overflow-y-auto p-6" onClick={(e) => e.stopPropagation()}>
         <h2 className="titulo-display text-xl font-bold text-tinta">{titulo}</h2>
         <div className="mt-2 text-sm leading-relaxed text-tinta-suave">{children}</div>
         <div className="mt-6 flex flex-wrap justify-end gap-2">{acciones}</div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
 
