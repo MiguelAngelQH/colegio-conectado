@@ -11,6 +11,7 @@ import { Boton, BotonRegresar, Contenido, Encabezado, Gema, Tarjeta, cx, inicial
 import { Evidencias } from "@/ui/Evidencias";
 import { Vacio } from "@/ui/formulario";
 import { DialogoObservacion } from "../notas/RegistroNotas";
+import { TarjetaInforme } from "./InformeTutor";
 import { DialogoEntrevista, indicadoresDe } from "./Tutoria";
 
 const TIPO_OBS: Record<Observacion["tipo"], { texto: string; tono: string }> = {
@@ -125,6 +126,8 @@ export function FichaSeguimiento() {
           <Boton variante="vidrio" icono={MessagesSquare} onClick={() => setEntrevistando(true)}>Entrevista</Boton>
           <Link to={`/convivencia?estudiante=${est.id}`}><Boton variante="vidrio" icono={ShieldAlert}>Incidencia</Boton></Link>
         </div>
+
+        <TarjetaInforme estudianteId={est.id} />
 
         <section className="space-y-2">
           <h2 className="etiqueta px-1">Historial</h2>
