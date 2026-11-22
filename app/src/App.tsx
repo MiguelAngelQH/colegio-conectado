@@ -25,6 +25,7 @@ const Avisos = lazy(() => import("@/paginas/familia/Avisos").then((m) => ({ defa
 const Paneles = lazy(() => import("@/paginas/paneles/Paneles").then((m) => ({ default: m.Paneles })));
 const Monitoreo = lazy(() => import("@/paginas/paneles/Monitoreo").then((m) => ({ default: m.Monitoreo })));
 const Exportar = lazy(() => import("@/paginas/exportar/Exportar").then((m) => ({ default: m.Exportar })));
+const HistorialEstudiante = lazy(() => import("@/paginas/HistorialEstudiante").then((m) => ({ default: m.HistorialEstudiante })));
 const Comunicados = lazy(() => import("@/paginas/comunicados/Comunicados").then((m) => ({ default: m.Comunicados })));
 
 const IMPLEMENTADAS: Record<string, JSX.Element> = {
@@ -84,6 +85,10 @@ export function App() {
         {modulos.map((m) => (
           <Route key={m.id} path={CON_SUBRUTAS.has(m.ruta) ? `${m.ruta}/*` : m.ruta} element={IMPLEMENTADAS[m.ruta] ?? <Proximamente modulo={m} />} />
         ))}
+        {/* Historial del estudiante: se abre desde notas, tutoría y configuración (no está en el menú). */}
+        {usuario.roles.some((r) => ["director", "subdirector", "docente", "tutor", "auxiliar", "ugel"].includes(r)) && (
+          <Route path="/estudiantes/:id" element={<HistorialEstudiante />} />
+        )}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Route>
     </Routes>
