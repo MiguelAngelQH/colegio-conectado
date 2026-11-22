@@ -97,7 +97,9 @@ export function HistorialEstudiante() {
     porAnio.sort((x, y) => y.anio.anio - x.anio.anio);
 
     // Evolución: cada competencia evaluada, con su nivel en cada periodo de cada año (del más antiguo al actual).
-    const columnas = [...porAnio].reverse().flatMap((x) => x.periodos.map((p) => ({ anio: x.anio.anio, periodo: p })));
+    // Solo los periodos con alguna nota (los del año que recién empieza aún no tienen).
+    const columnas = [...porAnio].reverse().flatMap((x) => x.periodos.map((p) => ({ anio: x.anio.anio, periodo: p })))
+      .filter((c) => notas.some((n) => n.periodo_id === c.periodo.id && n.nivel_logro));
     const compsConNota = vivas(competencias).filter((k) => notas.some((c) => c.competencia_id === k.id && c.nivel_logro));
     const evolucion = vivas(areas).filter((ar) => compsConNota.some((k) => k.area_id === ar.id)).sort((x, y) => x.orden - y.orden || x.nivel.localeCompare(y.nivel))
       .map((ar) => ({
@@ -178,7 +180,7 @@ export function HistorialEstudiante() {
             <Tarjeta key={x.anio.id} className="aparecer space-y-3 p-4" style={orden(i + 2)}>
               <div className="flex flex-wrap items-center gap-2">
                 <Gema icono={GraduationCap} tono="tono-cielo" tam="sm" />
-                <div className="min-w-0 flex-1">
+                <div className="min-w-[11rem] flex-1">
                   <p className="font-bold">{x.anio.anio} · {x.seccion}</p>
                   <p className="text-xs text-tinta-suave">Tutor(a): {x.tutor ?? "-"}</p>
                 </div>
@@ -188,7 +190,7 @@ export function HistorialEstudiante() {
                 ) : x.anio.id === datos.actual?.id ? <span className="rounded-full bg-sky-50 px-2.5 py-0.5 text-xs font-bold text-sky-900 ring-1 ring-sky-200">En curso</span> : null}
                 {x.asistencia && (
                   <span className="inline-flex items-center gap-1 rounded-full bg-white/70 px-2.5 py-0.5 text-xs font-semibold ring-1 ring-white">
-                    <CalendarCheck className="h-3.5 w-3.5" aria-hidden /> {x.asistencia.porcentaje ?? "-"}% · {x.asistencia.F} faltas
+                    <CalendarCheck className="h-3.5 w-3.5" aria-hidden /> {x.asistencia.porcentaje === null ? "Sin registros de asistencia" : `${x.asistencia.porcentaje}% · ${x.asistencia.F} faltas`}
                   </span>
                 )}
               </div>
