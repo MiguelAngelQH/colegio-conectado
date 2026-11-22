@@ -1,5 +1,5 @@
 import { BaseLocal } from "@/db/local";
-import type { AnioEscolar, Asistencia, AsistenciaSesion, Calificacion, Fila, Justificacion, NombreTabla, ObservacionMonitoreo, Periodo, SolicitudTutoria, Usuario } from "@/db/tipos";
+import type { AnioEscolar, Asistencia, AsistenciaSesion, Calificacion, Fila, InformeTutor, Justificacion, Matricula, NombreTabla, ObservacionMonitoreo, Periodo, SolicitudTutoria, Usuario } from "@/db/tipos";
 import { ABIERTAS, puedeVer, validarSolicitud } from "@/dominio/solicitudes";
 import { evaluarMarca, firmaValida, leerTokenQr } from "@/dominio/qr";
 import { TABLAS } from "@/db/tipos";
@@ -86,6 +86,8 @@ export class ServidorDemo extends BaseLocal {
       await this.validarMarcaQr(fila as Asistencia, !!actual, usuarioId);
     }
 
+    if (validar && usuarioId) await this.validarCierre(tabla, fila, actual, usuarioId);
+
     let guardar = fila;
     if (validar && tabla === "solicitud_tutoria" && usuarioId) {
       guardar = await this.validarSolicitud(actual as SolicitudTutoria | undefined, fila as SolicitudTutoria, usuarioId);
@@ -94,6 +96,51 @@ export class ServidorDemo extends BaseLocal {
     guardar.updated_at = await this.marcaDeTiempo();
     guardar.updated_by = usuarioId;
     await t.put(guardar as never);
+  }
+
+  /** Año escolar al que pertenece una fila (para no modificar años cerrados). */
+  private async anioDe(tabla: NombreTabla, fila: Fila): Promise<string | null> {
+    const f = fila as unknown as Record<string, string>;
+    if (tabla === "calificacion") return ((await this.tabla("periodo").get(f.periodo_id)) as Periodo | undefined)?.anio_id ?? null;
+    if (tabla === "asistencia_sesion") return (await this.tabla("seccion").get(f.seccion_id))?.anio_id ?? null;
+    if (tabla === "asistencia") {
+      const ses = await this.tabla("asistencia_sesion").get(f.sesion_id);
+      return ses ? (await this.tabla("seccion").get(ses.seccion_id))?.anio_id ?? null : null;
+    }
+    if (tabla === "informe_tutor") return f.anio_id;
+    return null;
+  }
+
+  /** Igual que la migración 0013: año cerrado, situación final e informe del tutor. */
+  private async validarCierre(tabla: NombreTabla, fila: Fila, actual: Fila | undefined, usuarioId: string) {
+    const u = (await this.tabla("usuario").get(usuarioId)) as Usuario | undefined;
+    const gestion = !!u?.roles.some((r) => r === "director" || r === "subdirector");
+    if (["calificacion", "asistencia_sesion", "asistencia", "informe_tutor"].includes(tabla)) {
+      const anio = await this.anioDe(tabla, fila);
+      if (anio && ((await this.tabla("anio_escolar").get(anio)) as AnioEscolar | undefined)?.cerrado_en) {
+        throw new Error("El año escolar ya está cerrado: sus registros no se modifican.");
+      }
+    }
+    if (tabla === "matricula" && actual) {
+      const m = fila as Matricula;
+      const a = actual as Matricula;
+      const campos = ["situacion_propuesta", "situacion_final", "situacion_motivo", "asistencia_resumen", "resultado_recuperacion"] as const;
+      if (campos.some((k) => JSON.stringify(m[k] ?? null) !== JSON.stringify(a[k] ?? null)) && !gestion) {
+        throw new Error("Solo la dirección registra la situación final.");
+      }
+      if (m.situacion_final && m.situacion_propuesta && m.situacion_final !== m.situacion_propuesta && !m.situacion_motivo?.trim()) {
+        throw new Error("Indique el motivo para cambiar la situación propuesta.");
+      }
+    }
+    if (tabla === "informe_tutor" && !gestion) {
+      const i = fila as InformeTutor;
+      const activo = ((await this.tabla("anio_escolar").toArray()) as AnioEscolar[]).find((x) => x.activo && !x.eliminado)?.id;
+      const mats = (await this.tabla("matricula").where("estudiante_id").equals(i.estudiante_id).toArray()).filter((x) => !x.eliminado && x.anio_id === activo);
+      const secciones = await this.tabla("seccion").bulkGet(mats.map((x) => x.seccion_id));
+      if (i.tutor_id !== usuarioId || !secciones.some((sec) => sec?.tutor_id === usuarioId)) {
+        throw new Error("Solo el tutor(a) del estudiante o la dirección escriben este informe.");
+      }
+    }
   }
 
   /** Estudiantes "propios": el mismo estudiante o los hijos del apoderado (como mis_estudiantes()). */
@@ -207,6 +254,8 @@ export class TransporteDemo implements Transporte {
       ) as Fila[];
       // Los pedidos de ayuda son privados (como la política leer de la migración 0012).
       if (t === "solicitud_tutoria") cambiadas = cambiadas.filter((f) => !!yo && puedeVer(f as SolicitudTutoria, yo));
+      // El informe del tutor es interno: solo el personal lo recibe (política leer de la migración 0013).
+      if (t === "informe_tutor" && !yo?.roles.some((r) => ["director", "subdirector", "docente", "tutor", "auxiliar"].includes(r))) cambiadas = [];
       if (cambiadas.length) filas[t] = cambiadas;
       for (const f of cambiadas) if ((f.updated_at ?? "") > max) max = f.updated_at!;
     }

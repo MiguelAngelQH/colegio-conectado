@@ -46,6 +46,8 @@ export interface AnioEscolar extends Fila {
   anio: number;
   regimen: "bimestre" | "trimestre";
   activo: boolean;
+  /** Año cerrado por la dirección: sus notas y asistencia ya no se modifican. */
+  cerrado_en?: string | null;
 }
 
 export interface Periodo extends Fila {
@@ -105,11 +107,36 @@ export interface Estudiante extends Fila {
   codigo_carne: string;
 }
 
+export type SituacionFinal = "PRO" | "RR" | "PER";
+
+export interface ResumenAsistencia { P: number; T: number; F: number; J: number; porcentaje: number | null }
+
 export interface Matricula extends Fila {
   anio_id: string;
   seccion_id: string;
   estudiante_id: string;
   estado: "matriculado" | "retirado" | "trasladado";
+  /** Propuesta calculada por la app al cerrar el año (RVM 094-2020). */
+  situacion_propuesta?: SituacionFinal | null;
+  /** Confirmada por la dirección (con motivo si difiere de la propuesta). */
+  situacion_final?: SituacionFinal | null;
+  situacion_motivo?: string | null;
+  /** Guardado al cerrar el año: así el historial no depende de las sesiones de ese año. */
+  asistencia_resumen?: ResumenAsistencia | null;
+  /** Resultado de la recuperación pedagógica (enero y febrero) de quien quedó en RR. */
+  resultado_recuperacion?: "PRO" | "PER" | null;
+}
+
+/** Informe del tutor al cerrar el año, para quien reciba al estudiante. Solo lo lee el personal. */
+export interface InformeTutor extends Fila {
+  estudiante_id: string;
+  anio_id: string;
+  tutor_id: string;
+  fortalezas: string | null;
+  dificultades: string | null;
+  recomendaciones: string | null;
+  apoyos: string | null;
+  intereses: string | null;
 }
 
 export interface Apoderado extends Fila {
@@ -305,6 +332,7 @@ export interface Tablas {
   asistencia: Asistencia;
   justificacion: Justificacion;
   solicitud_tutoria: SolicitudTutoria;
+  informe_tutor: InformeTutor;
   observacion: Observacion;
   sesion_tutoria: SesionTutoria;
   entrevista: Entrevista;
@@ -339,6 +367,7 @@ export const INDICES: Record<NombreTabla, string> = {
   asistencia: "id, sesion_id, estudiante_id, [sesion_id+estudiante_id]",
   justificacion: "id, estudiante_id, asistencia_id, estado",
   solicitud_tutoria: "id, estudiante_id, solicitante_id, tutor_id, estado",
+  informe_tutor: "id, estudiante_id, anio_id",
   observacion: "id, estudiante_id, autor_id",
   sesion_tutoria: "id, seccion_id",
   entrevista: "id, estudiante_id, tutor_id",
