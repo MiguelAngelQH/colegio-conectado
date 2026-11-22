@@ -3,7 +3,7 @@
 import cneb from "./cneb.json";
 import { idCalificacion, idDeterministico } from "@/dominio/notas";
 import type {
-  AnioEscolar, Apoderado, ObservacionMonitoreo, Asistencia, AsistenciaSesion, Incidencia, IncidenciaAccion, Justificacion, Observacion, SesionTutoria, Area, Calificacion, Colegio, Comunicado, Competencia, DocenteAsignacion,
+  AnioEscolar, Apoderado, InformeTutor, ObservacionMonitoreo, Asistencia, AsistenciaSesion, Incidencia, IncidenciaAccion, Justificacion, Observacion, SesionTutoria, Area, Calificacion, Colegio, Comunicado, Competencia, DocenteAsignacion,
   Estudiante, EstudianteApoderado, Fila, Grado, Matricula, NivelLogro, NombreTabla, Periodo, Rol, Seccion, Usuario,
 } from "@/db/tipos";
 
@@ -88,7 +88,7 @@ const hoyLocal = () => {
 };
 
 /** Cambia este número cuando cambien los datos de demo: los equipos vuelven a sembrar. */
-export const VERSION_DEMO = 11;
+export const VERSION_DEMO = 12;
 
 export async function datosDemo(hoyReal = hoyLocal()): Promise<Partial<Record<NombreTabla, Fila[]>>> {
   const r = rng(42);
@@ -225,6 +225,64 @@ export async function datosDemo(hoyReal = hoyLocal()): Promise<Partial<Record<No
     pendientes.map(async (c) => ({ ...c, id: await idCalificacion(c.estudiante_id, c.competencia_id, c.periodo_id) })),
   );
 
+  // ------------------------------------------------------------------ año anterior (historial)
+  // 2.º B cursó 1.º B el año pasado: notas, situación final, asistencia e informes de su tutora de
+  // entonces. Así el historial muestra lo que vería un docente que recibe a la sección.
+  const anioPrevio: AnioEscolar = {
+    id: id("f0000000", 2), colegio_id: CID, anio: anioNum - 1, regimen: "bimestre", activo: false, cerrado_en: `${anioNum - 1}-12-20T17:00:00.000Z`,
+  };
+  const periodosPrevios: Periodo[] = rangos.map(([inicio, fin], i) => ({
+    id: id("f1000000", 5 + i), colegio_id: CID, anio_id: anioPrevio.id, numero: i + 1,
+    nombre: `${["I", "II", "III", "IV"][i]} Bimestre`, inicio: `${anioNum - 1}-${inicio}`, fin: `${anioNum - 1}-${fin}`, estado: "cerrado",
+  }));
+  const secPrevia: Seccion = { id: id("f3000000", 50), colegio_id: CID, anio_id: anioPrevio.id, grado_id: id("f2000000", 11), letra: "B", tutor_id: uGutierrez.id };
+  const deSecSec = porSeccion.get(secSec.id)!;
+  const azarPrevio = rng(99);
+  const matriculasPrevias: Matricula[] = deSecSec.map((e, i) => {
+    const F = Math.floor(azarPrevio() * 6), T = Math.floor(azarPrevio() * 5), J = Math.floor(azarPrevio() * 3), total = 150;
+    const P = total - F - T - J;
+    const juan = e.nombres === "Juan";
+    return {
+      id: id("f6000000", 900 + i), colegio_id: CID, anio_id: anioPrevio.id, seccion_id: secPrevia.id, estudiante_id: e.id, estado: "matriculado",
+      situacion_propuesta: juan ? "RR" : "PRO", situacion_final: juan ? "RR" : "PRO", situacion_motivo: null,
+      resultado_recuperacion: juan ? "PRO" : null,
+      asistencia_resumen: { P, T, F: juan ? F + 9 : F, J, porcentaje: Math.round(((P + T) / (P + T + (juan ? F + 9 : F))) * 100) },
+    };
+  });
+  const pendientesPrevias: Calificacion[] = [];
+  for (const cod of ["MAT", "COM", "CYT", "CCSS"]) {
+    const ar = area("secundaria", cod);
+    deSecSec.forEach((e) => {
+      periodosPrevios.forEach((p, ip) => {
+        for (const c of competencias.filter((k) => k.area_id === ar.id)) {
+          // Mejora a lo largo del año: los primeros bimestres son un poco más bajos.
+          const n = elegir((dificultad[cod] ?? 0) + (habilidad.get(e.id) ?? 0) + (3 - ip) * 0.03);
+          pendientesPrevias.push({
+            id: "", colegio_id: CID, estudiante_id: e.id, competencia_id: c.id, periodo_id: p.id, seccion_id: secPrevia.id, nivel_logro: n,
+            conclusion: n === "B" || n === "C" ? (cod === "MAT" ? CONCLUSIONES : CONCLUSIONES_GENERALES)[n][0] : null,
+          });
+        }
+      });
+    });
+  }
+  const califsPrevias: Calificacion[] = await Promise.all(
+    pendientesPrevias.map(async (c) => ({ ...c, id: await idCalificacion(c.estudiante_id, c.competencia_id, c.periodo_id) })),
+  );
+  const INFORMES: Record<string, [string, string, string, string | null, string]> = {
+    Luis: ["Colaborador y respetuoso; muy bueno en Ciencia.", "Se distrae cuando el trabajo es individual y largo.", "Darle tareas cortas con metas claras y revisar avances.", null, "Fútbol, robótica."],
+    Ana: ["Ordenada y constante. Excelente en Comunicación.", "Muy tímida para exponer frente al grupo.", "Empezar con exposiciones en parejas; reforzar su confianza.", null, "Dibujo, lectura."],
+    Juan: ["Creativo y con buena disposición para los trabajos prácticos.", "Muchas faltas en el segundo semestre por trabajo familiar.", "Coordinar con la familia desde el inicio; seguimiento semanal de asistencia.", "Requirió recuperación en Matemática (aprobó en febrero).", "Música, carpintería."],
+    Rosa: ["Líder natural; ayuda a sus compañeros.", "Le cuesta Matemática.", "Ofrecerle reforzamiento temprano en Matemática.", "Usa lentes: sentarla adelante.", "Vóley, danza."],
+  };
+  const informesPrevios: InformeTutor[] = deSecSec.filter((e) => INFORMES[e.nombres]).map((e, i) => {
+    const [fortalezas, dificultades, recomendaciones, apoyos, intereses] = INFORMES[e.nombres];
+    return { id: id("fe300000", i + 1), colegio_id: CID, estudiante_id: e.id, anio_id: anioPrevio.id, tutor_id: uGutierrez.id, fortalezas, dificultades, recomendaciones, apoyos, intereses };
+  });
+  const observacionesPrevias: Observacion[] = [
+    { id: id("fb000000", 50), colegio_id: CID, estudiante_id: deSecSec[0].id, autor_id: uGutierrez.id, fecha: `${anioNum - 1}-09-12`, tipo: "felicitacion", texto: "Primer puesto en la feria de ciencias del colegio." },
+    { id: id("fb000000", 51), colegio_id: CID, estudiante_id: deSecSec.find((e) => e.nombres === "Juan")!.id, autor_id: uGutierrez.id, fecha: `${anioNum - 1}-10-03`, tipo: "conducta", texto: "Acumula faltas; se citó a la familia." },
+  ];
+
   // ------------------------------------------------------------------ asistencia
   // Días hábiles de las últimas 14 semanas (sin hoy, para que el docente pueda tomar la de hoy).
   const dias: string[] = [];
@@ -323,10 +381,11 @@ export async function datosDemo(hoyReal = hoyLocal()): Promise<Partial<Record<No
   }];
 
   return {
-    colegio: [colegio], usuario: usuarios, anio_escolar: [anio], periodo: periodos, grado: grados,
-    seccion: secciones, area: areas, competencia: competencias, docente_asignacion: asignaciones,
-    estudiante: estudiantes, matricula: matriculas, apoderado: [apoderado], estudiante_apoderado: [vinculo],
-    calificacion: califs, comunicado: comunicados, observacion: observaciones, sesion_tutoria: sesionesTutoria,
+    colegio: [colegio], usuario: usuarios, anio_escolar: [anioPrevio, anio], periodo: [...periodosPrevios, ...periodos], grado: grados,
+    seccion: [secPrevia, ...secciones], area: areas, competencia: competencias, docente_asignacion: asignaciones,
+    estudiante: estudiantes, matricula: [...matriculasPrevias, ...matriculas], apoderado: [apoderado], estudiante_apoderado: [vinculo],
+    calificacion: [...califsPrevias, ...califs], comunicado: comunicados, observacion: [...observacionesPrevias, ...observaciones], sesion_tutoria: sesionesTutoria,
+    informe_tutor: informesPrevios,
     incidencia: incidencias, incidencia_accion: acciones, asistencia_sesion: sesionesAsis, asistencia: marcasAsis,
     justificacion: justificaciones, observacion_monitoreo: monitoreo,
   };
