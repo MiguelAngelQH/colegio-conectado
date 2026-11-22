@@ -8,6 +8,8 @@ import { indicadores } from "./seguimiento";
 export interface EntradaPanel {
   hoy: string; // aaaa-mm-dd
   periodoId: string | null;
+  /** Año escolar del panel: la asistencia de otros años (historial) no cuenta. */
+  anio?: number;
   estudiantes: Estudiante[];
   matriculas: Matricula[]; // del año activo, ya filtradas por sección/nivel si corresponde
   seccionNombre: (id: string) => string;
@@ -75,7 +77,8 @@ export function calcularPanel(e: EntradaPanel, semanasAtras = 14, mesesAtras = 6
   const seccionDe = new Map(mats.map((m) => [m.estudiante_id, m.seccion_id]));
   const secciones = new Set(mats.map((m) => m.seccion_id));
   const sesion = new Map(e.sesiones.filter((s) => !s.eliminado).map((s) => [s.id, s]));
-  const marcas = e.asistencias.filter((a) => !a.eliminado && ids.has(a.estudiante_id) && sesion.has(a.sesion_id));
+  const marcas = e.asistencias.filter((a) => !a.eliminado && ids.has(a.estudiante_id) && sesion.has(a.sesion_id)
+    && (!e.anio || sesion.get(a.sesion_id)!.fecha.startsWith(String(e.anio))));
   const fechaDe = (a: Asistencia) => sesion.get(a.sesion_id)!.fecha;
 
   // Asistencia de los últimos 30 días.

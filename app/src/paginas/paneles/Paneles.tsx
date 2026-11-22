@@ -88,7 +88,7 @@ export function Paneles() {
     if (!base) return null;
     const visibles = new Set((seccionId ? seccionesFiltradas.filter((s) => s.id === seccionId) : seccionesFiltradas).map((s) => s.id));
     return calcularPanel({
-      hoy: hoyISO(), periodoId: periodoId || null, estudiantes: base.estudiantes,
+      hoy: hoyISO(), periodoId: periodoId || null, anio: base.anio.anio, estudiantes: base.estudiantes,
       matriculas: base.matriculas.filter((m) => visibles.has(m.seccion_id)),
       seccionNombre: (id) => base.secciones.find((s) => s.id === id)?.nombre ?? "",
       sesiones: base.sesiones, asistencias: base.asistencias, calificaciones: base.calificaciones, competencias: base.competencias,

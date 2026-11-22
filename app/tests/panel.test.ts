@@ -91,6 +91,12 @@ describe("panel del colegio", () => {
     expect(p.incidenciasPorMes[4].n).toBe(0);
   });
 
+  it("la asistencia de otros años (historial) no cuenta en el panel del año", () => {
+    const p = calcularPanel(entrada({ anio: 2025 }));
+    expect(p.asistencia30).toBeNull();
+    expect(p.enRiesgo.every((r) => !r.alertas.some((a) => a.includes("faltas")))).toBe(true);
+  });
+
   it("filtra por sección: los indicadores solo cuentan a sus estudiantes", () => {
     const p = calcularPanel(entrada({ matriculas: [mat("e1")] }));
     expect(p.matriculados).toBe(1);
