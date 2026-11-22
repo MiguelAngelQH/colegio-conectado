@@ -1,14 +1,16 @@
 import { useEffect, useMemo, useState } from "react";
-import { CalendarPlus, CalendarRange, Lock, Save, TriangleAlert } from "lucide-react";
+import { useLiveQuery } from "dexie-react-hooks";
+import { CalendarPlus, CalendarRange, Lock, RotateCcw, Save, TriangleAlert } from "lucide-react";
 import { db, useApp } from "@/app/contexto";
-import { useEstructura } from "@/datos/consultas";
+import { nombreCompleto, nombreSeccion, useEstructura } from "@/datos/consultas";
 import { nuevoId } from "@/db/local";
-import { guardarLote, type Escritura } from "@/db/repositorio";
-import type { Grado, Nivel, Periodo } from "@/db/tipos";
+import { guardarLote, vivas, type Escritura } from "@/db/repositorio";
+import type { Grado, Matricula, Nivel, Periodo } from "@/db/tipos";
+import { planificarPaso } from "@/dominio/pasoAnio";
 import { proponerPeriodos, validarPeriodos, type PeriodoBorrador, type Regimen } from "@/dominio/periodos";
 import { textoGuardado, useAvisar } from "@/ui/avisos";
 import { Aviso, Boton, BotonRegresar, Contenido, Dialogo, Encabezado, Gema, Tarjeta, orden } from "@/ui/componentes";
-import { Campo, Casilla, Entrada, Segmentado } from "@/ui/formulario";
+import { Campo, Casilla, Entrada, Segmentado, Selector } from "@/ui/formulario";
 
 const NOMBRE_GRADO = (nivel: Nivel, n: number) => (nivel === "primaria" ? `${n}.º grado` : `${n}.º año`);
 const GRADOS_POR_NIVEL: Record<Nivel, number> = { primaria: 6, secundaria: 5 };
@@ -77,6 +79,17 @@ function EditorPeriodos({ periodos, onCambio, cerrados = [] }: { periodos: Perio
   );
 }
 
+/** Año activo actual, con sus secciones, matrículas y asignaciones: base del paso al año siguiente. */
+async function datosAnioActual() {
+  const anio = vivas(await db.tabla("anio_escolar").toArray()).find((a) => a.activo);
+  if (!anio) return null;
+  const secciones = vivas(await db.tabla("seccion").where("anio_id").equals(anio.id).toArray());
+  const ids = new Set(secciones.map((x) => x.id));
+  const matriculas = vivas(await db.tabla("matricula").toArray()).filter((m) => m.anio_id === anio.id);
+  const asignaciones = vivas(await db.tabla("docente_asignacion").toArray()).filter((a) => ids.has(a.seccion_id));
+  return { anio, secciones, matriculas, asignaciones };
+}
+
 function NuevoAnio({ anioSugerido, grados, hayAnterior, onCancelar, onCreado }: {
   anioSugerido: number; grados: Grado[]; hayAnterior: boolean; onCancelar?: () => void; onCreado(): void;
 }) {
@@ -90,6 +103,17 @@ function NuevoAnio({ anioSugerido, grados, hayAnterior, onCancelar, onCreado }: 
   });
   const [periodos, setPeriodos] = useState<PeriodoBorrador[]>(() => proponerPeriodos(anioSugerido, "bimestre"));
   const [guardando, setGuardando] = useState(false);
+  const [promover, setPromover] = useState(true);
+  const [mantenerDocentes, setMantenerDocentes] = useState(false);
+  const actual = useLiveQuery(datosAnioActual, []);
+  const vistaPrevia = useMemo(() => {
+    if (!actual) return null;
+    let n = 0;
+    return planificarPaso({
+      nuevoAnioId: "x", seccionesAnteriores: actual.secciones, matriculasAnteriores: actual.matriculas, grados,
+      mantenerDocentes, asignacionesAnteriores: actual.asignaciones, nuevoId: () => `x${++n}`,
+    });
+  }, [actual, grados, mantenerDocentes]);
   useEffect(() => setPeriodos(proponerPeriodos(anio, regimen)), [anio, regimen]);
   const errores = useMemo(() => validarPeriodos(anio, periodos), [anio, periodos]);
 
@@ -107,6 +131,16 @@ function NuevoAnio({ anioSugerido, grados, hayAnterior, onCancelar, onCreado }: 
       nuevoAnio.datos.id = anioId;
       escrituras.push(...periodos.map((p) => ({ tabla: "periodo" as const, datos: { ...p, anio_id: anioId, estado: "abierto" as const } })));
       escrituras.push(...gradosFaltantes(niveles, grados));
+      // Matrícula del nuevo año según la situación final de cada estudiante.
+      if (hayAnterior && promover && actual) {
+        const plan = planificarPaso({
+          nuevoAnioId: anioId, seccionesAnteriores: actual.secciones, matriculasAnteriores: actual.matriculas, grados,
+          mantenerDocentes, asignacionesAnteriores: actual.asignaciones, nuevoId,
+        });
+        escrituras.push(...plan.secciones.map((x) => ({ tabla: "seccion" as const, datos: x })));
+        escrituras.push(...plan.matriculas.map((x) => ({ tabla: "matricula" as const, datos: x })));
+        escrituras.push(...plan.asignaciones.map((x) => ({ tabla: "docente_asignacion" as const, datos: x })));
+      }
       await guardarLote(db, escrituras, colegioId);
       avisar(textoGuardado(`Año ${anio} creado`));
       onCreado();
@@ -126,10 +160,29 @@ function NuevoAnio({ anioSugerido, grados, hayAnterior, onCancelar, onCreado }: 
           <p className="text-sm text-tinta-suave">Las fechas se proponen según el calendario habitual; puede ajustarlas.</p>
         </div>
       </div>
-      {hayAnterior && (
+      {hayAnterior && actual && !actual.anio.cerrado_en && (
         <Aviso tipo="alerta" icono={TriangleAlert}>
-          Al crear el nuevo año, el actual queda como anterior (sus notas se conservan). Las secciones y matrículas del nuevo año se crean aparte.
+          El año {actual.anio.anio} aún no está cerrado. Conviene cerrarlo primero (Configuración, Cierre del año) para fijar la situación final de cada estudiante.
         </Aviso>
+      )}
+      {hayAnterior && (
+        <div className="space-y-2 rounded-2xl bg-white/40 p-4 ring-1 ring-white/80">
+          <Casilla marcada={promover} onCambio={setPromover}>Matricular a los estudiantes en su nuevo grado según la situación final</Casilla>
+          {promover && vistaPrevia && (
+            <ul className="space-y-0.5 pl-1 text-sm text-tinta-suave">
+              <li><strong className="text-tinta">{vistaPrevia.matriculas.length}</strong> matrículas en {vistaPrevia.secciones.length} secciones (mismas letras; el grado según su situación).</li>
+              <li><strong className="text-tinta">{vistaPrevia.egresados.length}</strong> egresan (5.º de secundaria promovidos).</li>
+              {vistaPrevia.pendientesRecuperacion.length > 0 && (
+                <li><strong className="text-tinta">{vistaPrevia.pendientesRecuperacion.length}</strong> pasan de grado pendientes de su recuperación: registre el resultado en enero o febrero.</li>
+              )}
+              {vistaPrevia.sinSituacion.length > 0 && (
+                <li className="text-amber-800"><strong>{vistaPrevia.sinSituacion.length}</strong> sin situación confirmada: se usa la propuesta de la app.</li>
+              )}
+            </ul>
+          )}
+          {promover && <Casilla marcada={mantenerDocentes} onCambio={setMantenerDocentes}>Mantener tutores y docentes en cada sección (mismo grado y letra)</Casilla>}
+          <p className="text-xs text-tinta-suave">El año actual y todo su historial se conservan. Los estudiantes nuevos se matriculan después, como siempre.</p>
+        </div>
       )}
       <div className="grid gap-4 sm:grid-cols-2">
         <Campo etiqueta="Año"><Entrada type="number" min={2020} max={2100} value={anio} onChange={(ev) => setAnio(+ev.target.value)} /></Campo>
@@ -153,6 +206,93 @@ function NuevoAnio({ anioSugerido, grados, hayAnterior, onCancelar, onCreado }: 
         <Boton icono={Save} onClick={crear} cargando={guardando} disabled={errores.length > 0 || niveles.length === 0}>Crear año {anio}</Boton>
       </div>
     </Tarjeta>
+  );
+}
+
+/** Estudiantes del año anterior en RR sin resultado de recuperación, con su matrícula de este año. */
+function RecuperacionPendiente() {
+  const { colegioId } = useApp();
+  const avisar = useAvisar();
+  const [abierto, setAbierto] = useState(false);
+  const [resultados, setResultados] = useState<Record<string, "PRO" | "PER">>({});
+  const datos = useLiveQuery(async () => {
+    const anios = vivas(await db.tabla("anio_escolar").toArray()).sort((a, b) => b.anio - a.anio);
+    const actual = anios.find((a) => a.activo);
+    const anterior = actual ? anios.find((a) => a.anio < actual.anio) : undefined;
+    if (!actual || !anterior) return null;
+    const mats = vivas(await db.tabla("matricula").toArray());
+    const pendientes = mats.filter((m) => m.anio_id === anterior.id && m.situacion_final === "RR" && !m.resultado_recuperacion);
+    const [estudiantes, secciones, grados] = await Promise.all([
+      db.tabla("estudiante").bulkGet(pendientes.map((m) => m.estudiante_id)), db.tabla("seccion").toArray(), db.tabla("grado").toArray(),
+    ]);
+    return {
+      actual, grados, secciones: vivas(secciones),
+      filas: pendientes
+        .map((m, i) => ({ anterior: m, estudiante: estudiantes[i], nueva: mats.find((x) => x.anio_id === actual.id && x.estudiante_id === m.estudiante_id) as Matricula | undefined }))
+        .filter((f) => !!f.estudiante),
+    };
+  }, []);
+  if (!datos || datos.filas.length === 0) return null;
+  const nombreSec = (id: string) => {
+    const s = datos.secciones.find((x) => x.id === id);
+    return s ? nombreSeccion(datos.grados.find((g) => g.id === s.grado_id), s) : "-";
+  };
+
+  const guardarResultados = async () => {
+    const escrituras: Escritura[] = [];
+    for (const f of datos.filas) {
+      const r = resultados[f.anterior.id];
+      if (!r) continue;
+      escrituras.push({ tabla: "matricula", datos: { id: f.anterior.id, resultado_recuperacion: r } });
+      // Si no aprobó la recuperación, permanece en el grado del año anterior (misma letra).
+      if (r === "PER" && f.nueva) {
+        const secAnt = datos.secciones.find((s) => s.id === f.anterior.seccion_id);
+        if (!secAnt) continue;
+        let destinoId = datos.secciones.find((s) => s.anio_id === datos.actual.id && s.grado_id === secAnt.grado_id && s.letra === secAnt.letra)?.id;
+        if (!destinoId) {
+          destinoId = nuevoId();
+          escrituras.push({ tabla: "seccion", datos: { id: destinoId, anio_id: datos.actual.id, grado_id: secAnt.grado_id, letra: secAnt.letra, tutor_id: null } });
+        }
+        escrituras.push({ tabla: "matricula", datos: { id: f.nueva.id, seccion_id: destinoId } });
+      }
+    }
+    await guardarLote(db, escrituras, colegioId);
+    avisar(textoGuardado("Resultados de recuperación guardados"));
+    setResultados({});
+    setAbierto(false);
+  };
+
+  return (
+    <>
+      <Tarjeta className="aparecer flex flex-wrap items-center gap-4 p-5">
+        <Gema icono={RotateCcw} tono="tono-ambar" />
+        <div className="min-w-0 flex-1">
+          <h2 className="font-bold">Recuperación pedagógica</h2>
+          <p className="text-sm text-tinta-suave">{datos.filas.length} estudiantes esperan el resultado de su recuperación (enero y febrero).</p>
+        </div>
+        <Boton variante="vidrio" onClick={() => setAbierto(true)}>Registrar resultados</Boton>
+      </Tarjeta>
+      <Dialogo abierto={abierto} titulo="Resultado de la recuperación" onCerrar={() => setAbierto(false)}
+        acciones={<>
+          <Boton variante="fantasma" onClick={() => setAbierto(false)}>Cancelar</Boton>
+          <Boton icono={Save} onClick={() => void guardarResultados()} disabled={!Object.keys(resultados).length}>Guardar</Boton>
+        </>}>
+        <ul className="space-y-3 pt-2 text-tinta">
+          {datos.filas.map((f) => (
+            <li key={f.anterior.id} className="space-y-1">
+              <p className="font-semibold">{nombreCompleto(f.estudiante!)}</p>
+              <p className="text-xs text-tinta-suave">Hoy en {f.nueva ? nombreSec(f.nueva.seccion_id) : "sin matrícula"} · el año pasado en {nombreSec(f.anterior.seccion_id)}</p>
+              <Selector value={resultados[f.anterior.id] ?? ""} aria-label={`Resultado de ${nombreCompleto(f.estudiante!)}`}
+                onChange={(e) => setResultados({ ...resultados, [f.anterior.id]: e.target.value as "PRO" | "PER" })}>
+                <option value="">Pendiente</option>
+                <option value="PRO">Aprobó: continúa en su nuevo grado</option>
+                <option value="PER">No aprobó: permanece en el grado anterior</option>
+              </Selector>
+            </li>
+          ))}
+        </ul>
+      </Dialogo>
+    </>
   );
 }
 
@@ -206,6 +346,8 @@ function EditarAnio({ anio, regimen, periodos, grados, onNuevo }: {
           <p className="text-sm text-tinta-suave">Régimen por {regimen === "bimestre" ? "bimestres" : "trimestres"}</p>
         </div>
       </Tarjeta>
+
+      <RecuperacionPendiente />
 
       <Tarjeta className="aparecer space-y-5 p-5 sm:p-6" style={orden(2)}>
         <div>
