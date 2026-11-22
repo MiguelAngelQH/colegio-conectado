@@ -4,6 +4,7 @@ import { db } from "@/app/contexto";
 import { vivas } from "@/db/repositorio";
 import type { Estudiante, Usuario } from "@/db/tipos";
 import { DESCRIPCION_NIVEL, NIVELES, armarLibreta } from "@/dominio/notas";
+import { NOMBRE_SITUACION } from "@/dominio/promocion";
 import { anioActivo, nombreCompleto, seccionesDetalle } from "./consultas";
 
 const TEAL: [number, number, number] = [11, 110, 106];
@@ -81,6 +82,8 @@ export async function descargarLibretas(estudianteIds: string[], nombreArchivo: 
         if (i === 0) fila.push({ content: f.area.nombre, rowSpan: f.competencias.length, styles: { fontStyle: "bold", valign: "middle" } });
         fila.push(c.competencia.nombre);
         c.niveles.forEach((n) => fila.push(n ?? ""));
+        // Nivel final del año: el del último periodo calificado (RVM 094-2020).
+        fila.push([...c.niveles].reverse().find(Boolean) ?? "");
         fila.push(c.conclusion ?? "");
         cuerpo.push(fila);
       });
@@ -88,7 +91,7 @@ export async function descargarLibretas(estudianteIds: string[], nombreArchivo: 
 
     autoTable(doc, {
       startY: (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 4,
-      head: [["Área", "Competencias", ...pers.map((p) => p.nombre.split(" ")[0]), "Conclusión descriptiva"]],
+      head: [["Área", "Competencias", ...pers.map((p) => p.nombre.split(" ")[0]), "Final", "Conclusión descriptiva"]],
       body: cuerpo.length ? cuerpo : [[{ content: "Aún no hay calificaciones registradas.", styles: { halign: "center" } } as never]],
       theme: "grid",
       styles: { fontSize: 7.5, cellPadding: 1.6, lineColor: [200, 214, 216], lineWidth: 0.2, textColor: [11, 46, 51] },
@@ -96,11 +99,11 @@ export async function descargarLibretas(estudianteIds: string[], nombreArchivo: 
       columnStyles: {
         0: { cellWidth: 26 },
         1: { cellWidth: 62 },
-        ...Object.fromEntries(pers.map((_, i) => [i + 2, { cellWidth: 9, halign: "center", fontStyle: "bold" }])),
+        ...Object.fromEntries([...pers, null].map((_, i) => [i + 2, { cellWidth: 9, halign: "center", fontStyle: "bold" }])),
       },
       didParseCell: (d) => {
         const v = String(d.cell.raw ?? "");
-        if (d.section === "body" && d.column.index >= 2 && d.column.index < 2 + pers.length && COLOR_NIVEL[v]) {
+        if (d.section === "body" && d.column.index >= 2 && d.column.index <= 2 + pers.length && COLOR_NIVEL[v]) {
           d.cell.styles.fillColor = COLOR_NIVEL[v].fondo;
           d.cell.styles.textColor = COLOR_NIVEL[v].texto;
         }
@@ -108,6 +111,19 @@ export async function descargarLibretas(estudianteIds: string[], nombreArchivo: 
     });
 
     let y = (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 5;
+    // Al cerrar el año: asistencia del año y situación final confirmada por la dirección.
+    const resumen = mat?.asistencia_resumen;
+    if (mat?.situacion_final || resumen) {
+      autoTable(doc, {
+        startY: y, theme: "plain", styles: { fontSize: 8.5, cellPadding: 1.2 },
+        columnStyles: { 0: { fontStyle: "bold", cellWidth: 38 }, 2: { fontStyle: "bold", cellWidth: 30 } },
+        body: [[
+          "Situación final", mat?.situacion_final ? `${mat.situacion_final} - ${NOMBRE_SITUACION[mat.situacion_final]}` : "-",
+          "Asistencia", resumen ? `${resumen.porcentaje ?? "-"}% · ${resumen.F} faltas · ${resumen.T} tardanzas · ${resumen.J} justificadas` : "-",
+        ]],
+      });
+      y = (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 4;
+    }
     autoTable(doc, {
       startY: y,
       head: [["Escala de calificación", ""]],
