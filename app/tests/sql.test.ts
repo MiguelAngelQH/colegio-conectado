@@ -343,7 +343,9 @@ describe("asistencia con QR", () => {
     expect((await pull(U.docente)).filas.asistencia_secreto?.map((s) => s.id)).toEqual([SESION]);
     expect((await pull(U.estudiante)).filas.asistencia_secreto).toBeUndefined();
     expect((await pull(U.ugel)).filas.asistencia_secreto).toBeUndefined();
-    expect((await pull(U.estudiante)).filas.asistencia_sesion).toBeUndefined();
+    // El estudiante solo ve las sesiones donde tiene su propia marca (fecha y clase), nunca el secreto.
+    const p = await pull(U.estudiante);
+    expect((p.filas.asistencia_sesion ?? []).every((s) => (p.filas.asistencia ?? []).some((a) => a.sesion_id === s.id && a.estudiante_id === E1))).toBe(true);
   });
 
   it("devuelve la hora del servidor para corregir relojes", async () => {
@@ -560,5 +562,68 @@ describe("pedidos de ayuda al tutor", () => {
   it("la dirección atiende los casos de acoso", async () => {
     const [r] = await push(U.director, [{ tabla: "solicitud_tutoria", parche: { id: S(4), estado: "vista", respuesta: "Vamos a conversar con tu tutora hoy" } }]);
     expect(r.estado).toBe("ok");
+  });
+});
+
+describe("cierre del año e historial", () => {
+  const I = (n: number) => `61000000-0000-4000-8000-${n.toString(16).padStart(12, "0")}`;
+  const MAT_E1 = "35000000-0000-4000-8000-000000000001";
+  const informe = (id: string, estudiante: string, tutor: string) => ({
+    tabla: "informe_tutor",
+    parche: { id, colegio_id: COL, estudiante_id: estudiante, anio_id: ANIO, tutor_id: tutor, fortalezas: "Participa", recomendaciones: "Sentarlo adelante" },
+  });
+  const ids = async (uid: string, tabla: string) => ((await pull(uid)).filas[tabla] ?? []).map((f) => f.id).sort();
+
+  it("solo la dirección fija la situación final, y con motivo si cambia la propuesta", async () => {
+    const r1 = await push(U.docente, [{ tabla: "matricula", parche: { id: MAT_E1, situacion_final: "PRO" } }]);
+    expect(r1[0].estado).toBe("rechazado");
+    const r2 = await push(U.director, [
+      { tabla: "matricula", parche: { id: MAT_E1, situacion_propuesta: "RR", situacion_final: "PRO" } },
+      { tabla: "matricula", parche: { id: MAT_E1, situacion_propuesta: "RR", situacion_final: "PRO", situacion_motivo: "Aprobó la evaluación de recuperación interna" } },
+    ]);
+    expect(r2.map((x) => x.estado)).toEqual(["rechazado", "ok"]);
+  });
+
+  it("el informe del tutor lo escribe el tutor y lo lee solo el personal", async () => {
+    const r = await push(U.docente, [informe(I(1), E1, U.docente)]);
+    expect(r[0].estado).toBe("ok");
+    expect(await ids(U.director, "informe_tutor")).toEqual([I(1)]);
+    expect(await ids(U.docente, "informe_tutor")).toEqual([I(1)]);
+    expect(await ids(U.apoderado, "informe_tutor")).toEqual([]);
+    expect(await ids(U.estudiante, "informe_tutor")).toEqual([]);
+    expect(await ids(U.ugel, "informe_tutor")).toEqual([]);
+    // Un docente no puede firmar como tutor de un estudiante que no es de su tutoría.
+    const [otro] = await push(U.docente, [informe(I(2), E3, U.docente)]);
+    expect(otro.estado).toBe("rechazado");
+  });
+
+  it("con el año cerrado ya no se registran notas ni se editan informes", async () => {
+    const [r] = await push(U.director, [{ tabla: "anio_escolar", parche: { id: ANIO, cerrado_en: "2026-12-20T00:00:00Z" } }]);
+    expect(r.estado).toBe("ok");
+    const [n] = await push(U.docente, [nota(idNota())]);
+    expect(n).toMatchObject({ estado: "rechazado", motivo: expect.stringContaining("cerrado") });
+    const [i] = await push(U.docente, [{ tabla: "informe_tutor", parche: { id: I(1), fortalezas: "Cambiado" } }]);
+    expect(i.estado).toBe("rechazado");
+  });
+
+  it("en el año nuevo cada docente ve a sus estudiantes actuales con todo su historial, y deja de ver a los anteriores", async () => {
+    const ANIO27 = "30000000-0000-4000-8000-000000000027";
+    const SEC27 = "33000000-0000-4000-8000-000000000027";
+    await db.exec(`
+      insert into informe_tutor (id, colegio_id, estudiante_id, anio_id, tutor_id, fortalezas) values ('${I(3)}', '${COL}', '${E2}', '${ANIO}', '${U.director}', 'Muy responsable');
+      update anio_escolar set activo = false where id = '${ANIO}';
+      insert into anio_escolar (id, colegio_id, anio, regimen, activo) values ('${ANIO27}', '${COL}', 2027, 'bimestre', true);
+      insert into seccion (id, colegio_id, anio_id, grado_id, letra, tutor_id) values ('${SEC27}', '${COL}', '${ANIO27}', '${GRADO}', 'A', '${U.docente}');
+      insert into matricula (id, colegio_id, anio_id, seccion_id, estudiante_id) values ('35000000-0000-4000-8000-000000000027', '${COL}', '${ANIO27}', '${SEC27}', '${E2}');
+    `);
+    expect(await ids(U.docente, "estudiante")).toEqual([E2]);
+    // Ve el informe que dejó el tutor del año anterior, pero ya no el de su antiguo estudiante.
+    expect(await ids(U.docente, "informe_tutor")).toEqual([I(3)]);
+    // Las sesiones de asistencia del año pasado de E2 siguen legibles para resumir su historial.
+    const sesiones = (await pull(U.docente)).filas.asistencia_sesion ?? [];
+    const marcasE2 = ((await pull(U.docente)).filas.asistencia ?? []).filter((a) => a.estudiante_id === E2);
+    expect(marcasE2.every((a) => sesiones.some((s) => s.id === a.sesion_id))).toBe(true);
+    // La dirección sigue viendo a todos.
+    expect((await ids(U.director, "estudiante")).length).toBe(3);
   });
 });
