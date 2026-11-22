@@ -2,7 +2,7 @@
 import { useLiveQuery } from "dexie-react-hooks";
 import { db } from "@/app/contexto";
 import { vivas } from "@/db/repositorio";
-import type { AnioEscolar, Grado, Periodo, Seccion, Usuario } from "@/db/tipos";
+import type { AnioEscolar, Asistencia, AsistenciaSesion, Grado, Matricula, Periodo, Seccion, Usuario } from "@/db/tipos";
 
 export interface SeccionDetalle extends Seccion {
   grado: Grado | undefined;
@@ -21,6 +21,30 @@ export const NIVEL_TEXTO = { primaria: "Primaria", secundaria: "Secundaria" } as
 export async function anioActivo(): Promise<AnioEscolar | undefined> {
   const anios = vivas(await db.tabla("anio_escolar").toArray());
   return anios.find((a) => a.activo) ?? anios.sort((a, b) => b.anio - a.anio)[0];
+}
+
+/**
+ * Matrícula del estudiante en el año activo. Con varios años guardados (historial), un estudiante
+ * tiene una matrícula por año: nunca se toma "cualquiera".
+ */
+export async function matriculaActual(estudianteId: string): Promise<Matricula | undefined> {
+  const anio = await anioActivo();
+  if (!anio) return undefined;
+  return vivas(await db.tabla("matricula").where("estudiante_id").equals(estudianteId).toArray())
+    .find((m) => m.anio_id === anio.id && m.estado === "matriculado");
+}
+
+/** El año escolar peruano coincide con el año calendario (marzo a diciembre). */
+export const esDelAnio = (fecha: string, anio: Pick<AnioEscolar, "anio">) => fecha.slice(0, 4) === String(anio.anio);
+
+/** Marcas de asistencia de un estudiante en el año activo, con la fecha de su sesión. */
+export async function asistenciaDelAnio(estudianteId: string): Promise<{ marcas: Asistencia[]; sesiones: Map<string, AsistenciaSesion> }> {
+  const anio = await anioActivo();
+  const todas = vivas(await db.tabla("asistencia").where("estudiante_id").equals(estudianteId).toArray());
+  const sesiones = new Map((await db.tabla("asistencia_sesion").bulkGet([...new Set(todas.map((m) => m.sesion_id))]))
+    .filter((s): s is AsistenciaSesion => !!s).map((s) => [s.id, s]));
+  const fecha = (m: Asistencia) => sesiones.get(m.sesion_id)?.fecha ?? (m.marcado_en ?? "").slice(0, 10);
+  return { marcas: anio ? todas.filter((m) => esDelAnio(fecha(m), anio)) : todas, sesiones };
 }
 
 export async function seccionesDetalle(anioId: string): Promise<SeccionDetalle[]> {

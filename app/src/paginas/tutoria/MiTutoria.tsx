@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useLiveQuery } from "dexie-react-hooks";
 import { HandHeart, LifeBuoy, Send, ShieldAlert, StickyNote, X } from "lucide-react";
 import { db, useApp } from "@/app/contexto";
+import { matriculaActual } from "@/datos/consultas";
 import { useHijos } from "@/datos/familia";
 import { guardar, vivas } from "@/db/repositorio";
 import type { Observacion, SolicitudTutoria } from "@/db/tipos";
@@ -94,7 +95,7 @@ export function MiTutoria() {
 
   const datos = useLiveQuery(async () => {
     if (!usuario || !hijo) return null;
-    const mat = vivas(await db.tabla("matricula").where("estudiante_id").equals(hijo.id).toArray()).find((m) => m.estado === "matriculado");
+    const mat = await matriculaActual(hijo.id);
     const sec = mat ? await db.tabla("seccion").get(mat.seccion_id) : undefined;
     const tutor = sec?.tutor_id ? await db.tabla("usuario").get(sec.tutor_id) : undefined;
     const obs = vivas(await db.tabla("observacion").where("estudiante_id").equals(hijo.id).toArray()).sort((a, b) => b.fecha.localeCompare(a.fecha));

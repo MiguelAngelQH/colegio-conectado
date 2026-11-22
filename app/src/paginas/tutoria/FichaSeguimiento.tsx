@@ -4,7 +4,7 @@ import { useLiveQuery } from "dexie-react-hooks";
 import { CalendarX, MessageSquarePlus, MessagesSquare, Phone, ShieldAlert, StickyNote, TriangleAlert } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { db, useApp } from "@/app/contexto";
-import { estudiantesDeSeccion, nombreCompleto, nombreSeccion } from "@/datos/consultas";
+import { estudiantesDeSeccion, matriculaActual, nombreCompleto, nombreSeccion } from "@/datos/consultas";
 import { vivas } from "@/db/repositorio";
 import type { EntidadEvidencia, Observacion } from "@/db/tipos";
 import { Boton, BotonRegresar, Contenido, Encabezado, Gema, Tarjeta, cx, iniciales, orden } from "@/ui/componentes";
@@ -36,7 +36,7 @@ export function FichaSeguimiento() {
   const datos = useLiveQuery(async () => {
     const est = await db.tabla("estudiante").get(id!);
     if (!est) return null;
-    const mat = vivas(await db.tabla("matricula").where("estudiante_id").equals(est.id).toArray()).find((m) => m.estado === "matriculado");
+    const mat = await matriculaActual(est.id);
     const sec = mat ? await db.tabla("seccion").get(mat.seccion_id) : undefined;
     const grado = sec ? await db.tabla("grado").get(sec.grado_id) : undefined;
     const vinculos = vivas(await db.tabla("estudiante_apoderado").where("estudiante_id").equals(est.id).toArray());

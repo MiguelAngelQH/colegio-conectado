@@ -3,7 +3,7 @@ import { Route, Routes, useNavigate } from "react-router-dom";
 import { useLiveQuery } from "dexie-react-hooks";
 import { CalendarDays, ChevronRight, HandHeart, LifeBuoy, MessagesSquare, Plus, Save, TriangleAlert, UserRound, Users } from "lucide-react";
 import { db, useApp } from "@/app/contexto";
-import { estudiantesDeSeccion, nombreCompleto, seccionesDeTutoria, anioActivo } from "@/datos/consultas";
+import { asistenciaDelAnio, estudiantesDeSeccion, nombreCompleto, seccionesDeTutoria, anioActivo } from "@/datos/consultas";
 import { guardar, vivas } from "@/db/repositorio";
 import type { Estudiante, Periodo } from "@/db/tipos";
 import { indicadores, type Indicadores } from "@/dominio/seguimiento";
@@ -45,8 +45,8 @@ export async function indicadoresDe(estudiantes: Estudiante[]): Promise<Map<stri
   const p = periodoActual(periodos);
   const res = new Map<string, Indicadores>();
   for (const e of estudiantes) {
-    const [asistencias, califs, incidencias] = await Promise.all([
-      db.tabla("asistencia").where("estudiante_id").equals(e.id).toArray(),
+    const [{ marcas: asistencias }, califs, incidencias] = await Promise.all([
+      asistenciaDelAnio(e.id),
       db.tabla("calificacion").where("estudiante_id").equals(e.id).toArray(),
       db.tabla("incidencia").where("estudiante_id").equals(e.id).toArray(),
     ]);

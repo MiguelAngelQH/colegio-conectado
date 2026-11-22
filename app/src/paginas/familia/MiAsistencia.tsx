@@ -3,6 +3,7 @@ import { useLiveQuery } from "dexie-react-hooks";
 import { CalendarCheck, FileCheck, Send } from "lucide-react";
 import { db, useApp } from "@/app/contexto";
 import { NOMBRE_ESTADO } from "@/datos/asistencia";
+import { asistenciaDelAnio } from "@/datos/consultas";
 import { useHijos } from "@/datos/familia";
 import { nuevoId } from "@/db/local";
 import { guardar, vivas } from "@/db/repositorio";
@@ -30,8 +31,8 @@ export function MiAsistencia() {
 
   const datos = useLiveQuery(async () => {
     if (!hijo) return null;
-    const marcas = vivas(await db.tabla("asistencia").where("estudiante_id").equals(hijo.id).toArray());
-    const sesiones = new Map((await db.tabla("asistencia_sesion").bulkGet([...new Set(marcas.map((m) => m.sesion_id))])).filter(Boolean).map((s) => [s!.id, s!]));
+    // Solo el año en curso: los años anteriores quedan en el historial del estudiante.
+    const { marcas, sesiones } = await asistenciaDelAnio(hijo.id);
     const areas = new Map((await db.tabla("area").toArray()).map((a) => [a.id, a.nombre]));
     const justifs = vivas(await db.tabla("justificacion").where("estudiante_id").equals(hijo.id).toArray());
     const registros: Registro[] = marcas

@@ -4,6 +4,7 @@ import { ArrowUpRight, CalendarDays, GraduationCap, Megaphone, TriangleAlert, Us
 import { db, useApp } from "@/app/contexto";
 import { modulosPara } from "@/app/modulos";
 import { vivas } from "@/db/repositorio";
+import { asistenciaDelAnio } from "@/datos/consultas";
 import { hijosDe } from "@/datos/familia";
 import { indicadores, type Indicadores } from "@/dominio/seguimiento";
 import type { Periodo } from "@/db/tipos";
@@ -57,8 +58,8 @@ export function Inicio() {
     if (usuario && usuario.roles.some((r) => r === "estudiante" || r === "apoderado")) {
       const p = periodoVigente(periodos);
       familia = await Promise.all((await hijosDe(usuario)).map(async (h) => {
-        const [asistencias, califs] = await Promise.all([
-          db.tabla("asistencia").where("estudiante_id").equals(h.id).toArray(),
+        const [{ marcas: asistencias }, califs] = await Promise.all([
+          asistenciaDelAnio(h.id),
           db.tabla("calificacion").where("estudiante_id").equals(h.id).toArray(),
         ]);
         // Si el periodo vigente aún no tiene notas, se usa el último que sí tenga.
