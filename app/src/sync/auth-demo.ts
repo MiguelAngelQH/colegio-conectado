@@ -28,9 +28,16 @@ export class AuthDemo implements Autenticacion {
     return this.servidor.leerMeta<Credenciales>(CLAVE_META, {});
   }
 
-  private async guardar(id: string, c: Credencial) {
-    const todas = await this.leer();
-    await this.servidor.guardarMeta(CLAVE_META, { ...todas, [id]: c });
+  // Las contraseñas se guardan en una sola lista: las escrituras van en cola para que dos cuentas
+  // creadas a la vez (creación masiva) no se pisen.
+  private cola: Promise<void> = Promise.resolve();
+  private guardar(id: string, c: Credencial): Promise<void> {
+    const tarea = this.cola.then(async () => {
+      const todas = await this.leer();
+      await this.servidor.guardarMeta(CLAVE_META, { ...todas, [id]: c });
+    });
+    this.cola = tarea.catch(() => undefined);
+    return tarea;
   }
 
   private async usuarios() {

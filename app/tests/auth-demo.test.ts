@@ -88,3 +88,13 @@ describe("cuentas creadas por la dirección", () => {
     await expect(auth.crearCuenta({ nombres: "A", apellidos: "B", dni: "43333333", email: "DIRECTOR@colegio.pe", roles: ["docente"] }, "dir")).rejects.toThrow(/correo/);
   });
 });
+
+describe("creación masiva en el demo", () => {
+  it("varias cuentas creadas a la vez conservan todas sus contraseñas", async () => {
+    const dnis = ["43000001", "43000002", "43000003", "43000004", "43000005", "43000006"];
+    const r = await Promise.all(dnis.map((dni) => auth.crearCuenta({ nombres: "N", apellidos: dni, dni, email: null, roles: ["docente"] }, "dir")));
+    for (const [i, x] of r.entries()) {
+      expect(await auth.ingresar(dnis[i], x.claveTemporal!)).toMatchObject({ usuarioId: x.id, debeCambiarClave: true });
+    }
+  });
+});
