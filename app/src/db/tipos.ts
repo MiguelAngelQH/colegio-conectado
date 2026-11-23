@@ -27,10 +27,22 @@ export interface Fila {
 
 export interface Colegio extends Fila {
   nombre: string;
+  /** 7 dígitos (ESCALE / SIAGIE). */
   codigo_modular: string;
+  /** 6 dígitos. */
+  codigo_local?: string;
   ugel: string;
+  /** DRE o GRE. */
+  dre?: string;
   region: string;
+  provincia?: string;
   distrito: string;
+  direccion?: string;
+  telefono?: string;
+  correo?: string;
+  lema?: string;
+  /** Insignia como imagen PNG o JPEG pequeña (data URL): se sincroniza y sirve sin conexión. */
+  insignia?: string | null;
 }
 
 export interface Usuario extends Fila {

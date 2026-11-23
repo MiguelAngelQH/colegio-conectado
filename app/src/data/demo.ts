@@ -88,7 +88,7 @@ const hoyLocal = () => {
 };
 
 /** Cambia este número cuando cambien los datos de demo: los equipos vuelven a sembrar. */
-export const VERSION_DEMO = 12;
+export const VERSION_DEMO = 13;
 
 export async function datosDemo(hoyReal = hoyLocal()): Promise<Partial<Record<NombreTabla, Fila[]>>> {
   const r = rng(42);
@@ -100,6 +100,8 @@ export async function datosDemo(hoyReal = hoyLocal()): Promise<Partial<Record<No
   const colegio: Colegio = {
     id: CID, colegio_id: CID, nombre: "I.E. Demostración N.° 00001", codigo_modular: "0000001",
     ugel: "UGEL de ejemplo", region: "Arequipa", distrito: "Cayma",
+    codigo_local: "000001", dre: "GRE Arequipa", provincia: "Arequipa", direccion: "Av. Ejemplo 123", telefono: "054 000000",
+    correo: "contacto@demo.edu.pe", lema: "Aprender juntos, sin dejar a nadie atrás", insignia: null,
   };
   const usuarios: Usuario[] = [
     ...USUARIOS_DEMO.map((u) => ({ id: u.id, colegio_id: CID, nombres: u.nombres, apellidos: u.apellidos, dni: u.dni, email: u.email, roles: u.roles, activo: true })),
