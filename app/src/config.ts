@@ -8,8 +8,10 @@ const clave = import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined;
  * o en una versión hecha para presentaciones (npm run build:demo). Una versión publicada sin servidor
  * y sin VITE_DEMO queda "sin-configurar": no se puede entrar (nunca se publica un demo por error).
  */
-const demoPermitido = import.meta.env.DEV || import.meta.env.VITE_DEMO === "1";
-export const MODO: "demo" | "supabase" | "sin-configurar" = url && clave ? "supabase" : demoPermitido ? "demo" : "sin-configurar";
+// VITE_DEMO=1 (npm run dev:demo / build:demo) fuerza el demo aunque app/.env tenga el servidor real.
+const demoForzado = import.meta.env.VITE_DEMO === "1";
+export const MODO: "demo" | "supabase" | "sin-configurar" =
+  demoForzado ? "demo" : url && clave ? "supabase" : import.meta.env.DEV ? "demo" : "sin-configurar";
 
 export const supabase: SupabaseClient | null =
   MODO === "supabase" ? createClient(url!, clave!, { auth: { persistSession: true, autoRefreshToken: true } }) : null;
