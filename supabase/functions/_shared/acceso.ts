@@ -41,10 +41,12 @@ export function clienteAdmin(): SupabaseClient {
 
 /** Perfil de quien llama, si es director o subdirector activo. Si no, null. */
 export async function direccionQueLlama(req: Request, admin: SupabaseClient) {
-  const jwt = req.headers.get("Authorization") ?? "";
-  const comoUsuario = createClient(Deno.env.get("SUPABASE_URL")!, clavePublica(), { global: { headers: { Authorization: jwt } } });
-  const { data: quien } = await comoUsuario.auth.getUser();
-  if (!quien.user) return null;
+  // El token de la sesión llega en "Authorization: Bearer ...". Se valida contra Auth pasándolo
+  // explícitamente: getUser() sin argumento buscaría una sesión guardada y aquí no hay ninguna.
+  const token = (req.headers.get("Authorization") ?? "").replace(/^Bearer\s+/i, "").trim();
+  if (!token) return null;
+  const { data: quien, error } = await admin.auth.getUser(token);
+  if (error || !quien.user) return null;
   const { data: perfil } = await admin.from("usuario").select("id, colegio_id, roles, activo, eliminado").eq("id", quien.user.id).single();
   if (!perfil || !perfil.activo || perfil.eliminado || !perfil.roles.some((r: string) => r === "director" || r === "subdirector")) return null;
   return perfil as { id: string; colegio_id: string; roles: string[] };
