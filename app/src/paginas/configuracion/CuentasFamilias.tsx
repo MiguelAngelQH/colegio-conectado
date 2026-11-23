@@ -2,19 +2,19 @@
 // con un PDF de tarjetas para entregar las contraseñas temporales.
 import { useState } from "react";
 import { useLiveQuery } from "dexie-react-hooks";
-import { CircleCheck, FileDown, GraduationCap, HeartHandshake, KeyRound, TriangleAlert, UserPlus } from "lucide-react";
+import { CircleCheck, FileDown, FileSpreadsheet, GraduationCap, HeartHandshake, KeyRound, TriangleAlert, UserPlus } from "lucide-react";
 import { db } from "@/app/contexto";
-import { nombreCompleto } from "@/datos/consultas";
-import { descargarCredenciales, type Credencial } from "@/datos/credenciales";
+import { anioActivo, nombreCompleto, seccionesDetalle } from "@/datos/consultas";
+import { descargarCredenciales, descargarCredencialesExcel, type Credencial } from "@/datos/credenciales";
 import { useCuentas, type NuevaCuenta } from "@/datos/cuentas";
 import { vivas } from "@/db/repositorio";
 import type { Apoderado, Estudiante } from "@/db/tipos";
 import { textoGuardado, useAvisar } from "@/ui/avisos";
 import { Aviso, Boton, Dialogo, Gema, Tarjeta } from "@/ui/componentes";
 import { DialogoCredencial } from "@/ui/credenciales";
-import { Casilla } from "@/ui/formulario";
+import { Casilla, Segmentado } from "@/ui/formulario";
 
-type Persona = { tabla: "estudiante"; fila: Estudiante; detalle: string } | { tabla: "apoderado"; fila: Apoderado; detalle: string };
+type Persona = ({ tabla: "estudiante"; fila: Estudiante } | { tabla: "apoderado"; fila: Apoderado }) & { detalle: string; seccion?: string };
 
 const nuevaCuenta = (p: Persona): NuevaCuenta => ({
   nombres: p.fila.nombres, apellidos: p.fila.apellidos, dni: p.fila.dni!, email: null,
@@ -80,9 +80,13 @@ export function AccesoFicha({ estudiante, apoderados }: { estudiante: Estudiante
   );
 }
 
-/** Crear de una vez las cuentas que faltan en una sección y descargar las tarjetas en PDF. */
+/**
+ * Crear de una vez las cuentas que faltan, de una sección o de todo el colegio, y descargar las
+ * credenciales en Excel (lista para la dirección) y en PDF (tarjetas para imprimir y repartir).
+ */
 export function DialogoCuentasSeccion({ seccionId, seccionNombre, colegio, onCerrar }: { seccionId: string; seccionNombre: string; colegio: string; onCerrar(): void }) {
   const cuentas = useCuentas();
+  const [alcance, setAlcance] = useState<"seccion" | "colegio">("seccion");
   const [conEstudiantes, setConEstudiantes] = useState(true);
   const [conApoderados, setConApoderados] = useState(true);
   const [avance, setAvance] = useState<{ hechas: number; total: number } | null>(null);
@@ -90,24 +94,32 @@ export function DialogoCuentasSeccion({ seccionId, seccionNombre, colegio, onCer
   const [error, setError] = useState<string | null>(null);
 
   const personas = useLiveQuery(async () => {
-    const mats = vivas(await db.tabla("matricula").where("seccion_id").equals(seccionId).toArray()).filter((m) => m.estado === "matriculado");
-    const ests = (await db.tabla("estudiante").bulkGet(mats.map((m) => m.estudiante_id))).filter((e): e is Estudiante => !!e && !e.eliminado);
-    const vinculos = vivas(await db.tabla("estudiante_apoderado").toArray()).filter((v) => ests.some((e) => e.id === v.estudiante_id));
+    const anio = await anioActivo();
+    const secciones = anio ? await seccionesDetalle(anio.id) : [];
+    const elegidas = alcance === "colegio" ? secciones : secciones.filter((s) => s.id === seccionId);
+    const lista: Persona[] = [];
     const apos = new Map<string, Persona>();
-    for (const v of vinculos) {
-      const a = await db.tabla("apoderado").get(v.apoderado_id);
-      const hijo = ests.find((e) => e.id === v.estudiante_id)!;
-      if (a && !a.eliminado && !apos.has(a.id)) apos.set(a.id, { tabla: "apoderado", fila: a, detalle: `${v.parentesco} de ${hijo.nombres} ${hijo.apellidos}` });
+    for (const s of elegidas) {
+      const mats = vivas(await db.tabla("matricula").where("seccion_id").equals(s.id).toArray()).filter((m) => m.estado === "matriculado");
+      const ests = (await db.tabla("estudiante").bulkGet(mats.map((m) => m.estudiante_id))).filter((e): e is Estudiante => !!e && !e.eliminado)
+        .sort((a, b) => a.apellidos.localeCompare(b.apellidos));
+      lista.push(...ests.map((e) => ({ tabla: "estudiante" as const, fila: e, detalle: "Estudiante", seccion: s.nombreLargo })));
+      const vinculos = vivas(await db.tabla("estudiante_apoderado").toArray()).filter((v) => ests.some((e) => e.id === v.estudiante_id));
+      for (const v of vinculos) {
+        const a = await db.tabla("apoderado").get(v.apoderado_id);
+        const hijo = ests.find((e) => e.id === v.estudiante_id)!;
+        if (a && !a.eliminado && !apos.has(a.id)) apos.set(a.id, { tabla: "apoderado", fila: a, detalle: `${v.parentesco} de ${hijo.nombres} ${hijo.apellidos}`, seccion: s.nombreLargo });
+      }
     }
-    const lista: Persona[] = [...ests.sort((a, b) => a.apellidos.localeCompare(b.apellidos)).map((e) => ({ tabla: "estudiante" as const, fila: e, detalle: `Estudiante de ${seccionNombre}` })), ...apos.values()];
-    return lista;
-  }, [seccionId]);
+    return [...lista, ...apos.values()];
+  }, [seccionId, alcance]);
 
   if (!personas) return null;
   const elegibles = personas.filter((p) => (p.tabla === "estudiante" ? conEstudiantes : conApoderados));
   const pendientes = elegibles.filter((p) => !p.fila.usuario_id && p.fila.dni);
   const sinDni = elegibles.filter((p) => !p.fila.usuario_id && !p.fila.dni);
   const conCuenta = elegibles.filter((p) => p.fila.usuario_id);
+  const titulo = alcance === "colegio" ? "Cuentas de todo el colegio" : `Cuentas ${seccionNombre}`;
 
   const crear = async () => {
     setError(null);
@@ -120,8 +132,9 @@ export function DialogoCuentasSeccion({ seccionId, seccionNombre, colegio, onCer
       r.forEach((x, i) => {
         const p = pendientes[i];
         if ("error" in x) errores.push(`${nombreCompleto(p.fila)}: ${x.error}`);
-        else if (x.claveTemporal) credenciales.push({ nombre: nombreCompleto(p.fila), rol: p.tabla === "estudiante" ? "Estudiante" : "Apoderado(a)", detalle: p.detalle, dni: p.fila.dni!, clave: x.claveTemporal });
-        else vinculadas++;
+        else if (x.claveTemporal) {
+          credenciales.push({ nombre: nombreCompleto(p.fila), rol: p.tabla === "estudiante" ? "Estudiante" : "Apoderado(a)", detalle: p.detalle, seccion: p.seccion, dni: p.fila.dni!, clave: x.claveTemporal });
+        } else vinculadas++;
       });
       setResultado({ credenciales, vinculadas, errores });
     } catch (e) {
@@ -131,24 +144,29 @@ export function DialogoCuentasSeccion({ seccionId, seccionNombre, colegio, onCer
     }
   };
 
-  const descargar = () => resultado && void descargarCredenciales({ colegio, titulo: `Cuentas ${seccionNombre}`, credenciales: resultado.credenciales, direccionWeb: window.location.origin });
+  const datosDescarga = () => ({ colegio, titulo, credenciales: resultado!.credenciales, direccionWeb: window.location.origin });
 
   if (resultado) {
     return (
       <Dialogo abierto titulo="Cuentas creadas" onCerrar={onCerrar}
         acciones={<>
           <Boton variante="fantasma" onClick={onCerrar}>Cerrar</Boton>
-          {resultado.credenciales.length > 0 && <Boton icono={FileDown} onClick={descargar}>Descargar tarjetas (PDF)</Boton>}
+          {resultado.credenciales.length > 0 && <>
+            <Boton variante="vidrio" icono={FileSpreadsheet} onClick={() => void descargarCredencialesExcel(datosDescarga())}>Excel</Boton>
+            <Boton icono={FileDown} onClick={() => void descargarCredenciales(datosDescarga())}>Tarjetas (PDF)</Boton>
+          </>}
         </>}>
         <div className="space-y-3 pt-1">
           <p><strong className="text-tinta">{resultado.credenciales.length}</strong> cuentas nuevas
             {resultado.vinculadas > 0 && <> y <strong className="text-tinta">{resultado.vinculadas}</strong> vinculadas a una cuenta que ya existía</>}.</p>
           <Aviso tipo="alerta" icono={KeyRound}>
-            Descargue e imprima las tarjetas ahora: las contraseñas temporales no se vuelven a mostrar. Si se pierde alguna, puede restablecerla desde la ficha del estudiante.
+            Descargue ahora el Excel (lista con todos los usuarios y contraseñas) y las tarjetas en PDF para repartir: las contraseñas
+            temporales no se vuelven a mostrar. Si se pierde alguna, puede restablecerla desde la ficha del estudiante.
           </Aviso>
           {resultado.errores.length > 0 && (
             <Aviso tipo="error" icono={TriangleAlert} titulo={`${resultado.errores.length} no se pudieron crear`}>
-              <ul className="list-disc pl-4">{resultado.errores.map((e) => <li key={e}>{e}</li>)}</ul>
+              <ul className="list-disc pl-4">{resultado.errores.slice(0, 20).map((e) => <li key={e}>{e}</li>)}</ul>
+              {resultado.errores.length > 20 && <p>y {resultado.errores.length - 20} más.</p>}
             </Aviso>
           )}
         </div>
@@ -157,7 +175,7 @@ export function DialogoCuentasSeccion({ seccionId, seccionNombre, colegio, onCer
   }
 
   return (
-    <Dialogo abierto titulo={`Cuentas de ${seccionNombre}`} onCerrar={onCerrar}
+    <Dialogo abierto titulo="Crear cuentas" onCerrar={avance ? () => undefined : onCerrar}
       acciones={<>
         <Boton variante="fantasma" onClick={onCerrar} disabled={!!avance}>Cancelar</Boton>
         <Boton icono={UserPlus} onClick={crear} cargando={!!avance} disabled={!pendientes.length}>
@@ -166,6 +184,7 @@ export function DialogoCuentasSeccion({ seccionId, seccionNombre, colegio, onCer
       </>}>
       <div className="space-y-3 pt-2 text-tinta">
         {error && <Aviso tipo="error">{error}</Aviso>}
+        <Segmentado etiqueta="Alcance" valor={alcance} onCambio={setAlcance} opciones={[{ valor: "seccion", texto: seccionNombre }, { valor: "colegio", texto: "Todo el colegio" }]} />
         <div className="grid gap-2 sm:grid-cols-2">
           <Casilla marcada={conEstudiantes} onCambio={setConEstudiantes}>Estudiantes</Casilla>
           <Casilla marcada={conApoderados} onCambio={setConApoderados}>Padres y apoderados</Casilla>
@@ -175,7 +194,13 @@ export function DialogoCuentasSeccion({ seccionId, seccionNombre, colegio, onCer
           <li><strong>{conCuenta.length}</strong> ya tienen cuenta.</li>
           {sinDni.length > 0 && <li className="text-amber-800"><strong>{sinDni.length}</strong> sin DNI registrado: complete su DNI en la ficha para crearles cuenta.</li>}
         </ul>
-        <p className="text-xs text-tinta-suave">Al terminar podrá descargar un PDF con una tarjeta por persona (usuario y contraseña temporal) para imprimir y entregar. Necesita conexión a internet.</p>
+        {avance && <div className="h-2 overflow-hidden rounded-full bg-white/70" role="progressbar" aria-valuenow={avance.hechas} aria-valuemax={avance.total}>
+          <div className="h-full rounded-full bg-teal-600 transition-all" style={{ width: `${(avance.hechas / Math.max(1, avance.total)) * 100}%` }} />
+        </div>}
+        <p className="text-xs text-tinta-suave">
+          Al terminar podrá descargar un Excel con todos los usuarios (DNI) y contraseñas temporales, y un PDF con tarjetas para repartir.
+          Cada persona elige su propia contraseña al ingresar por primera vez. Necesita conexión a internet; no cierre esta ventana mientras se crean.
+        </p>
       </div>
     </Dialogo>
   );

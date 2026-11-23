@@ -70,7 +70,7 @@ export function EstudiantesPagina() {
                 <Boton icono={UserPlus} onClick={() => setAgregando(true)}>Agregar</Boton>
                 <Link to={`importar?seccion=${seccionId}`}><Boton variante="vidrio" icono={FileSpreadsheet}>Importar Excel</Boton></Link>
                 <Boton variante="fantasma" icono={Download} onClick={() => void descargarPlantilla()}>Plantilla</Boton>
-                <Boton variante="vidrio" icono={KeyRound} onClick={() => setCuentas(true)} disabled={!lista?.length}>Cuentas de la sección</Boton>
+                <Boton variante="vidrio" icono={KeyRound} onClick={() => setCuentas(true)} disabled={!lista?.length}>Crear cuentas</Boton>
               </div>
             </Tarjeta>
 

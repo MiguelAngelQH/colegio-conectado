@@ -4,6 +4,7 @@ export interface Credencial {
   nombre: string;
   rol: string;
   detalle: string; // sección o estudiante al que representa
+  seccion?: string;
   dni: string;
   clave: string;
 }
@@ -47,7 +48,8 @@ export async function descargarCredenciales(p: { colegio: string; titulo: string
     doc.setFont("helvetica", "normal");
     doc.setFontSize(8);
     doc.setTextColor(63, 95, 99);
-    doc.text(doc.splitTextToSize(`${c.rol} · ${c.detalle}`, w - 12)[0], x + 6, y + 22);
+    const detalle = c.detalle === c.rol || c.detalle === "Estudiante" ? c.seccion ?? "" : c.seccion ? `${c.detalle} · ${c.seccion}` : c.detalle;
+    doc.text(doc.splitTextToSize(`${c.rol} · ${detalle}`, w - 12)[0], x + 6, y + 22);
 
     doc.setTextColor(11, 46, 51);
     doc.setFontSize(8);
@@ -73,4 +75,33 @@ export async function descargarCredenciales(p: { colegio: string; titulo: string
     doc.text(`Contiene contraseñas: entregue a cada titular y destruya las sobrantes. Página ${i} de ${total}`, margen, alto - 4);
   }
   doc.save(`credenciales_${p.titulo.replace(/[^a-zA-Z0-9áéíóúñÁÉÍÓÚÑ]+/g, "_")}.pdf`);
+}
+
+/** Lista en Excel con todos los usuarios y contraseñas temporales (para la dirección). */
+export async function descargarCredencialesExcel(p: { colegio: string; titulo: string; credenciales: Credencial[]; direccionWeb: string }) {
+  const XLSX = await import("xlsx");
+  const filas = p.credenciales.map((c, i) => ({
+    "N°": i + 1, Sección: c.seccion ?? "", Rol: c.rol, "Apellidos y nombres": c.nombre, Detalle: c.detalle,
+    "Usuario (DNI)": c.dni, "Contraseña temporal": c.clave,
+  }));
+  const hoja = XLSX.utils.json_to_sheet(filas);
+  hoja["!cols"] = [{ wch: 5 }, { wch: 28 }, { wch: 14 }, { wch: 36 }, { wch: 34 }, { wch: 14 }, { wch: 20 }];
+  // Las celdas de DNI y contraseña como texto: Excel no debe quitar ceros ni cambiar el formato.
+  filas.forEach((_, i) => {
+    for (const col of ["F", "G"]) {
+      const celda = hoja[`${col}${i + 2}`];
+      if (celda) { celda.t = "s"; celda.z = "@"; }
+    }
+  });
+  const libro = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(libro, hoja, "Cuentas");
+  const info = XLSX.utils.aoa_to_sheet([
+    [p.colegio], [p.titulo], [`Generado el ${new Date().toLocaleString("es-PE")}`], [],
+    [`Cada persona ingresa en ${p.direccionWeb} con su DNI y la contraseña temporal.`],
+    ["La primera vez la app le da la bienvenida y le pide crear su propia contraseña."],
+    ["Este archivo contiene contraseñas: guárdelo en un lugar seguro y elimínelo cuando ya las haya entregado."],
+  ]);
+  info["!cols"] = [{ wch: 100 }];
+  XLSX.utils.book_append_sheet(libro, info, "Instrucciones");
+  XLSX.writeFile(libro, `credenciales_${p.titulo.replace(/[^a-zA-Z0-9áéíóúñÁÉÍÓÚÑ]+/g, "_")}.xlsx`);
 }
