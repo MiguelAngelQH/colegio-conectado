@@ -686,3 +686,10 @@ describe("rol de servicio (funciones de cuentas)", () => {
     expect(rows.every((r) => r.ok)).toBe(true);
   });
 });
+
+describe("rendimiento de los permisos", () => {
+  it("ninguna política de lectura revisa estudiante por estudiante", async () => {
+    const { rows } = await db.query<{ n: number }>("select count(*)::int n from pg_policies where cmd = 'SELECT' and qual like '%puedo_ver_estudiante(%'");
+    expect(rows[0].n).toBe(0);
+  });
+});
