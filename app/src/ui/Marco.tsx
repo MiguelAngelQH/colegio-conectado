@@ -60,7 +60,10 @@ export function Marco() {
             {modulos.map((m) => <ItemLateral key={m.id} m={m} />)}
           </nav>
           <div className="mt-3 space-y-3 border-t border-white/60 pt-3">
-            <p className="truncate px-1 text-xs text-tinta-suave">{colegio?.nombre}</p>
+            <p className="flex items-center gap-2 px-1 text-xs text-tinta-suave">
+              {colegio?.insignia && <img src={colegio.insignia} alt="" className="h-8 w-8 shrink-0 object-contain" />}
+              <span className="truncate">{colegio?.nombre}</span>
+            </p>
             <button onClick={pedirSalida} className="flex w-full items-center gap-3 rounded-2xl px-3 py-2.5 text-sm font-semibold text-red-700 transition hover:bg-red-50/60">
               <LogOut className="h-5 w-5" aria-hidden /> Cerrar sesión
             </button>
@@ -79,6 +82,7 @@ export function Marco() {
             </span>
           </Link>
           <span className="ml-auto flex items-center gap-2">
+            {colegio?.insignia && <img src={colegio.insignia} alt={`Insignia de ${colegio.nombre}`} className="h-9 w-9 object-contain lg:hidden" />}
             <EstadoSync />
             <Campana />
           </span>
