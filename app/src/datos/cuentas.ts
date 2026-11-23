@@ -19,17 +19,26 @@ export function useCuentas() {
     };
     return {
       crear: (d: NuevaCuenta) => conServidor((por) => autenticacion.crearCuenta(d, por)),
-      /** Varias cuentas seguidas (una sección): un error no detiene a las demás y se sincroniza una sola vez. */
+      /**
+       * Muchas cuentas (una sección o todo el colegio): de 4 en 4 para no tardar, un error no detiene
+       * a las demás, los resultados quedan en el mismo orden y se sincroniza una sola vez al final.
+       */
       crearVarias: (lista: NuevaCuenta[], alAvanzar?: (hechas: number) => void) => conServidor(async (por) => {
-        const resultados: (ResultadoCuenta | { error: string })[] = [];
-        for (const d of lista) {
-          try {
-            resultados.push(await autenticacion.crearCuenta(d, por));
-          } catch (e) {
-            resultados.push({ error: e instanceof Error ? e.message : String(e) });
+        const resultados: (ResultadoCuenta | { error: string })[] = new Array(lista.length);
+        let hechas = 0;
+        let siguiente = 0;
+        const trabajador = async () => {
+          while (siguiente < lista.length) {
+            const i = siguiente++;
+            try {
+              resultados[i] = await autenticacion.crearCuenta(lista[i], por);
+            } catch (e) {
+              resultados[i] = { error: e instanceof Error ? e.message : String(e) };
+            }
+            alAvanzar?.(++hechas);
           }
-          alAvanzar?.(resultados.length);
-        }
+        };
+        await Promise.all(Array.from({ length: Math.min(4, lista.length) }, trabajador));
         return resultados;
       }),
       restablecer: (usuarioId: string) => conServidor((por) => autenticacion.restablecerClave(usuarioId, por)),
