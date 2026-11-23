@@ -627,3 +627,25 @@ describe("cierre del año e historial", () => {
     expect((await ids(U.director, "estudiante")).length).toBe(3);
   });
 });
+
+describe("datos del colegio", () => {
+  const PNG = "data:image/png;base64,iVBORw0KGgo=";
+  it("la dirección edita los datos y la insignia; un docente no", async () => {
+    const r = await push(U.director, [{ tabla: "colegio", parche: { id: COL, nombre: "I.E. Prueba Renovada", codigo_local: "123456", ugel: "UGEL Cusco", insignia: PNG } }]);
+    expect(r[0].estado).toBe("ok");
+    const [d] = await push(U.docente, [{ tabla: "colegio", parche: { id: COL, nombre: "Hackeado" } }]);
+    expect(d.estado).toBe("rechazado");
+    const { rows } = await db.query<{ nombre: string; insignia: string }>("select nombre, insignia from colegio where id = $1", [COL]);
+    expect(rows[0]).toEqual({ nombre: "I.E. Prueba Renovada", insignia: PNG });
+  });
+
+  it("valida el código modular, el código de local y que la insignia sea una imagen", async () => {
+    const r = await push(U.director, [
+      { tabla: "colegio", parche: { id: COL, codigo_modular: "123" } },
+      { tabla: "colegio", parche: { id: COL, codigo_local: "abc" } },
+      { tabla: "colegio", parche: { id: COL, insignia: "data:text/html;base64,PHNjcmlwdD4=" } },
+      { tabla: "colegio", parche: { id: COL, nombre: "   " } },
+    ]);
+    expect(r.map((x) => x.estado)).toEqual(["rechazado", "rechazado", "rechazado", "rechazado"]);
+  });
+});
