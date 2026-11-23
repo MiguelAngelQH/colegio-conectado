@@ -32,23 +32,28 @@ npm run build:demo # versión de demostración para presentaciones (sin servidor
 
 ## Puesta en producción
 
-1. **Supabase:** cree un proyecto y ejecute en orden los archivos de `supabase/migrations/` (SQL Editor o
-   `supabase db push`). Despliegue las funciones:
+1. **Supabase:** cree un proyecto (región São Paulo, la más cercana a Perú). En *Authentication → Sign In / Providers*
+   desactive **Allow new users to sign up** (las cuentas las crea la dirección). Desde la carpeta del repositorio:
    ```bash
-   supabase functions deploy crear-usuario
-   supabase functions deploy gestionar-cuenta
-   supabase functions deploy acceso-por-correo --no-verify-jwt
+   npx supabase@2.122.1 login
+   npx supabase@2.122.1 link --project-ref <ref-del-proyecto>   # pide la contraseña de la base de datos
+   npx supabase@2.122.1 db push                                  # aplica supabase/migrations en orden
+   npx supabase@2.122.1 functions deploy crear-usuario --use-api
+   npx supabase@2.122.1 functions deploy gestionar-cuenta --use-api
+   npx supabase@2.122.1 functions deploy acceso-por-correo --use-api
    ```
-2. **Primer director:** en Supabase Auth cree un usuario con correo `<DNI>@dni.colegio.invalid` (por ejemplo
-   `45678912@dni.colegio.invalid`), una contraseña y "Auto Confirm User". Luego su perfil con SQL:
+   `supabase/config.toml` desactiva la verificación de JWT de la pasarela: cada función valida la sesión por dentro.
+   Las funciones usan las claves nuevas (`SUPABASE_SECRET_KEYS`) o, si no existen, las antiguas.
+2. **Primer director:** en *Authentication → Users → Add user* cree un usuario con correo `<DNI>@dni.colegio.invalid`
+   (por ejemplo `45678912@dni.colegio.invalid`), una contraseña y **Auto Confirm User**. Luego, en el *SQL Editor*:
    ```sql
    insert into colegio (id, colegio_id, nombre, codigo_modular, ugel) values ('<uuid>', '<uuid>', 'I.E. ...', '0000000', 'UGEL ...');
    insert into usuario (id, colegio_id, nombres, apellidos, dni, email, roles)
      values ('<id-auth>', '<uuid>', 'Nombre', 'Apellidos', '45678912', 'director@correo.pe', '{director}');
    ```
-   El director ingresa con su DNI y crea al resto de cuentas desde la app. La cuenta de la UGEL se crea igual que la
+   El director ingresa con su DNI y crea el resto de cuentas desde la app. La cuenta de la UGEL se crea igual que la
    del director, con el rol `{ugel}`.
-3. **Web (PWA):** copie `app/.env.example` a `app/.env`, complete `VITE_SUPABASE_URL` y `VITE_SUPABASE_ANON_KEY`,
+3. **Web (PWA):** copie `app/.env.example` a `app/.env`, complete `VITE_SUPABASE_URL` y `VITE_SUPABASE_ANON_KEY` (la *publishable key*, nunca la *secret*),
    ejecute `npm run build` y publique `app/dist` en cualquier hosting estático con HTTPS (necesario para la cámara).
 4. **APK Android:** con el mismo `.env`:
    ```bash
