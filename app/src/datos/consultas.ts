@@ -2,7 +2,7 @@
 import { useLiveQuery } from "dexie-react-hooks";
 import { db } from "@/app/contexto";
 import { vivas } from "@/db/repositorio";
-import type { AnioEscolar, Asistencia, AsistenciaSesion, Grado, Matricula, Periodo, Seccion, Usuario } from "@/db/tipos";
+import type { AnioEscolar, Asistencia, AsistenciaSesion, Colegio, Grado, Matricula, Periodo, Seccion, Usuario } from "@/db/tipos";
 
 export interface SeccionDetalle extends Seccion {
   grado: Grado | undefined;
@@ -17,6 +17,15 @@ export function nombreSeccion(g: Grado | undefined, s: Pick<Seccion, "letra">) {
 }
 
 export const NIVEL_TEXTO = { primaria: "Primaria", secundaria: "Secundaria" } as const;
+
+/** El colegio del usuario (una sola fila sincronizada). */
+export async function colegioActual(): Promise<Colegio | undefined> {
+  return vivas(await db.tabla("colegio").toArray())[0];
+}
+
+export function useColegio(): Colegio | undefined {
+  return useLiveQuery(colegioActual, []);
+}
 
 export async function anioActivo(): Promise<AnioEscolar | undefined> {
   const anios = vivas(await db.tabla("anio_escolar").toArray());

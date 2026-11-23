@@ -1,8 +1,8 @@
 import { Link, Route, Routes } from "react-router-dom";
-import { ArrowRight, CalendarRange, CircleCheck, ClipboardCheck, LayoutGrid, Users, GraduationCap } from "lucide-react";
+import { ArrowRight, CalendarRange, CircleCheck, ClipboardCheck, LayoutGrid, School, Users, GraduationCap } from "lucide-react";
 import { useLiveQuery } from "dexie-react-hooks";
 import { db } from "@/app/contexto";
-import { useEstructura } from "@/datos/consultas";
+import { useColegio, useEstructura } from "@/datos/consultas";
 import { vivas } from "@/db/repositorio";
 import { Contenido, Encabezado, Gema, Tarjeta, cx, orden } from "@/ui/componentes";
 import { AnioEscolarPagina } from "./AnioEscolar";
@@ -11,6 +11,7 @@ import { PersonalPagina, FichaPersonal } from "./Personal";
 import { EstudiantesPagina, FichaEstudiante } from "./Estudiantes";
 import { ImportarPagina } from "./Importar";
 import { CierreAnio } from "./CierreAnio";
+import { DatosColegio } from "./DatosColegio";
 
 export function Configuracion() {
   return (
@@ -24,12 +25,14 @@ export function Configuracion() {
       <Route path="estudiantes/importar" element={<ImportarPagina />} />
       <Route path="estudiantes/:id" element={<FichaEstudiante />} />
       <Route path="cierre" element={<CierreAnio />} />
+      <Route path="colegio" element={<DatosColegio />} />
     </Routes>
   );
 }
 
 function Centro() {
   const e = useEstructura();
+  const colegio = useColegio();
   const conteos = useLiveQuery(async () => ({
     personal: vivas(await db.tabla("usuario").toArray()).filter((u) => u.roles.some((r) => r === "docente" || r === "auxiliar")).length,
     asignaciones: vivas(await db.tabla("docente_asignacion").toArray()).length,
@@ -75,6 +78,17 @@ function Centro() {
             ))}
           </div>
         </Tarjeta>
+
+        <Link to="colegio" className="vidrio aparecer group flex items-center gap-4 p-4 transition hover:bg-white/55" style={orden(2)}>
+          <span className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-white/80 ring-1 ring-white">
+            {colegio?.insignia ? <img src={colegio.insignia} alt="" className="h-full w-full object-contain p-0.5" /> : <School className="h-6 w-6 text-tinta-suave" aria-hidden />}
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="block font-bold">Datos del colegio</span>
+            <span className="block truncate text-sm text-tinta-suave">{colegio ? `${colegio.nombre}${colegio.codigo_modular ? ` · Cód. ${colegio.codigo_modular}` : ""}${colegio.ugel ? ` · ${colegio.ugel}` : ""}` : "..."}</span>
+          </span>
+          <ArrowRight className="h-5 w-5 text-tinta-suave transition group-hover:translate-x-0.5" aria-hidden />
+        </Link>
 
         <div className="space-y-3">
           {pasos.map((p, i) => (
