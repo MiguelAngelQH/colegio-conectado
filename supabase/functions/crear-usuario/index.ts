@@ -7,7 +7,7 @@
 // vínculo sin crear otra cuenta.
 //
 // Despliegue:  supabase functions deploy crear-usuario
-// Variables (las provee Supabase): SUPABASE_URL, SUPABASE_ANON_KEY, SUPABASE_SERVICE_ROLE_KEY
+// Variables (las provee Supabase): SUPABASE_URL y las claves (ver _shared/acceso.ts).
 import { claveTemporal, clienteAdmin, CORS, correoDeAcceso, direccionQueLlama, dniValido, respuesta } from "../_shared/acceso.ts";
 
 // Roles que puede otorgar la dirección. La cuenta UGEL la crea el administrador de la plataforma.

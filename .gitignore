@@ -8,3 +8,6 @@ coverage/
 dev-dist/
 *.tsbuildinfo
 .claude/
+# Archivos locales de Supabase CLI (proyecto vinculado)
+supabase/.temp/
+supabase/.branches/

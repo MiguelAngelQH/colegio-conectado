@@ -3,9 +3,9 @@
 // Así el cliente nunca puede consultar qué DNI tiene un correo.
 // El error es siempre el mismo para no revelar si un correo está registrado.
 //
-// Despliegue (se llama sin sesión):  supabase functions deploy acceso-por-correo --no-verify-jwt
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.4";
-import { clienteAdmin, CORS, correoDeAcceso, respuesta } from "../_shared/acceso.ts";
+// Despliegue:  supabase functions deploy acceso-por-correo (se llama sin sesión: verify_jwt = false en supabase/config.toml)
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.119.0";
+import { clavePublica, clienteAdmin, CORS, correoDeAcceso, respuesta } from "../_shared/acceso.ts";
 
 const INCORRECTO = { error: "DNI/correo o contraseña incorrectos." };
 
@@ -25,7 +25,7 @@ Deno.serve(async (req) => {
   const { data: cuenta } = await clienteAdmin().from("usuario").select("dni").ilike("email", correo).eq("eliminado", false).maybeSingle();
   if (!cuenta?.dni) return respuesta(INCORRECTO, 401);
 
-  const anonimo = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_ANON_KEY")!, { auth: { persistSession: false } });
+  const anonimo = createClient(Deno.env.get("SUPABASE_URL")!, clavePublica(), { auth: { persistSession: false } });
   const { data, error } = await anonimo.auth.signInWithPassword({ email: correoDeAcceso(cuenta.dni), password: datos.clave });
   if (error || !data.session) {
     const bloqueada = error?.message?.toLowerCase().includes("banned");

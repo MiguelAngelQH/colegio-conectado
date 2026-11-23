@@ -1,0 +1,13 @@
+# Configuración de Supabase CLI para este proyecto (supabase link / db push / functions deploy).
+project_id = "colegio-conectado"
+
+# Las funciones validan la sesión por dentro (auth.getUser), así que no dependen de la verificación
+# de JWT de la pasarela, que no funciona con las nuevas claves de firma ni con las claves sb_publishable.
+[functions.crear-usuario]
+verify_jwt = false
+
+[functions.gestionar-cuenta]
+verify_jwt = false
+
+[functions.acceso-por-correo]
+verify_jwt = false

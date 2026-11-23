@@ -1,5 +1,5 @@
 // Piezas comunes de las funciones de cuentas. Deben coincidir con app/src/dominio/acceso.ts.
-import { createClient, type SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.45.4";
+import { createClient, type SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.119.0";
 
 export const DOMINIO_ACCESO = "dni.colegio.invalid";
 export const correoDeAcceso = (dni: string) => `${dni}@${DOMINIO_ACCESO}`;
@@ -23,14 +23,26 @@ export function respuesta(cuerpo: unknown, estado = 200) {
   return new Response(JSON.stringify(cuerpo), { status: estado, headers: { ...CORS, "Content-Type": "application/json" } });
 }
 
+/** Claves que Supabase entrega a la función: las nuevas (JSON con nombre) y, si no hay, las antiguas. */
+function deJson(nombre: string): string | undefined {
+  try {
+    const claves = JSON.parse(Deno.env.get(nombre) ?? "{}") as Record<string, string>;
+    return claves.default ?? Object.values(claves)[0];
+  } catch {
+    return undefined;
+  }
+}
+export const clavePublica = () => deJson("SUPABASE_PUBLISHABLE_KEYS") ?? Deno.env.get("SUPABASE_ANON_KEY")!;
+const claveServicio = () => deJson("SUPABASE_SECRET_KEYS") ?? Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+
 export function clienteAdmin(): SupabaseClient {
-  return createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!, { auth: { persistSession: false } });
+  return createClient(Deno.env.get("SUPABASE_URL")!, claveServicio(), { auth: { persistSession: false } });
 }
 
 /** Perfil de quien llama, si es director o subdirector activo. Si no, null. */
 export async function direccionQueLlama(req: Request, admin: SupabaseClient) {
   const jwt = req.headers.get("Authorization") ?? "";
-  const comoUsuario = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_ANON_KEY")!, { global: { headers: { Authorization: jwt } } });
+  const comoUsuario = createClient(Deno.env.get("SUPABASE_URL")!, clavePublica(), { global: { headers: { Authorization: jwt } } });
   const { data: quien } = await comoUsuario.auth.getUser();
   if (!quien.user) return null;
   const { data: perfil } = await admin.from("usuario").select("id, colegio_id, roles, activo, eliminado").eq("id", quien.user.id).single();
