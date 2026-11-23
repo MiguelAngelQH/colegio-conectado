@@ -71,6 +71,7 @@ beforeAll(async () => {
   await db.exec(`
     create role anon nologin;
     create role authenticated nologin;
+    create role service_role nologin bypassrls;
     create schema auth;
     create table auth.users (id uuid primary key);
     create function auth.uid() returns uuid language sql stable as
@@ -647,5 +648,16 @@ describe("datos del colegio", () => {
       { tabla: "colegio", parche: { id: COL, nombre: "   " } },
     ]);
     expect(r.map((x) => x.estado)).toEqual(["rechazado", "rechazado", "rechazado", "rechazado"]);
+  });
+});
+
+describe("rol de servicio (funciones de cuentas)", () => {
+  it("puede leer y escribir usuarios y vincular estudiantes y apoderados", async () => {
+    const { rows } = await db.query<{ tabla: string; ok: boolean }>(`
+      select t as tabla, has_table_privilege('service_role', 'public.' || t, 'SELECT')
+        and has_table_privilege('service_role', 'public.' || t, 'INSERT')
+        and has_table_privilege('service_role', 'public.' || t, 'UPDATE') as ok
+      from unnest(array['usuario', 'estudiante', 'apoderado', 'colegio']) t`);
+    expect(rows.every((r) => r.ok)).toBe(true);
   });
 });
