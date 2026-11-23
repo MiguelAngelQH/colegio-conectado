@@ -4,6 +4,7 @@ import { guardar, guardarLote, vivas, type Escritura } from "@/db/repositorio";
 import type { Asistencia, AsistenciaSesion, EstadoAsistencia } from "@/db/tipos";
 import { idDeterministico } from "@/dominio/notas";
 import { idEquipo, nuevoSecreto } from "@/dominio/qr";
+import { nombreSeccion } from "./consultas";
 import { ahoraServidor } from "@/sync/reloj";
 
 export const NOMBRE_ESTADO: Record<EstadoAsistencia, string> = { P: "Presente", T: "Tardanza", F: "Falta", J: "Justificada" };
@@ -69,4 +70,25 @@ export async function marcarConQr(p: { token: string; sesionId: string; estudian
     marcado_en: new Date(ahoraServidor()).toISOString(), token_qr: p.token, por_revisar: false, dispositivo_id: idEquipo(),
   }, p.colegioId);
   return "nueva";
+}
+
+export interface DetalleSesion { fecha: string; clase: string; seccion: string | null; docente: string | null }
+
+/** Para mostrar cada marca con su clase, sección y docente (lo que el estudiante tenga sincronizado). */
+export async function detallesDeSesiones(ids: string[]): Promise<Map<string, DetalleSesion>> {
+  const sesiones = (await db.tabla("asistencia_sesion").bulkGet([...new Set(ids)])).filter((s): s is AsistenciaSesion => !!s);
+  const areas = new Map((await db.tabla("area").toArray()).map((a) => [a.id, a.nombre]));
+  const secciones = new Map((await db.tabla("seccion").bulkGet([...new Set(sesiones.map((s) => s.seccion_id))])).filter((x) => !!x).map((x) => [x!.id, x!]));
+  const grados = new Map((await db.tabla("grado").toArray()).map((g) => [g.id, g]));
+  const docentes = new Map((await db.tabla("usuario").bulkGet([...new Set(sesiones.map((s) => s.docente_id))])).filter((u) => !!u).map((u) => [u!.id, u!]));
+  return new Map(sesiones.map((s) => {
+    const sec = secciones.get(s.seccion_id);
+    const doc = docentes.get(s.docente_id);
+    return [s.id, {
+      fecha: s.fecha,
+      clase: s.area_id ? areas.get(s.area_id) ?? "Clase" : "Asistencia del día",
+      seccion: sec ? nombreSeccion(grados.get(sec.grado_id), sec) : null,
+      docente: doc ? `${doc.nombres.split(" ")[0]} ${doc.apellidos.split(" ")[0]}` : null,
+    }];
+  }));
 }

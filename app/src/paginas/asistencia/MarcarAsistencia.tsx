@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useLiveQuery } from "dexie-react-hooks";
 import { CircleCheck, CloudOff, CloudUpload, QrCode, ScanLine, TriangleAlert } from "lucide-react";
 import { db, useApp } from "@/app/contexto";
-import { NOMBRE_ESTADO, marcarConQr } from "@/datos/asistencia";
+import { NOMBRE_ESTADO, detallesDeSesiones, marcarConQr } from "@/datos/asistencia";
 import { vivas } from "@/db/repositorio";
 import { leerTokenQr } from "@/dominio/qr";
 import { Boton, Contenido, Encabezado, Gema, Tarjeta, cx, orden } from "@/ui/componentes";
@@ -25,7 +25,8 @@ export function MarcarAsistencia() {
     const outbox = (await db.outbox.toArray()).filter((e) => e.tabla === "asistencia");
     const pendientes = new Set(outbox.filter((e) => e.estado !== "rechazado").map((e) => e.fila_id));
     const rechazos = new Map(outbox.filter((e) => e.estado === "rechazado").map((e) => [e.fila_id, e.error]));
-    return { yo, marcas: marcas.map((m) => ({ m, pendiente: pendientes.has(m.id), rechazo: rechazos.get(m.id) })) };
+    const detalles = await detallesDeSesiones(marcas.map((m) => m.sesion_id));
+    return { yo, marcas: marcas.map((m) => ({ m, d: detalles.get(m.sesion_id), pendiente: pendientes.has(m.id), rechazo: rechazos.get(m.id) })) };
   }, [usuario?.id]);
 
   if (!datos) return null;
@@ -79,10 +80,15 @@ export function MarcarAsistencia() {
           <section className="space-y-2">
             <h2 className="etiqueta px-1">Mis últimas marcas</h2>
             <Tarjeta className="divide-y divide-white/70">
-              {datos.marcas.map(({ m, pendiente, rechazo }) => (
+              {datos.marcas.map(({ m, d, pendiente, rechazo }) => (
                 <div key={m.id} className="flex items-center gap-3 px-4 py-3 text-sm">
-                  <span className="flex-1">
-                    <span className="block font-semibold">{m.marcado_en ? new Date(m.marcado_en).toLocaleString("es-PE", { weekday: "short", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }) : "-"}</span>
+                  <span className="min-w-0 flex-1">
+                    <span className="block font-semibold">{d?.clase ?? (pendiente ? "Clase de hoy" : "Clase")}{d?.seccion ? ` · ${d.seccion}` : ""}</span>
+                    <span className="block text-xs text-tinta-suave">
+                      {m.marcado_en ? new Date(m.marcado_en).toLocaleString("es-PE", { weekday: "short", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }) : "-"}
+                      {d?.docente ? ` · Prof. ${d.docente}` : ""}
+                      {m.origen === "qr" ? " · con QR" : m.origen === "carne" ? " · con carné" : ""}
+                    </span>
                     {m.motivo_revision && <span className="block text-xs text-amber-800">En revisión: {m.motivo_revision}</span>}
                     {rechazo && <span className="block text-xs text-red-700">No aceptada: {rechazo}</span>}
                   </span>
