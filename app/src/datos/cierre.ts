@@ -5,6 +5,7 @@ import { vivas } from "@/db/repositorio";
 import type { Area, Calificacion, Competencia, Estudiante, Matricula, NivelLogro, Periodo, ResumenAsistencia, SituacionFinal } from "@/db/tipos";
 import { notasFinales, NOMBRE_SITUACION, situacionPropuesta, type Propuesta, type Reglas } from "@/dominio/promocion";
 import { anioActivo, nombreCompleto, seccionesDetalle, type SeccionDetalle } from "./consultas";
+import { dibujarInsignia } from "./insignia";
 
 export interface FilaCierre {
   matricula: Matricula;
@@ -111,6 +112,7 @@ export async function descargarActas(d: DatosCierre, seccionIds: string[], nombr
 
     doc.setFillColor(...TEAL);
     doc.rect(0, 0, ancho, 20, "F");
+    dibujarInsignia(doc, colegio?.insignia, ancho - 20, 2, 16);
     doc.setTextColor(255, 255, 255);
     doc.setFont("helvetica", "bold");
     doc.setFontSize(12);

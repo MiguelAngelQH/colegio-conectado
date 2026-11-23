@@ -5,6 +5,7 @@ import { vivas } from "@/db/repositorio";
 import type { Estudiante, Usuario } from "@/db/tipos";
 import { DESCRIPCION_NIVEL, NIVELES, armarLibreta } from "@/dominio/notas";
 import { NOMBRE_SITUACION } from "@/dominio/promocion";
+import { dibujarInsignia } from "./insignia";
 import { anioActivo, nombreCompleto, seccionesDetalle } from "./consultas";
 
 const TEAL: [number, number, number] = [11, 110, 106];
@@ -48,6 +49,7 @@ export async function descargarLibretas(estudianteIds: string[], nombreArchivo: 
     // Encabezado
     doc.setFillColor(...TEAL);
     doc.rect(0, 0, ancho, 24, "F");
+    dibujarInsignia(doc, colegio?.insignia, 8, 3, 18);
     doc.setTextColor(255, 255, 255);
     doc.setFont("helvetica", "bold");
     doc.setFontSize(12);
@@ -99,7 +101,7 @@ export async function descargarLibretas(estudianteIds: string[], nombreArchivo: 
       columnStyles: {
         0: { cellWidth: 26 },
         1: { cellWidth: 62 },
-        ...Object.fromEntries([...pers, null].map((_, i) => [i + 2, { cellWidth: 9, halign: "center", fontStyle: "bold" }])),
+        ...Object.fromEntries([...pers, null].map((_, i) => [i + 2, { cellWidth: i === pers.length ? 11 : 9, halign: "center", fontStyle: "bold" }])),
       },
       didParseCell: (d) => {
         const v = String(d.cell.raw ?? "");

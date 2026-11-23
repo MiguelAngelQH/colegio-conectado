@@ -3,6 +3,7 @@ import { db } from "@/app/contexto";
 import type { Estudiante } from "@/db/tipos";
 import { textoCarne } from "@/dominio/qr";
 import { anioActivo, seccionesDetalle } from "./consultas";
+import { dibujarInsignia } from "./insignia";
 
 const ANCHO = 85.6;
 const ALTO = 54;
@@ -43,7 +44,10 @@ export async function descargarCarnes(seccionIds: string[], nombreArchivo: strin
     doc.setTextColor(255, 255, 255);
     doc.setFont("helvetica", "bold");
     doc.setFontSize(7.5);
-    doc.text(doc.splitTextToSize(colegio?.nombre ?? "Institución educativa", ANCHO - 8)[0], x + 4, y + 5.2);
+    const conInsignia = dibujarInsignia(doc, colegio?.insignia, x + ANCHO - 11, y + 1.5, 9);
+    doc.setTextColor(255, 255, 255);
+    doc.setFont("helvetica", "bold");
+    doc.text(doc.splitTextToSize(colegio?.nombre ?? "Institución educativa", ANCHO - (conInsignia ? 18 : 8))[0], x + 4, y + 5.2);
     doc.setFont("helvetica", "normal");
     doc.setFontSize(6);
     doc.text(`CARNÉ DE ESTUDIANTE ${anio.anio}`, x + 4, y + 9.5);

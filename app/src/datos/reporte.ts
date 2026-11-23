@@ -1,7 +1,8 @@
 // Reporte de indicadores en PDF para la dirección y la UGEL. Se genera en el equipo, sin internet.
 import type { Panel } from "@/dominio/panel";
 import { DESCRIPCION_NIVEL, NIVELES } from "@/dominio/notas";
-import { nombreCompleto } from "./consultas";
+import { colegioActual, nombreCompleto } from "./consultas";
+import { dibujarInsignia } from "./insignia";
 
 const TEAL: [number, number, number] = [11, 110, 106];
 
@@ -26,6 +27,7 @@ export async function descargarReporte(p: {
 
   doc.setFillColor(...TEAL);
   doc.rect(0, 0, ancho, 24, "F");
+  dibujarInsignia(doc, (await colegioActual())?.insignia, ancho - 24, 3, 18);
   doc.setTextColor(255, 255, 255);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(13);

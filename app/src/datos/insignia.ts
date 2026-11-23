@@ -43,3 +43,23 @@ export async function procesarInsignia(archivo: File): Promise<string> {
 
 /** Formato para jsPDF.addImage a partir del data URL. */
 export const formatoInsignia = (dataUrl: string) => (dataUrl.startsWith("data:image/jpeg") ? "JPEG" : "PNG");
+
+/**
+ * Dibuja la insignia en un PDF dentro de un recuadro blanco de lado "tam" (mm), sin deformarla.
+ * Devuelve false si el colegio no tiene insignia.
+ */
+export function dibujarInsignia(doc: import("jspdf").jsPDF, insignia: string | null | undefined, x: number, y: number, tam: number): boolean {
+  if (!insignia) return false;
+  try {
+    doc.setFillColor(255, 255, 255);
+    doc.roundedRect(x, y, tam, tam, tam * 0.18, tam * 0.18, "F");
+    const { width, height } = doc.getImageProperties(insignia);
+    const util = tam * 0.84;
+    const escala = Math.min(util / width, util / height);
+    const w = width * escala, h = height * escala;
+    doc.addImage(insignia, formatoInsignia(insignia), x + (tam - w) / 2, y + (tam - h) / 2, w, h, undefined, "FAST");
+    return true;
+  } catch {
+    return false; // una imagen dañada no debe impedir generar el documento
+  }
+}
