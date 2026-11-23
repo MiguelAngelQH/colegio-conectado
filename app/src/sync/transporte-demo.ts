@@ -1,7 +1,7 @@
 import { BaseLocal } from "@/db/local";
 import type { AnioEscolar, Asistencia, AsistenciaSesion, Calificacion, Fila, InformeTutor, Justificacion, Matricula, NombreTabla, ObservacionMonitoreo, Periodo, SolicitudTutoria, Usuario } from "@/db/tipos";
 import { ABIERTAS, puedeVer, validarSolicitud } from "@/dominio/solicitudes";
-import { evaluarMarca, firmaValida, leerTokenQr } from "@/dominio/qr";
+import { evaluarMarca, leerTokenQr, ventanaValida } from "@/dominio/qr";
 import { TABLAS } from "@/db/tipos";
 import type { CambioSalida, RespuestaPull, ResultadoPush, Transporte } from "./motor";
 import { SinConexion } from "./motor";
@@ -187,8 +187,10 @@ export class ServidorDemo extends BaseLocal {
     const habitual = marcas
       .filter((m) => m.estudiante_id === a.estudiante_id && m.origen === "qr" && m.dispositivo_id && !m.por_revisar && !m.eliminado)
       .sort((x, y) => (y.marcado_en ?? "").localeCompare(x.marcado_en ?? ""))[0]?.dispositivo_id ?? null;
+    // Con el código escrito, la hora del código es la de la ventana en que coincidió.
+    const ventana = await ventanaValida(token, secreto);
     const r = evaluarMarca({
-      token, firmaOk: await firmaValida(token, secreto), sesionId: a.sesion_id, abiertaEnMs: sesion?.abierta_en ?? null,
+      token: { ...token, ventana: ventana ?? token.ventana }, firmaOk: ventana !== null, sesionId: a.sesion_id, abiertaEnMs: sesion?.abierta_en ?? null,
       marcadoEnMs: a.marcado_en ? Date.parse(a.marcado_en) : null, matriculado,
       dispositivoHabitual: habitual, dispositivo: a.dispositivo_id ?? null,
       dispositivoUsadoPorOtro: !!a.dispositivo_id && marcas.some((m) => m.sesion_id === a.sesion_id && m.dispositivo_id === a.dispositivo_id && m.estudiante_id !== a.estudiante_id),

@@ -57,3 +57,18 @@ describe("reglas de la marca", () => {
     expect(evaluarMarca({ ...base, dispositivo: "eq2" })).toMatchObject({ porRevisar: true, motivo: "Usó un celular distinto al habitual" });
   });
 });
+
+describe("código de 6 dígitos", () => {
+  it("se acepta el de la ventana actual o de hasta un minuto antes, y se lee con o sin espacio", async () => {
+    const { codigoCorto, leerCodigoCorto, tokenDeCodigo, ventanaValida } = await import("@/dominio/qr");
+    const s = nuevoSecreto();
+    const sesion = "6b1f0c2e-1111-4222-8333-444455556666";
+    const v = 120_000_000;
+    const hace45s = await codigoCorto(sesion, s, v - 3);
+    expect(hace45s).toMatch(/^\d{6}$/);
+    expect(leerCodigoCorto(`${hace45s.slice(0, 3)} ${hace45s.slice(3)}`)).toBe(hace45s);
+    expect(await ventanaValida(leerTokenQr(tokenDeCodigo(sesion, v, hace45s))!, s)).toBe(v - 3);
+    const viejo = await codigoCorto(sesion, s, v - 6);
+    if (viejo !== hace45s) expect(await ventanaValida(leerTokenQr(tokenDeCodigo(sesion, v, viejo))!, s)).toBeNull();
+  });
+});

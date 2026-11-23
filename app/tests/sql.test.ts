@@ -4,7 +4,7 @@ import { readFileSync, readdirSync } from "node:fs";
 import { resolve } from "node:path";
 import { PGlite } from "@electric-sql/pglite";
 import { beforeAll, describe, expect, it } from "vitest";
-import { crearTokenQr, leerTokenQr } from "@/dominio/qr";
+import { codigoCorto, crearTokenQr, leerTokenQr, tokenDeCodigo, ventanaDe } from "@/dominio/qr";
 
 const DIR = resolve(__dirname, "../../supabase/migrations");
 
@@ -340,13 +340,38 @@ describe("asistencia con QR", () => {
     expect(f.motivo_revision).toMatch(/fuera de tiempo; Este celular ya marcó por otro estudiante/);
   });
 
+  it("el código de 6 dígitos calculado en Postgres es idéntico al de la app", async () => {
+    for (const v of [119_000_000, 119_696_578, 120_000_001]) {
+      const r = await db.query<{ c: string }>("select codigo_qr($1, $2, $3) c", [SECRETO, SESION, v]);
+      expect(r.rows[0].c).toBe(await codigoCorto(SESION, SECRETO, v));
+    }
+  });
+
+  it("el estudiante marca escribiendo el código que vio hace unos segundos; uno equivocado se rechaza", async () => {
+    const SESION2 = "60000000-0000-4000-8000-000000000002";
+    await push(U.docente, [
+      { tabla: "asistencia_sesion", parche: { id: SESION2, colegio_id: COL, seccion_id: SEC, area_id: null, docente_id: U.docente, fecha: "2026-10-19", modo: "qr", abierta_en: ahora() - 60_000, estado: "abierta" } },
+      { tabla: "asistencia_secreto", parche: { id: SESION2, colegio_id: COL, sesion_id: SESION2, docente_id: U.docente, secreto: SECRETO } },
+    ]);
+    const v = ventanaDe(ahora());
+    const codigo = await codigoCorto(SESION2, SECRETO, v - 1);
+    const conCodigo = (est: string, c: string) => ({ ...marca(est, tokenDeCodigo(SESION2, v, c)), parche: { ...marca(est, "").parche, sesion_id: SESION2, token_qr: tokenDeCodigo(SESION2, v, c) } });
+    const [mal] = await push(U_EST2, [conCodigo(E2, String((+codigo + 1) % 1_000_000).padStart(6, "0"))]);
+    expect(mal).toMatchObject({ estado: "rechazado", motivo: "El código no es correcto o ya cambió" });
+    const m = conCodigo(E1, codigo);
+    expect((await push(U.estudiante, [m]))[0].estado).toBe("ok");
+    const f = (await db.query<{ estado: string; por_revisar: boolean }>("select estado, por_revisar from asistencia where id = $1", [m.parche.id])).rows[0];
+    expect(f).toEqual({ estado: "P", por_revisar: false });
+  });
+
   it("el secreto solo lo ve quien abrió la sesión (ni estudiantes ni la UGEL)", async () => {
-    expect((await pull(U.docente)).filas.asistencia_secreto?.map((s) => s.id)).toEqual([SESION]);
+    expect((await pull(U.docente)).filas.asistencia_secreto?.map((s) => s.id).sort()).toEqual([SESION, "60000000-0000-4000-8000-000000000002"]);
     expect((await pull(U.estudiante)).filas.asistencia_secreto).toBeUndefined();
     expect((await pull(U.ugel)).filas.asistencia_secreto).toBeUndefined();
-    // El estudiante solo ve las sesiones donde tiene su propia marca (fecha y clase), nunca el secreto.
+    // El estudiante ve las sesiones de su sección (para saber qué clase está abierta), nunca el secreto.
     const p = await pull(U.estudiante);
-    expect((p.filas.asistencia_sesion ?? []).every((s) => (p.filas.asistencia ?? []).some((a) => a.sesion_id === s.id && a.estudiante_id === E1))).toBe(true);
+    expect((p.filas.asistencia_sesion ?? []).length).toBeGreaterThan(0);
+    expect((p.filas.asistencia_sesion ?? []).every((s) => s.seccion_id === SEC)).toBe(true);
   });
 
   it("devuelve la hora del servidor para corregir relojes", async () => {

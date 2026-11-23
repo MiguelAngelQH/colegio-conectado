@@ -7,7 +7,7 @@ import { NOMBRE_ESTADO, confirmarSesion, marcar } from "@/datos/asistencia";
 import { nombreCompleto, nombreSeccion } from "@/datos/consultas";
 import { vivas } from "@/db/repositorio";
 import type { Asistencia, EstadoAsistencia, Estudiante } from "@/db/tipos";
-import { VENTANA_MS, crearTokenQr, leerCarne } from "@/dominio/qr";
+import { VENTANA_MS, codigoCorto, crearTokenQr, leerCarne } from "@/dominio/qr";
 import { ahoraServidor } from "@/sync/reloj";
 import { textoGuardado, useAvisar } from "@/ui/avisos";
 import { Aviso, Boton, BotonRegresar, Contenido, Dialogo, Encabezado, Gema, Tarjeta, cx, orden } from "@/ui/componentes";
@@ -189,6 +189,7 @@ function VistaQr({ sesionId, secreto, recibidas, total, conectado, sincronizar }
   sesionId: string; secreto: string; recibidas: number; total: number; conectado: boolean; sincronizar(): Promise<unknown>;
 }) {
   const [token, setToken] = useState("");
+  const [codigo, setCodigo] = useState("");
   const [restante, setRestante] = useState(15);
   const [grande, setGrande] = useState(false);
   const ventanaActual = useRef(-1);
@@ -201,8 +202,8 @@ function VistaQr({ sesionId, secreto, recibidas, total, conectado, sincronizar }
       setRestante(Math.ceil((VENTANA_MS - (ahora % VENTANA_MS)) / 1000));
       if (v !== ventanaActual.current) {
         ventanaActual.current = v;
-        const t = await crearTokenQr(sesionId, secreto, ahora);
-        if (vivo) setToken(t);
+        const [t, c] = await Promise.all([crearTokenQr(sesionId, secreto, ahora), codigoCorto(sesionId, secreto, v)]);
+        if (vivo) { setToken(t); setCodigo(c); }
       }
     };
     void tic();
@@ -222,6 +223,12 @@ function VistaQr({ sesionId, secreto, recibidas, total, conectado, sincronizar }
     <div className={cx("flex flex-col items-center gap-4", grande ? "w-full max-w-[min(90vw,80dvh)]" : "")}>
       <div className="w-full rounded-[1.75rem] bg-white p-4 shadow-[0_24px_60px_-24px_rgba(11,46,51,.6)]">
         {token ? <CodigoQr texto={token} className="aspect-square w-full" /> : <div className="aspect-square w-full animate-pulse rounded-2xl bg-slate-100" />}
+        <div className="mt-3 border-t border-slate-200 pt-3 text-center">
+          <p className="text-[0.7rem] font-semibold uppercase tracking-wider text-tinta-suave">Sin cámara, escriba este código</p>
+          <p className={cx("titulo-display font-bold tabular-nums tracking-[0.18em] text-tinta", grande ? "text-6xl" : "text-4xl")} aria-label={`Código ${codigo.split("").join(" ")}`}>
+            {codigo ? `${codigo.slice(0, 3)} ${codigo.slice(3)}` : "--- ---"}
+          </p>
+        </div>
       </div>
       <div className="flex items-center gap-4">
         <svg viewBox="0 0 52 52" className="h-12 w-12 -rotate-90" aria-hidden>

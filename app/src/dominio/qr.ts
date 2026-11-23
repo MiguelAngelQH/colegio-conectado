@@ -7,6 +7,11 @@
 // El secreto se crea en el equipo del docente y solo lo conocen él y el servidor. El estudiante
 // no puede fabricar códigos; el servidor verifica la firma (supabase/migrations/0007).
 //
+// Código para escribir (si la cámara no funciona): 6 dígitos que cambian con el QR.
+//   codigo = (primeros 4 bytes del mismo HMAC como entero) mod 1 000 000
+//   El estudiante envía CC1.<sesion_id>.<su_ventana>.<codigo>; el servidor lo busca en su ventana
+//   y en las 4 anteriores (el código pudo verse hasta un minuto antes).
+//
 // Carné (lo escanea el docente): CCE.<codigo_carne>
 
 export const PREFIJO_QR = "CC1";
@@ -24,13 +29,34 @@ export function nuevoSecreto(): string {
   return b64url(globalThis.crypto.getRandomValues(new Uint8Array(24)));
 }
 
-async function firmar(secreto: string, mensaje: string): Promise<string> {
+async function hmac(secreto: string, mensaje: string): Promise<Uint8Array> {
   const subtle = globalThis.crypto?.subtle;
   if (!subtle) throw new Error("Este navegador no permite generar códigos seguros (se necesita HTTPS).");
   const clave = await subtle.importKey("raw", new TextEncoder().encode(secreto), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
-  const firma = new Uint8Array(await subtle.sign("HMAC", clave, new TextEncoder().encode(mensaje)));
-  return b64url(firma.slice(0, 16));
+  return new Uint8Array(await subtle.sign("HMAC", clave, new TextEncoder().encode(mensaje)));
 }
+
+async function firmar(secreto: string, mensaje: string): Promise<string> {
+  return b64url((await hmac(secreto, mensaje)).slice(0, 16));
+}
+
+/** Código de 6 dígitos que el docente muestra bajo el QR (cambia junto con él). */
+export async function codigoCorto(sesionId: string, secreto: string, ventana: number): Promise<string> {
+  const h = await hmac(secreto, `${sesionId}.${ventana}`);
+  const n = ((h[0] << 24) >>> 0) + (h[1] << 16) + (h[2] << 8) + h[3];
+  return String(n % 1_000_000).padStart(6, "0");
+}
+
+/** Lo que escribe el estudiante: 6 dígitos, con o sin espacio en medio. */
+export function leerCodigoCorto(texto: string): string | null {
+  const t = texto.replace(/[\s-]/g, "");
+  return /^\d{6}$/.test(t) ? t : null;
+}
+
+/** Ventanas anteriores en que se acepta un código escrito (el código se vio hasta un minuto antes). */
+export const VENTANAS_CODIGO = 4;
+
+export const tokenDeCodigo = (sesionId: string, ventana: number, codigo: string) => `${PREFIJO_QR}.${sesionId}.${ventana}.${codigo}`;
 
 export const ventanaDe = (ms: number) => Math.floor(ms / VENTANA_MS);
 
@@ -42,7 +68,7 @@ export async function crearTokenQr(sesionId: string, secreto: string, ahoraMs: n
 export interface TokenQr { sesionId: string; ventana: number; firma: string }
 
 export function leerTokenQr(texto: string): TokenQr | null {
-  const m = texto.trim().match(/^CC1\.([0-9a-f-]{36})\.(\d{1,12})\.([A-Za-z0-9_-]{16,32})$/);
+  const m = texto.trim().match(/^CC1\.([0-9a-f-]{36})\.(\d{1,12})\.(\d{6}|[A-Za-z0-9_-]{16,32})$/);
   return m ? { sesionId: m[1], ventana: +m[2], firma: m[3] } : null;
 }
 
@@ -55,8 +81,22 @@ export function leerCarne(texto: string): string | null {
 
 export const textoCarne = (codigo: string) => `${PREFIJO_CARNE}.${codigo}`;
 
+/**
+ * Ventana real del código si es válido (null si no). Para el QR es la del token; para el código
+ * escrito se busca en la ventana del estudiante y en las anteriores.
+ */
+export async function ventanaValida(token: TokenQr, secreto: string): Promise<number | null> {
+  if (/^\d{6}$/.test(token.firma)) {
+    for (let v = token.ventana; v >= token.ventana - VENTANAS_CODIGO; v--) {
+      if ((await codigoCorto(token.sesionId, secreto, v)) === token.firma) return v;
+    }
+    return null;
+  }
+  return (await firmar(secreto, `${token.sesionId}.${token.ventana}`)) === token.firma ? token.ventana : null;
+}
+
 export async function firmaValida(token: TokenQr, secreto: string): Promise<boolean> {
-  return (await firmar(secreto, `${token.sesionId}.${token.ventana}`)) === token.firma;
+  return (await ventanaValida(token, secreto)) !== null;
 }
 
 export type ResultadoMarca =
@@ -77,7 +117,7 @@ export function evaluarMarca(params: {
 }): ResultadoMarca {
   const p = params;
   if (p.token.sesionId !== p.sesionId) return { valida: false, motivo: "El código no corresponde a esta clase" };
-  if (!p.firmaOk) return { valida: false, motivo: "Código QR no válido" };
+  if (!p.firmaOk) return { valida: false, motivo: /^\d{6}$/.test(p.token.firma) ? "El código no es correcto o ya cambió" : "Código QR no válido" };
   if (!p.matriculado) return { valida: false, motivo: "No estás matriculado en esta sección" };
   const horaCodigo = p.token.ventana * VENTANA_MS;
   if (p.abiertaEnMs !== null && (horaCodigo < p.abiertaEnMs - VENTANA_MS * 4 || horaCodigo > p.abiertaEnMs + DURACION_SESION_MS)) {

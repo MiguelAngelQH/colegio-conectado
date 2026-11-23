@@ -23,7 +23,9 @@ type Detector = { detect(fuente: CanvasImageSource): Promise<{ rawValue: string 
  * Lector de QR con la cámara trasera. Usa el detector nativo del navegador (Android Chrome)
  * y, si no existe, jsQR. Siempre permite escribir el código a mano.
  */
-export function Escaner({ onLeer, pausado, textoManual = "Escribir el código" }: { onLeer(texto: string): void; pausado?: boolean; textoManual?: string }) {
+export function Escaner({ onLeer, pausado, textoManual = "Escribir el código", placeholderManual = "Código", numerico }: {
+  onLeer(texto: string): void; pausado?: boolean; textoManual?: string; placeholderManual?: string; numerico?: boolean;
+}) {
   const video = useRef<HTMLVideoElement>(null);
   const ultimo = useRef<{ texto: string; t: number }>({ texto: "", t: 0 });
   const pausadoRef = useRef(pausado);
@@ -140,7 +142,8 @@ export function Escaner({ onLeer, pausado, textoManual = "Escribir el código" }
       )}
       {manual ? (
         <form onSubmit={enviarManual} className="flex gap-2">
-          <input value={codigo} onChange={(e) => setCodigo(e.target.value)} className="campo flex-1" placeholder="Código" aria-label="Código" autoFocus />
+          <input value={codigo} onChange={(e) => setCodigo(e.target.value)} className={cx("campo flex-1", numerico && "text-center text-lg font-bold tracking-[0.2em]")}
+            placeholder={placeholderManual} aria-label={placeholderManual} autoFocus inputMode={numerico ? "numeric" : undefined} autoComplete="off" />
           <Boton type="submit" disabled={!codigo.trim()}>Registrar</Boton>
         </form>
       ) : null}

@@ -4,7 +4,8 @@ import { guardar, guardarLote, vivas, type Escritura } from "@/db/repositorio";
 import type { Asistencia, AsistenciaSesion, EstadoAsistencia } from "@/db/tipos";
 import { idDeterministico } from "@/dominio/notas";
 import { idEquipo, nuevoSecreto } from "@/dominio/qr";
-import { nombreSeccion } from "./consultas";
+import { matriculaActual, nombreSeccion } from "./consultas";
+import { descartarCambio } from "@/sync/motor";
 import { ahoraServidor } from "@/sync/reloj";
 
 export const NOMBRE_ESTADO: Record<EstadoAsistencia, string> = { P: "Presente", T: "Tardanza", F: "Falta", J: "Justificada" };
@@ -64,12 +65,30 @@ export async function confirmarSesion(sesionId: string, sinMarca: string[], cole
  */
 export async function marcarConQr(p: { token: string; sesionId: string; estudianteId: string; colegioId: string | null }): Promise<"nueva" | "repetida"> {
   const id = await idAsistencia(p.sesionId, p.estudianteId);
-  if (await db.tabla("asistencia").get(id)) return "repetida";
+  if (await db.tabla("asistencia").get(id)) {
+    // Un intento rechazado (código equivocado o vencido) no impide volver a intentarlo.
+    const envios = await db.outbox.where("[tabla+fila_id]").equals(["asistencia", id]).toArray();
+    if (!envios.length || envios.some((e) => e.estado !== "rechazado")) return "repetida";
+    for (const e of envios) await descartarCambio(db, e.id!);
+  }
   await guardar(db, "asistencia", {
     id, sesion_id: p.sesionId, estudiante_id: p.estudianteId, estado: "P", origen: "qr",
     marcado_en: new Date(ahoraServidor()).toISOString(), token_qr: p.token, por_revisar: false, dispositivo_id: idEquipo(),
   }, p.colegioId);
   return "nueva";
+}
+
+/** Cómo quedó el envío de la marca del estudiante después de sincronizar. */
+export async function envioDeMarca(sesionId: string, estudianteId: string): Promise<{ estado: "recibida" | "pendiente" } | { estado: "rechazada"; motivo: string }> {
+  const id = await idAsistencia(sesionId, estudianteId);
+  const envios = await db.outbox.where("[tabla+fila_id]").equals(["asistencia", id]).toArray();
+  const rechazo = envios.find((e) => e.estado === "rechazado");
+  if (rechazo) {
+    // Se descarta para que pueda intentarlo de nuevo con el código correcto.
+    for (const e of envios) await descartarCambio(db, e.id!);
+    return { estado: "rechazada", motivo: (rechazo.error ?? "El colegio no aceptó la marca").replace(/^No se pudo enviar tras \d+ intentos: /, "") };
+  }
+  return { estado: envios.length ? "pendiente" : "recibida" };
 }
 
 export interface DetalleSesion { fecha: string; clase: string; seccion: string | null; docente: string | null }
@@ -91,4 +110,12 @@ export async function detallesDeSesiones(ids: string[]): Promise<Map<string, Det
       docente: doc ? `${doc.nombres.split(" ")[0]} ${doc.apellidos.split(" ")[0]}` : null,
     }];
   }));
+}
+
+/** La clase abierta hoy en la sección del estudiante (la más reciente), para marcar con el código escrito. */
+export async function claseAbiertaDe(estudianteId: string): Promise<AsistenciaSesion | undefined> {
+  const m = await matriculaActual(estudianteId);
+  if (!m) return undefined;
+  const sesiones = vivas(await db.tabla("asistencia_sesion").where("[seccion_id+fecha]").equals([m.seccion_id, hoyLocal()]).toArray());
+  return sesiones.filter((s) => s.estado === "abierta").sort((a, b) => (b.abierta_en ?? 0) - (a.abierta_en ?? 0))[0];
 }
