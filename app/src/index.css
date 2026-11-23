@@ -179,5 +179,15 @@ body {
 @keyframes escaneo { from { top: 8%; } to { top: 92%; } }
 .linea-escaneo { top: 50%; }
 
+/* Confeti de la felicitación por asistir (solo si la persona no pidió reducir el movimiento). */
+.confeti { opacity: 0; }
+@media (prefers-reduced-motion: no-preference) {
+  .confeti { animation-name: confeti; animation-timing-function: cubic-bezier(.25,.6,.5,1); animation-fill-mode: both; }
+}
+@keyframes confeti {
+  0% { opacity: 1; transform: translateY(-12px) rotate(0deg); }
+  100% { opacity: 0; transform: translateY(240px) rotate(540deg); }
+}
+
 /* Anillo de cuenta regresiva del QR. */
 .anillo { transition: stroke-dashoffset 1s linear; }
