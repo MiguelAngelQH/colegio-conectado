@@ -79,7 +79,7 @@ export function MiAsistencia() {
         </Tarjeta>
         <p className="px-1 text-xs text-tinta-suave">Sobre {ind.sesiones} {ind.sesiones === 1 ? "registro" : "registros"} de asistencia de este año.</p>
 
-        <div className="flex items-center justify-between gap-2 px-1">
+        <div className="flex flex-col items-start gap-2 px-1 sm:flex-row sm:items-center sm:justify-between">
           <h2 className="etiqueta">Registro de asistencia</h2>
           <Segmentado etiqueta="Mostrar" valor={filtro} onCambio={setFiltro}
             opciones={[{ valor: "todas", texto: `Todas (${datos.registros.length})` }, { valor: "faltas", texto: "Faltas y tardanzas" }]} />
