@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useLiveQuery } from "dexie-react-hooks";
 import { CalendarCheck, FileCheck, Send } from "lucide-react";
 import { db, useApp } from "@/app/contexto";
-import { NOMBRE_ESTADO } from "@/datos/asistencia";
+import { NOMBRE_ESTADO, detallesDeSesiones } from "@/datos/asistencia";
 import { asistenciaDelAnio } from "@/datos/consultas";
 import { useHijos } from "@/datos/familia";
 import { nuevoId } from "@/db/local";
@@ -12,7 +12,7 @@ import { indicadores } from "@/dominio/seguimiento";
 import { textoGuardado, useAvisar } from "@/ui/avisos";
 import { Boton, Contenido, Dialogo, Encabezado, Tarjeta, cx, orden } from "@/ui/componentes";
 import { Evidencias } from "@/ui/Evidencias";
-import { Vacio } from "@/ui/formulario";
+import { Segmentado, Vacio } from "@/ui/formulario";
 import { SelectorHijo } from "@/ui/SelectorHijo";
 
 const ESTADO_J: Record<Justificacion["estado"], { texto: string; clase: string }> = {
@@ -21,29 +21,30 @@ const ESTADO_J: Record<Justificacion["estado"], { texto: string; clase: string }
   rechazada: { texto: "Justificación rechazada", clase: "bg-red-100/80 text-red-800" },
 };
 
-interface Registro { a: Asistencia; fecha: string; clase: string | null; j: Justificacion | undefined }
+interface Registro { a: Asistencia; fecha: string; clase: string | null; docente: string | null; j: Justificacion | undefined }
 
 export function MiAsistencia() {
   const { usuario } = useApp();
   const { hijos, hijo } = useHijos(usuario);
   const [justificando, setJustificando] = useState<Registro | null>(null);
+  const [filtro, setFiltro] = useState<"todas" | "faltas">("todas");
   const esApoderado = !!usuario?.roles.includes("apoderado");
 
   const datos = useLiveQuery(async () => {
     if (!hijo) return null;
     // Solo el año en curso: los años anteriores quedan en el historial del estudiante.
     const { marcas, sesiones } = await asistenciaDelAnio(hijo.id);
-    const areas = new Map((await db.tabla("area").toArray()).map((a) => [a.id, a.nombre]));
+    const detalles = await detallesDeSesiones(marcas.map((m) => m.sesion_id));
     const justifs = vivas(await db.tabla("justificacion").where("estudiante_id").equals(hijo.id).toArray());
     const registros: Registro[] = marcas
-      .filter((m) => m.estado !== "P")
       .map((a) => {
         const s = sesiones.get(a.sesion_id);
         // Si hay varias solicitudes para la misma marca, cuenta la más reciente.
         const j = justifs.filter((x) => x.asistencia_id === a.id).sort((x, y) => (y.updated_at ?? "").localeCompare(x.updated_at ?? ""))[0];
-        return { a, fecha: s?.fecha ?? (a.marcado_en ?? "").slice(0, 10), clase: s?.area_id ? areas.get(s.area_id) ?? null : null, j };
+        const d = detalles.get(a.sesion_id);
+        return { a, fecha: s?.fecha ?? (a.marcado_en ?? "").slice(0, 10), clase: d?.clase ?? null, docente: d?.docente ?? null, j };
       })
-      .sort((x, y) => y.fecha.localeCompare(x.fecha));
+      .sort((x, y) => y.fecha.localeCompare(x.fecha) || (y.a.marcado_en ?? "").localeCompare(x.a.marcado_en ?? ""));
     return { ind: indicadores({ asistencias: marcas, calificacionesPeriodo: [], incidencias: [] }), registros };
   }, [hijo?.id]);
 
@@ -78,21 +79,36 @@ export function MiAsistencia() {
         </Tarjeta>
         <p className="px-1 text-xs text-tinta-suave">Sobre {ind.sesiones} {ind.sesiones === 1 ? "registro" : "registros"} de asistencia de este año.</p>
 
-        {datos.registros.length === 0 ? (
-          <Vacio icono={CalendarCheck} tono="tono-musgo" titulo="Sin faltas ni tardanzas">¡Muy bien!</Vacio>
-        ) : (
+        <div className="flex items-center justify-between gap-2 px-1">
+          <h2 className="etiqueta">Registro de asistencia</h2>
+          <Segmentado etiqueta="Mostrar" valor={filtro} onCambio={setFiltro}
+            opciones={[{ valor: "todas", texto: `Todas (${datos.registros.length})` }, { valor: "faltas", texto: "Faltas y tardanzas" }]} />
+        </div>
+        {(() => {
+          const lista = filtro === "todas" ? datos.registros : datos.registros.filter((r) => r.a.estado !== "P");
+          if (lista.length === 0) {
+            return filtro === "faltas"
+              ? <Vacio icono={CalendarCheck} tono="tono-musgo" titulo="Sin faltas ni tardanzas">¡Muy bien!</Vacio>
+              : <Vacio icono={CalendarCheck} titulo="Todavía no hay asistencias registradas este año" />;
+          }
+          return (
           <Tarjeta className="aparecer divide-y divide-white/70" style={orden(2)}>
-            {datos.registros.map((r) => {
+            {lista.map((r) => {
               const puedeJustificar = esApoderado && (r.a.estado === "F" || r.a.estado === "T") && (!r.j || r.j.estado === "rechazada");
               return (
                 <div key={r.a.id} className="flex flex-wrap items-center gap-3 px-4 py-3">
                   <span className={cx("titulo-display flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-sm font-bold text-white",
-                    r.a.estado === "F" ? "bg-gradient-to-b from-red-400 to-red-600" : r.a.estado === "T" ? "bg-gradient-to-b from-amber-300 to-amber-500 !text-amber-950" : "bg-gradient-to-b from-sky-400 to-sky-600")}>
+                    r.a.estado === "F" ? "bg-gradient-to-b from-red-400 to-red-600" : r.a.estado === "T" ? "bg-gradient-to-b from-amber-300 to-amber-500 !text-amber-950"
+                      : r.a.estado === "P" ? "bg-gradient-to-b from-emerald-400 to-emerald-600" : "bg-gradient-to-b from-sky-400 to-sky-600")}>
                     {r.a.estado}
                   </span>
                   <div className="min-w-0 flex-1 text-sm">
                     <p className="font-semibold">{NOMBRE_ESTADO[r.a.estado]} · {new Date(`${r.fecha}T12:00:00`).toLocaleDateString("es-PE", { weekday: "long", day: "numeric", month: "long" })}</p>
-                    <p className="text-xs text-tinta-suave">{r.clase ?? "Asistencia del día"}</p>
+                    <p className="text-xs text-tinta-suave">
+                      {r.clase ?? "Asistencia del día"}{r.docente ? ` · Prof. ${r.docente}` : ""}
+                      {r.a.marcado_en && r.a.estado !== "F" ? ` · ${new Date(r.a.marcado_en).toLocaleTimeString("es-PE", { hour: "2-digit", minute: "2-digit" })}` : ""}
+                      {r.a.origen === "qr" ? " · con QR" : r.a.origen === "carne" ? " · con carné" : ""}
+                    </p>
                     {r.j && (
                       <p className="mt-1">
                         <span className={cx("rounded-full px-2 py-0.5 text-[0.65rem] font-bold", ESTADO_J[r.j.estado].clase)}>{ESTADO_J[r.j.estado].texto}</span>
@@ -105,7 +121,8 @@ export function MiAsistencia() {
               );
             })}
           </Tarjeta>
-        )}
+          );
+        })()}
       </Contenido>
       {justificando && <DialogoJustificar registro={justificando} onCerrar={() => setJustificando(null)} />}
     </>
