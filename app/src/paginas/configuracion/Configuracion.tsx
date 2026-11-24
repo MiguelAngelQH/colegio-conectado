@@ -1,5 +1,5 @@
 import { Link, Route, Routes } from "react-router-dom";
-import { ArrowRight, CalendarRange, CircleCheck, ClipboardCheck, LayoutGrid, School, Users, GraduationCap } from "lucide-react";
+import { ArrowRight, BookMarked, CalendarRange, CircleCheck, ClipboardCheck, LayoutGrid, School, Users, GraduationCap } from "lucide-react";
 import { useLiveQuery } from "dexie-react-hooks";
 import { db } from "@/app/contexto";
 import { useColegio, useEstructura } from "@/datos/consultas";
@@ -12,6 +12,7 @@ import { EstudiantesPagina, FichaEstudiante } from "./Estudiantes";
 import { ImportarPagina } from "./Importar";
 import { CierreAnio } from "./CierreAnio";
 import { DatosColegio } from "./DatosColegio";
+import { AreasPropias } from "./AreasPropias";
 
 export function Configuracion() {
   return (
@@ -26,6 +27,7 @@ export function Configuracion() {
       <Route path="estudiantes/:id" element={<FichaEstudiante />} />
       <Route path="cierre" element={<CierreAnio />} />
       <Route path="colegio" element={<DatosColegio />} />
+      <Route path="areas" element={<AreasPropias />} />
     </Routes>
   );
 }
@@ -104,6 +106,15 @@ function Centro() {
             </Link>
           ))}
         </div>
+
+        <Link to="areas" className="vidrio aparecer group flex items-center gap-4 p-4 transition hover:bg-white/55">
+          <Gema icono={BookMarked} tono="tono-lila" />
+          <span className="min-w-0 flex-1">
+            <span className="block font-bold">Áreas y talleres</span>
+            <span className="block text-sm text-tinta-suave">Currículo nacional y talleres propios del colegio.</span>
+          </span>
+          <ArrowRight className="h-5 w-5 text-tinta-suave transition group-hover:translate-x-0.5" aria-hidden />
+        </Link>
 
         {e?.anio && (
           <Link to="cierre" className="vidrio aparecer group flex items-center gap-4 p-4 transition hover:bg-white/55">
