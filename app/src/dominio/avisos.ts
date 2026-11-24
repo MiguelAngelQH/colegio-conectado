@@ -1,9 +1,9 @@
 // Bandeja de avisos. Se calcula en el equipo con lo que trajo la sincronización: no necesita un
 // servidor de notificaciones y funciona sin conexión (los avisos llegan con el siguiente sync).
-import type { Asistencia, Calificacion, Comunicado, Justificacion, Observacion, ObservacionMonitoreo, SolicitudTutoria } from "@/db/tipos";
+import type { Asistencia, Calificacion, Comunicado, Justificacion, Observacion, ObservacionMonitoreo, SolicitudTutoria, Tarea } from "@/db/tipos";
 import { esSensible, MOTIVOS } from "./solicitudes";
 
-export type TipoAviso = "falta" | "tardanza" | "nota" | "comunicado" | "observacion" | "justificacion" | "por_revisar" | "monitoreo" | "tutoria";
+export type TipoAviso = "falta" | "tardanza" | "nota" | "comunicado" | "observacion" | "justificacion" | "por_revisar" | "monitoreo" | "tutoria" | "tarea";
 
 export interface Aviso {
   id: string;
@@ -37,6 +37,8 @@ export interface EntradaAvisos {
   esUgel?: boolean;
   /** Pedidos de ayuda que el usuario puede ver (ya filtrados por privacidad). */
   solicitudes?: SolicitudTutoria[];
+  /** Tareas de las secciones de la familia, con el nombre del área. */
+  tareas?: { t: Tarea; area: string }[];
 }
 
 const fechaCorta = (f: string) => new Date(`${f}T12:00:00`).toLocaleDateString("es-PE", { weekday: "short", day: "numeric", month: "short" });
@@ -137,5 +139,16 @@ export function calcularAvisos(e: EntradaAvisos): Aviso[] {
   }
 
   for (const a of res) a.nuevo = !e.vistosHasta || a.momento > e.vistosHasta;
+  if (e.esFamilia) {
+    for (const { t, area } of e.tareas ?? []) {
+      if (t.eliminado) continue;
+      res.push({
+        id: `tarea-${t.id}`, tipo: "tarea", momento: t.updated_at ?? t.entrega,
+        titulo: `Tarea de ${area}: ${t.titulo}`, detalle: `Entrega: ${fechaCorta(t.entrega)}${t.descripcion ? `. ${t.descripcion}` : ""}`,
+        estudianteId: null, enlace: "/tareas", importante: false, nuevo: false,
+      });
+    }
+  }
+
   return res.sort((a, b) => b.momento.localeCompare(a.momento));
 }

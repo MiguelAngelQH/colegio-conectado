@@ -160,6 +160,27 @@ export interface ListaCotejo extends Fila {
   notas: Record<string, Record<string, NivelLogro>>;
 }
 
+/** Un bloque del horario de una sección (dia 1 = lunes). */
+export interface HorarioClase extends Fila {
+  seccion_id: string;
+  dia: number;
+  inicio: string; // "08:00"
+  fin: string;
+  area_id: string | null;
+  docente_id: string | null;
+  detalle: string | null;
+}
+
+/** Tarea que el docente deja a una sección. */
+export interface Tarea extends Fila {
+  seccion_id: string;
+  area_id: string;
+  docente_id: string;
+  titulo: string;
+  descripcion: string | null;
+  entrega: string; // aaaa-mm-dd
+}
+
 /** Informe del tutor al cerrar el año, para quien reciba al estudiante. Solo lo lee el personal. */
 export interface InformeTutor extends Fila {
   estudiante_id: string;
@@ -369,6 +390,8 @@ export interface Tablas {
   solicitud_tutoria: SolicitudTutoria;
   informe_tutor: InformeTutor;
   lista_cotejo: ListaCotejo;
+  horario_clase: HorarioClase;
+  tarea: Tarea;
   observacion: Observacion;
   sesion_tutoria: SesionTutoria;
   entrevista: Entrevista;
@@ -405,6 +428,8 @@ export const INDICES: Record<NombreTabla, string> = {
   solicitud_tutoria: "id, estudiante_id, solicitante_id, tutor_id, estado",
   informe_tutor: "id, estudiante_id, anio_id",
   lista_cotejo: "id, [seccion_id+area_id+periodo_id], docente_id",
+  horario_clase: "id, seccion_id, docente_id",
+  tarea: "id, seccion_id, docente_id, entrega",
   observacion: "id, estudiante_id, autor_id",
   sesion_tutoria: "id, seccion_id",
   entrevista: "id, estudiante_id, tutor_id",

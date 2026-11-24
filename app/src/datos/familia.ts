@@ -94,7 +94,16 @@ export function useAvisos(usuario: Usuario | null): { avisos: Aviso[]; nuevos: n
       esDireccion: usuario.roles.some((r) => r === "director" || r === "subdirector"),
       esUgel: usuario.roles.includes("ugel"),
       solicitudes,
+      tareas: esFamilia ? await tareasDeFamilia(hijos.map((h) => h.id), areas) : [],
     });
     return { avisos, nuevos: avisos.filter((a) => a.nuevo).length };
   }, [usuario?.id]);
+}
+
+/** Tareas de las secciones donde están matriculados los hijos (o el propio estudiante). */
+async function tareasDeFamilia(estudianteIds: string[], areas: Map<string, { nombre: string }>) {
+  const mats = vivas(await db.tabla("matricula").where("estudiante_id").anyOf(estudianteIds).toArray()).filter((m) => m.estado === "matriculado");
+  const secciones = [...new Set(mats.map((m) => m.seccion_id))];
+  const tareas = vivas(await db.tabla("tarea").where("seccion_id").anyOf(secciones).toArray());
+  return tareas.map((t) => ({ t, area: areas.get(t.area_id)?.nombre ?? "Clase" }));
 }

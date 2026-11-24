@@ -298,6 +298,22 @@ describe("listas de cotejo", () => {
   });
 });
 
+describe("horario y tareas", () => {
+  it("la dirección arma el horario y todo el colegio lo ve; un docente no lo cambia", async () => {
+    const b = { id: "7b000000-0000-4000-8000-000000000001", colegio_id: COL, seccion_id: SEC, dia: 1, inicio: "08:00", fin: "08:45", area_id: "a0000000-0000-4000-8000-00000000000b", docente_id: U.docente, detalle: null };
+    expect((await push(U.director, [{ tabla: "horario_clase", parche: b }]))[0]).toEqual({ ref: 1, estado: "ok" });
+    expect((await pull(U.estudiante)).filas.horario_clase?.map((x) => x.id)).toEqual([b.id]);
+    expect((await push(U.docente, [{ tabla: "horario_clase", parche: { id: b.id, inicio: "09:00" } }]))[0].estado).toBe("rechazado");
+  });
+  it("el docente deja una tarea a su sección: la ven el estudiante y su apoderado", async () => {
+    const t = { id: "7c000000-0000-4000-8000-000000000001", colegio_id: COL, seccion_id: SEC, area_id: "a0000000-0000-4000-8000-00000000000b", docente_id: U.docente, titulo: "Ficha 12", descripcion: null, entrega: "2026-10-23" };
+    expect((await push(U.docente, [{ tabla: "tarea", parche: t }]))[0]).toEqual({ ref: 1, estado: "ok" });
+    expect((await pull(U.estudiante)).filas.tarea?.map((x) => x.id)).toEqual([t.id]);
+    expect((await pull(U.apoderado)).filas.tarea?.map((x) => x.id)).toEqual([t.id]);
+    expect((await push(U.estudiante, [{ tabla: "tarea", parche: { id: t.id, titulo: "Cambiada" } }]))[0].estado).toBe("rechazado");
+  });
+});
+
 describe("asistencia con QR", () => {
   const SESION = "60000000-0000-4000-8000-000000000001";
   const SECRETO = "secreto-de-prueba-1234567890";

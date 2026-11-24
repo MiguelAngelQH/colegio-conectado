@@ -89,7 +89,7 @@ const hoyLocal = () => {
 };
 
 /** Cambia este número cuando cambien los datos de demo: los equipos vuelven a sembrar. */
-export const VERSION_DEMO = 14;
+export const VERSION_DEMO = 15;
 
 export async function datosDemo(hoyReal = hoyLocal()): Promise<Partial<Record<NombreTabla, Fila[]>>> {
   const r = rng(42);
@@ -396,6 +396,32 @@ export async function datosDemo(hoyReal = hoyLocal()): Promise<Partial<Record<No
     texto: `En la visita de monitoreo se observó que el registro de notas del ${ultimoTerminado.nombre} está atrasado en primaria. Presentar un plan para completarlo antes del cierre.`,
   }];
 
+  // Horario de las secciones de secundaria (lunes a viernes, 6 bloques y recreo) y algunas tareas.
+  const BLOQUES = [["08:00", "08:45"], ["08:45", "09:30"], ["09:30", "10:15"], ["10:15", "10:35"], ["10:35", "11:20"], ["11:20", "12:05"], ["12:05", "12:50"]];
+  const horario: Fila[] = [];
+  for (const s of [secSec, sec5, sec1]) {
+    const delaSeccion = asignaciones.filter((a) => a.seccion_id === s.id);
+    if (!delaSeccion.length) continue;
+    let k = 0;
+    for (let dia = 1; dia <= 5; dia++) {
+      BLOQUES.forEach(([inicio, fin], b) => {
+        const recreo = b === 3;
+        const a = recreo ? null : delaSeccion[(k++ + dia) % delaSeccion.length];
+        horario.push({
+          id: id("fe200000", horario.length + 1), colegio_id: CID, seccion_id: s.id, dia, inicio, fin,
+          area_id: a?.area_id ?? null, docente_id: a?.docente_id ?? null, detalle: recreo ? "Recreo" : null,
+        } as unknown as Fila);
+      });
+    }
+  }
+  const tareas: Fila[] = asignaciones.filter((a) => a.seccion_id === secSec.id).slice(0, 3).flatMap((a, i) => [
+    { id: id("fe300000", i * 2 + 1), colegio_id: CID, seccion_id: secSec.id, area_id: a.area_id, docente_id: a.docente_id,
+      titulo: ["Resolver la ficha de fracciones (páginas 12 y 13)", "Leer el cuento y responder las preguntas", "Traer materiales para el experimento"][i] ?? "Tarea",
+      descripcion: "Revisar las indicaciones dadas en clase.", entrega: sumarDias(hoy, 2 + i) },
+    { id: id("fe300000", i * 2 + 2), colegio_id: CID, seccion_id: secSec.id, area_id: a.area_id, docente_id: a.docente_id,
+      titulo: "Repaso de la semana", descripcion: null, entrega: hace(5 + i) },
+  ] as unknown as Fila[]);
+
   return {
     colegio: [colegio], usuario: usuarios, anio_escolar: [anioPrevio, anio], periodo: [...periodosPrevios, ...periodos], grado: grados,
     seccion: [secPrevia, ...secciones], area: areas, competencia: competencias, docente_asignacion: asignaciones,
@@ -404,5 +430,6 @@ export async function datosDemo(hoyReal = hoyLocal()): Promise<Partial<Record<No
     informe_tutor: informesPrevios,
     incidencia: incidencias, incidencia_accion: acciones, asistencia_sesion: sesionesAsis, asistencia: marcasAsis,
     justificacion: justificaciones, observacion_monitoreo: monitoreo,
+    horario_clase: horario as never, tarea: tareas as never,
   };
 }
