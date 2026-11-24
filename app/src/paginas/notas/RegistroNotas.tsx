@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useLiveQuery } from "dexie-react-hooks";
 import { Link } from "react-router-dom";
-import { BookOpenCheck, ClipboardList, Lock, MessageSquarePlus, PenLine, Save } from "lucide-react";
+import { BookOpenCheck, ClipboardList, FileSpreadsheet, Lock, MessageSquarePlus, PenLine, Save } from "lucide-react";
 import { db, useApp } from "@/app/contexto";
 import { nombreCompleto, seccionesDetalle, anioActivo } from "@/datos/consultas";
+import { descargarRegistroAuxiliar } from "@/datos/formatos-colegio";
 import { guardarNota } from "@/datos/notas";
 import { guardar, vivas } from "@/db/repositorio";
 import type { Calificacion, Competencia, Estudiante, NivelLogro, Observacion, Periodo } from "@/db/tipos";
@@ -37,6 +38,8 @@ export function RegistroNotas() {
   const [periodoId, setPeriodoId] = useState("");
   const [competenciaId, setCompetenciaId] = useState("");
   const [vista, setVista] = useState<"lista" | "matriz">("lista");
+  const [descargando, setDescargando] = useState(false);
+  const avisarDescarga = useAvisar();
 
   const base = useLiveQuery(async () => {
     if (!usuario) return null;
@@ -119,6 +122,19 @@ export function RegistroNotas() {
           <Segmentado etiqueta="Periodo" valor={periodoId} onCambio={setPeriodoId}
             opciones={base.periodos.map((p) => ({ valor: p.id, texto: p.nombre.split(" ")[0] }))} />
         </div>
+        <Boton variante="vidrio" icono={FileSpreadsheet} className="sm:col-span-2" cargando={descargando} disabled={!curso || !periodoId}
+          onClick={async () => {
+            setDescargando(true);
+            try {
+              await descargarRegistroAuxiliar({ seccionId: curso!.seccionId, areaId: curso!.areaId, periodoId });
+            } catch (err) {
+              avisarDescarga(err instanceof Error ? err.message : String(err), "error");
+            } finally {
+              setDescargando(false);
+            }
+          }}>
+          Descargar registro auxiliar, descriptivo y mapa de calor (Excel)
+        </Boton>
       </Tarjeta>
 
       {cerrado && (
