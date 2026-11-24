@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
 import { Route, Routes, useNavigate } from "react-router-dom";
 import { useLiveQuery } from "dexie-react-hooks";
-import { CalendarDays, ChevronRight, ClipboardCheck, FileCheck, History, IdCard } from "lucide-react";
+import { CalendarDays, ChevronRight, ClipboardCheck, FileCheck, FileSpreadsheet, History, IdCard } from "lucide-react";
 import { db, useApp } from "@/app/contexto";
 import { abrirSesion, hoyLocal } from "@/datos/asistencia";
 import { anioActivo, seccionesDetalle } from "@/datos/consultas";
+import { descargarRegistroAsistencia } from "@/datos/formatos-colegio";
 import { vivas } from "@/db/repositorio";
 import { useAvisar } from "@/ui/avisos";
 import { Boton, Contenido, Encabezado, Gema, Tarjeta, cx, orden } from "@/ui/componentes";
@@ -33,6 +34,7 @@ function InicioAsistencia() {
   const [seccionId, setSeccionId] = useState("");
   const [areaId, setAreaId] = useState("");
   const [abriendo, setAbriendo] = useState(false);
+  const [descargando, setDescargando] = useState(false);
   const verTodo = !!usuario?.roles.some((r) => ["director", "subdirector", "auxiliar"].includes(r));
 
   const datos = useLiveQuery(async () => {
@@ -85,6 +87,17 @@ function InicioAsistencia() {
     }
   };
 
+  const descargarRegistro = async () => {
+    setDescargando(true);
+    try {
+      await descargarRegistroAsistencia({ seccionId, areaId: areaId || null });
+    } catch (err) {
+      avisar(err instanceof Error ? err.message : String(err), "error");
+    } finally {
+      setDescargando(false);
+    }
+  };
+
   const hoy = hoyLocal();
   return (
     <>
@@ -109,6 +122,9 @@ function InicioAsistencia() {
               </Campo>
             </div>
             <Boton icono={ClipboardCheck} className="w-full" onClick={tomar} cargando={abriendo} disabled={!seccionId}>Tomar asistencia de hoy</Boton>
+            <Boton variante="vidrio" icono={FileSpreadsheet} className="w-full" onClick={descargarRegistro} cargando={descargando} disabled={!seccionId}>
+              Descargar registro de control de asistencia (Excel)
+            </Boton>
           </Tarjeta>
         )}
 
