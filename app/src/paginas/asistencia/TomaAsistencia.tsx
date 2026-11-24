@@ -4,7 +4,7 @@ import { useLiveQuery } from "dexie-react-hooks";
 import { CircleCheck, CircleAlert, ClipboardCheck, IdCard, Maximize, Minimize, QrCode, UserCheck, X } from "lucide-react";
 import { db, useApp } from "@/app/contexto";
 import { NOMBRE_ESTADO, confirmarSesion, marcar } from "@/datos/asistencia";
-import { nombreCompleto, nombreSeccion } from "@/datos/consultas";
+import { nombreCompleto, nombreSeccion, useColegio } from "@/datos/consultas";
 import { vivas } from "@/db/repositorio";
 import type { Asistencia, EstadoAsistencia, Estudiante } from "@/db/tipos";
 import { VENTANA_MS, codigoCorto, crearTokenQr, leerCarne } from "@/dominio/qr";
@@ -14,7 +14,7 @@ import { Aviso, Boton, BotonRegresar, Contenido, Dialogo, Encabezado, Gema, Tarj
 import { Segmentado, Vacio } from "@/ui/formulario";
 import { CodigoQr, Escaner } from "@/ui/qr";
 
-const ESTADOS: EstadoAsistencia[] = ["P", "T", "F", "J"];
+const TODOS_ESTADOS: EstadoAsistencia[] = ["P", "T", "F", "J"];
 const COLOR_ESTADO: Record<EstadoAsistencia, string> = {
   P: "bg-gradient-to-b from-emerald-400 to-emerald-600 text-white",
   T: "bg-gradient-to-b from-amber-300 to-amber-500 text-amber-950",
@@ -31,6 +31,9 @@ export function TomaAsistencia() {
   const avisar = useAvisar();
   const [modo, setModo] = useState<Modo>("lista");
   const [confirmando, setConfirmando] = useState(false);
+  // El colegio puede no usar tardanzas (registro A/F/J): entonces no se ofrece "T".
+  const colegio = useColegio();
+  const ESTADOS = colegio?.usa_tardanza === false ? TODOS_ESTADOS.filter((e) => e !== "T") : TODOS_ESTADOS;
 
   const datos = useLiveQuery(async () => {
     const sesion = await db.tabla("asistencia_sesion").get(id!);
@@ -79,7 +82,7 @@ export function TomaAsistencia() {
         titulo={`${datos.titulo}${datos.area ? ` · ${datos.area}` : ""}`} />
       <Contenido ancho="max-w-4xl">
         <Tarjeta className="aparecer p-4" style={orden(1)}>
-          <div className="grid grid-cols-5 gap-2 text-center">
+          <div className={cx("grid gap-2 text-center", ESTADOS.length === 4 ? "grid-cols-5" : "grid-cols-4")}>
             {ESTADOS.map((e) => (
               <div key={e} className="rounded-2xl bg-white/45 py-2 ring-1 ring-white/80">
                 <p className="titulo-display text-2xl font-bold">{cuenta(e)}</p>

@@ -43,6 +43,8 @@ export interface Colegio extends Fila {
   lema?: string;
   /** Insignia como imagen PNG o JPEG pequeña (data URL): se sincroniza y sirve sin conexión. */
   insignia?: string | null;
+  /** Si es false, la asistencia no ofrece "Tardanza" (registro A/F/J). */
+  usa_tardanza?: boolean;
 }
 
 export interface Usuario extends Fila {

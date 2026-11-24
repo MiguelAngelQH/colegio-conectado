@@ -9,7 +9,7 @@ import { guardar } from "@/db/repositorio";
 import type { Colegio } from "@/db/tipos";
 import { textoGuardado, useAvisar } from "@/ui/avisos";
 import { Aviso, Boton, BotonRegresar, Contenido, Encabezado, Gema, Tarjeta } from "@/ui/componentes";
-import { Campo, Entrada } from "@/ui/formulario";
+import { Campo, Casilla, Entrada } from "@/ui/formulario";
 
 type Formulario = Required<Pick<Colegio, "nombre" | "codigo_modular" | "codigo_local" | "ugel" | "dre" | "region" | "provincia" | "distrito" | "direccion" | "telefono" | "correo" | "lema">>;
 
@@ -25,6 +25,7 @@ export function DatosColegio() {
   const colegio = useColegio();
   const [f, setF] = useState<Formulario | null>(null);
   const [insignia, setInsignia] = useState<string | null | undefined>(undefined);
+  const [tardanza, setTardanza] = useState<boolean | undefined>(undefined);
   const [procesando, setProcesando] = useState(false);
   const [guardando, setGuardando] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -47,7 +48,8 @@ export function DatosColegio() {
   };
   const valido = Object.values(errores).every((x) => !x);
   const cambioInsignia = insignia !== (colegio.insignia ?? null);
-  const cambioDatos = (Object.keys(f) as (keyof Formulario)[]).some((k) => f[k].trim() !== (desde(colegio)[k] ?? "").trim());
+  const cambioDatos = (Object.keys(f) as (keyof Formulario)[]).some((k) => f[k].trim() !== (desde(colegio)[k] ?? "").trim())
+    || (tardanza !== undefined && tardanza !== (colegio.usa_tardanza !== false));
 
   const elegirArchivo = async (e: ChangeEvent<HTMLInputElement>) => {
     const a = e.target.files?.[0];
@@ -68,7 +70,7 @@ export function DatosColegio() {
     setGuardando(true);
     try {
       const datos = Object.fromEntries(Object.entries(f).map(([k, v]) => [k, v.trim()])) as Formulario;
-      await guardar(db, "colegio", { id: colegio.id, ...datos, insignia: insignia ?? null }, colegioId);
+      await guardar(db, "colegio", { id: colegio.id, ...datos, insignia: insignia ?? null, usa_tardanza: tardanza ?? colegio.usa_tardanza !== false }, colegioId);
       avisar(textoGuardado("Datos del colegio guardados"));
     } finally {
       setGuardando(false);
@@ -105,6 +107,13 @@ export function DatosColegio() {
             <Campo etiqueta="DRE / GRE"><Entrada {...campo("dre")} placeholder="DRE Cusco" /></Campo>
           </div>
           <Campo etiqueta="Lema (opcional)"><Entrada {...campo("lema")} /></Campo>
+        </Tarjeta>
+
+        <Tarjeta className="aparecer space-y-3 p-5">
+          <h2 className="font-bold">Asistencia</h2>
+          <Casilla marcada={tardanza ?? colegio.usa_tardanza !== false} onCambio={setTardanza}>
+            Registrar tardanzas (T). Si lo desmarca, la asistencia solo usa Presente, Falta y Justificada, como el registro de control A/F/J.
+          </Casilla>
         </Tarjeta>
 
         <Tarjeta className="aparecer space-y-4 p-5">
