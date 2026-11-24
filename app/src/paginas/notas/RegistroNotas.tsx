@@ -5,7 +5,8 @@ import { BookOpenCheck, ClipboardList, FileSpreadsheet, Lock, MessageSquarePlus,
 import { db, useApp } from "@/app/contexto";
 import { nombreCompleto, seccionesDetalle, anioActivo } from "@/datos/consultas";
 import { descargarRegistroAuxiliar } from "@/datos/formatos-colegio";
-import { guardarNota } from "@/datos/notas";
+import { guardarCapacidad, guardarNota } from "@/datos/notas";
+import { capacidadesDe } from "@/dominio/capacidades";
 import { guardar, vivas } from "@/db/repositorio";
 import type { Calificacion, Competencia, Estudiante, NivelLogro, Observacion, Periodo } from "@/db/tipos";
 import { DESCRIPCION_NIVEL, NIVELES, PLANTILLAS_CONCLUSION, faltaConclusion, requiereConclusion } from "@/dominio/notas";
@@ -38,6 +39,9 @@ export function RegistroNotas() {
   const [periodoId, setPeriodoId] = useState("");
   const [competenciaId, setCompetenciaId] = useState("");
   const [vista, setVista] = useState<"lista" | "matriz">("lista");
+  // Como el registro auxiliar del colegio: por defecto se califica cada capacidad.
+  const [modo, setModoEstado] = useState<"capacidad" | "directo">(() => (localStorage.getItem("cc.modoNotas") === "directo" ? "directo" : "capacidad"));
+  const setModo = (m: "capacidad" | "directo") => { setModoEstado(m); localStorage.setItem("cc.modoNotas", m); };
   const [descargando, setDescargando] = useState(false);
   const avisarDescarga = useAvisar();
 
@@ -179,12 +183,26 @@ export function RegistroNotas() {
               })}
             </div>
           </div>
-          {competencia && <p className="px-1 text-sm font-semibold leading-snug">{competencia.nombre}</p>}
+          {competencia && (
+            <div className="flex flex-wrap items-start justify-between gap-2 px-1">
+              <p className="min-w-0 flex-1 text-sm font-semibold leading-snug">{competencia.nombre}</p>
+              {capacidadesDe(competencia).length > 0 && (
+                <Segmentado etiqueta="Forma de calificar" valor={modo} onCambio={setModo}
+                  opciones={[{ valor: "capacidad", texto: "Por capacidad" }, { valor: "directo", texto: "Directo" }]} />
+              )}
+            </div>
+          )}
+          {competencia && modo === "capacidad" && capacidadesDe(competencia).length > 0 && (
+            <ol className="space-y-0.5 px-1 text-xs text-tinta-suave">
+              {capacidadesDe(competencia).map((c, i) => <li key={c}><strong className="text-tinta">{i + 1}.</strong> {c}</li>)}
+              <li className="pt-1 italic">El logro de la competencia se calcula solo: AD=3, A=2, B=1, C=0, promedio redondeado.</li>
+            </ol>
+          )}
 
           <Tarjeta className="divide-y divide-white/70 overflow-hidden">
             {competencia && datos.estudiantes.map((e, i) => (
               <FilaEstudiante key={`${e.id}-${competencia.id}`} n={i + 1} estudiante={e} competencia={competencia} nota={nota(e.id, competencia.id)}
-                periodoId={periodoId} seccionId={curso!.seccionId} bloqueado={cerrado} />
+                periodoId={periodoId} seccionId={curso!.seccionId} bloqueado={cerrado} porCapacidad={modo === "capacidad"} />
             ))}
           </Tarjeta>
         </>
@@ -198,10 +216,11 @@ export function RegistroNotas() {
   );
 }
 
-function FilaEstudiante({ n, estudiante, competencia, nota, periodoId, seccionId, bloqueado }: {
+function FilaEstudiante({ n, estudiante, competencia, nota, periodoId, seccionId, bloqueado, porCapacidad }: {
   n: number; estudiante: Estudiante; competencia: Competencia; nota: Calificacion | undefined;
-  periodoId: string; seccionId: string; bloqueado: boolean;
+  periodoId: string; seccionId: string; bloqueado: boolean; porCapacidad: boolean;
 }) {
+  const capacidades = porCapacidad ? capacidadesDe(competencia) : [];
   const { colegioId } = useApp();
   const avisar = useAvisar();
   const [texto, setTexto] = useState(nota?.conclusion ?? "");
@@ -219,6 +238,13 @@ function FilaEstudiante({ n, estudiante, competencia, nota, periodoId, seccionId
   const elegir = async (nivel: NivelLogro) => {
     try {
       await guardarNota({ ...params, cambios: { nivel_logro: nota?.nivel_logro === nivel ? null : nivel } }, colegioId);
+    } catch (err) {
+      avisar(err instanceof Error ? err.message : String(err), "error");
+    }
+  };
+  const elegirCapacidad = async (capacidad: number, nivel: NivelLogro) => {
+    try {
+      await guardarCapacidad({ ...params, capacidad, nivel }, colegioId);
     } catch (err) {
       avisar(err instanceof Error ? err.message : String(err), "error");
     }
@@ -248,13 +274,33 @@ function FilaEstudiante({ n, estudiante, competencia, nota, periodoId, seccionId
         <button onClick={() => setObservando(true)} className="rounded-full p-2 text-tinta-suave hover:bg-white/60" aria-label={`Observación sobre ${estudiante.nombres}`}>
           <MessageSquarePlus className="h-4 w-4" aria-hidden />
         </button>
-        {/* En celular los botones bajan a su propia línea para no cortar el nombre. */}
-        <div className="flex w-full gap-2 pl-8 sm:w-auto sm:gap-1.5 sm:pl-0">
-          {NIVELES.map((nv) => (
-            <ChipNivel key={nv} nivel={nv} activo={nota?.nivel_logro === nv} deshabilitado={bloqueado} onClick={() => void elegir(nv)} />
+        {capacidades.length > 0 ? (
+          <span className="flex items-center gap-1.5 text-xs font-semibold text-tinta-suave">
+            Logro
+            {nota?.nivel_logro ? <ChipNivel nivel={nota.nivel_logro} activo pequeno deshabilitado /> : <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-white/50">-</span>}
+          </span>
+        ) : (
+          /* En celular los botones bajan a su propia línea para no cortar el nombre. */
+          <div className="flex w-full gap-2 pl-8 sm:w-auto sm:gap-1.5 sm:pl-0">
+            {NIVELES.map((nv) => (
+              <ChipNivel key={nv} nivel={nv} activo={nota?.nivel_logro === nv} deshabilitado={bloqueado} onClick={() => void elegir(nv)} />
+            ))}
+          </div>
+        )}
+      </div>
+      {capacidades.length > 0 && (
+        <div className="mt-2 grid gap-x-4 gap-y-1.5 pl-7 sm:grid-cols-2 sm:pl-8">
+          {capacidades.map((c, k) => (
+            <div key={c} className="flex items-center gap-1.5" title={c}>
+              <span className="w-5 text-xs font-bold text-tinta-suave">{k + 1}.</span>
+              {NIVELES.map((nv) => (
+                <ChipNivel key={nv} nivel={nv} pequeno activo={nota?.capacidades?.[String(k + 1)] === nv} deshabilitado={bloqueado}
+                  onClick={() => void elegirCapacidad(k + 1, nv)} />
+              ))}
+            </div>
           ))}
         </div>
-      </div>
+      )}
       {pide && (
         <div className="mt-2 pl-7 sm:pl-8">
           <textarea value={texto} disabled={bloqueado} rows={2} placeholder="Conclusión descriptiva: qué logra y qué necesita mejorar"

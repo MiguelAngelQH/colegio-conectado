@@ -2,6 +2,7 @@
 // Las fechas se calculan a partir de hoy: el panel siempre muestra las últimas semanas con datos.
 import cneb from "./cneb.json";
 import { idCalificacion, idDeterministico } from "@/dominio/notas";
+import { capacidadesDe } from "@/dominio/capacidades";
 import type {
   AnioEscolar, Apoderado, InformeTutor, ObservacionMonitoreo, Asistencia, AsistenciaSesion, Incidencia, IncidenciaAccion, Justificacion, Observacion, SesionTutoria, Area, Calificacion, Colegio, Comunicado, Competencia, DocenteAsignacion,
   Estudiante, EstudianteApoderado, Fila, Grado, Matricula, NivelLogro, NombreTabla, Periodo, Rol, Seccion, Usuario,
@@ -88,7 +89,7 @@ const hoyLocal = () => {
 };
 
 /** Cambia este número cuando cambien los datos de demo: los equipos vuelven a sembrar. */
-export const VERSION_DEMO = 13;
+export const VERSION_DEMO = 14;
 
 export async function datosDemo(hoyReal = hoyLocal()): Promise<Partial<Record<NombreTabla, Fila[]>>> {
   const r = rng(42);
@@ -137,6 +138,19 @@ export async function datosDemo(hoyReal = hoyLocal()): Promise<Partial<Record<No
 
   const areas = cneb.areas as Area[];
   const competencias = cneb.competencias as Competencia[];
+  // Notas por capacidad coherentes con el logro: una sube y otra baja un nivel, el promedio no cambia.
+  const ESCALA: NivelLogro[] = ["C", "B", "A", "AD"];
+  const capacidadesPara = (c: Competencia, n: NivelLogro): Record<string, NivelLogro> => {
+    const caps = capacidadesDe(c).map(() => n);
+    const k = ESCALA.indexOf(n);
+    if (caps.length >= 2 && k > 0 && k < 3 && r() < 0.7) {
+      const i = Math.floor(r() * caps.length);
+      const j = (i + 1 + Math.floor(r() * (caps.length - 1))) % caps.length;
+      caps[i] = ESCALA[k + 1];
+      caps[j] = ESCALA[k - 1];
+    }
+    return Object.fromEntries(caps.map((v, i) => [String(i + 1), v]));
+  };
   const area = (nivel: string, codigo: string) => areas.find((a) => a.nivel === nivel && a.codigo === codigo)!;
 
   // Quién enseña qué. En primaria el tutor dicta las áreas principales.
@@ -216,7 +230,7 @@ export async function datosDemo(hoyReal = hoyLocal()): Promise<Partial<Record<No
           const textos = ar.codigo === "MAT" ? CONCLUSIONES : CONCLUSIONES_GENERALES;
           pendientes.push({
             id: "", colegio_id: CID, estudiante_id: e.id, competencia_id: c.id, periodo_id: p.id, seccion_id: s.id, nivel_logro: n,
-            conclusion: n === "B" || n === "C" ? textos[n][Math.floor(r() * 2)] : null,
+            conclusion: n === "B" || n === "C" ? textos[n][Math.floor(r() * 2)] : null, capacidades: capacidadesPara(c, n),
           });
         }
       });
@@ -261,7 +275,7 @@ export async function datosDemo(hoyReal = hoyLocal()): Promise<Partial<Record<No
           const n = elegir((dificultad[cod] ?? 0) + (habilidad.get(e.id) ?? 0) + (3 - ip) * 0.03);
           pendientesPrevias.push({
             id: "", colegio_id: CID, estudiante_id: e.id, competencia_id: c.id, periodo_id: p.id, seccion_id: secPrevia.id, nivel_logro: n,
-            conclusion: n === "B" || n === "C" ? (cod === "MAT" ? CONCLUSIONES : CONCLUSIONES_GENERALES)[n][0] : null,
+            conclusion: n === "B" || n === "C" ? (cod === "MAT" ? CONCLUSIONES : CONCLUSIONES_GENERALES)[n][0] : null, capacidades: capacidadesPara(c, n),
           });
         }
       });

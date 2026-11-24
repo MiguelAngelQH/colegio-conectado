@@ -173,6 +173,8 @@ export interface Calificacion extends Fila {
   seccion_id: string;
   nivel_logro: NivelLogro | null;
   conclusion: string | null;
+  /** Notas por capacidad: {"1": "B", "2": "A"}; el logro de la competencia sale de su promedio. */
+  capacidades?: Record<string, NivelLogro>;
 }
 
 export interface AsistenciaSesion extends Fila {

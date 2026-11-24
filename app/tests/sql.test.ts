@@ -270,6 +270,18 @@ describe("sync_pull y RLS", () => {
   });
 });
 
+describe("notas por capacidad", () => {
+  it("guarda las capacidades junto con la nota y rechaza valores inválidos", async () => {
+    const id = idNota();
+    const ok = await push(U.docente, [nota(id, { competencia_id: "c0000000-0000-4000-8000-00000b000018", capacidades: { 1: "B", 2: "A", 3: "A", 4: "A" }, nivel_logro: "A" })]);
+    expect(ok[0]).toEqual({ ref: 1, estado: "ok" });
+    const { rows } = await db.query<{ capacidades: Record<string, string> }>("select capacidades from calificacion where id = $1", [id]);
+    expect(rows[0].capacidades).toEqual({ 1: "B", 2: "A", 3: "A", 4: "A" });
+    const mal = await push(U.docente, [{ tabla: "calificacion", parche: { id, capacidades: { 1: "Z" } } }]);
+    expect(mal[0].estado).toBe("rechazado");
+  });
+});
+
 describe("asistencia con QR", () => {
   const SESION = "60000000-0000-4000-8000-000000000001";
   const SECRETO = "secreto-de-prueba-1234567890";
