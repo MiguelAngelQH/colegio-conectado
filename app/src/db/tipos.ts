@@ -139,6 +139,25 @@ export interface Matricula extends Fila {
   resultado_recuperacion?: "PRO" | "PER" | null;
 }
 
+/** Criterio de evaluación de una lista de cotejo, ligado a una competencia y capacidad. */
+export interface CriterioCotejo { competencia_id: string; capacidad: number | null; texto: string }
+
+/** Lista de cotejo de una sesión de aprendizaje (como las hojas S17..S32 del registro del colegio). */
+export interface ListaCotejo extends Fila {
+  seccion_id: string;
+  area_id: string;
+  periodo_id: string;
+  docente_id: string;
+  numero: number | null;
+  titulo: string;
+  experiencia: string | null;
+  evidencia: string | null;
+  fecha: string;
+  criterios: CriterioCotejo[];
+  /** estudiante_id -> índice del criterio -> nivel */
+  notas: Record<string, Record<string, NivelLogro>>;
+}
+
 /** Informe del tutor al cerrar el año, para quien reciba al estudiante. Solo lo lee el personal. */
 export interface InformeTutor extends Fila {
   estudiante_id: string;
@@ -347,6 +366,7 @@ export interface Tablas {
   justificacion: Justificacion;
   solicitud_tutoria: SolicitudTutoria;
   informe_tutor: InformeTutor;
+  lista_cotejo: ListaCotejo;
   observacion: Observacion;
   sesion_tutoria: SesionTutoria;
   entrevista: Entrevista;
@@ -382,6 +402,7 @@ export const INDICES: Record<NombreTabla, string> = {
   justificacion: "id, estudiante_id, asistencia_id, estado",
   solicitud_tutoria: "id, estudiante_id, solicitante_id, tutor_id, estado",
   informe_tutor: "id, estudiante_id, anio_id",
+  lista_cotejo: "id, [seccion_id+area_id+periodo_id], docente_id",
   observacion: "id, estudiante_id, autor_id",
   sesion_tutoria: "id, seccion_id",
   entrevista: "id, estudiante_id, tutor_id",

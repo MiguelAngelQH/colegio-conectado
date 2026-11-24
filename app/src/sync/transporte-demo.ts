@@ -108,6 +108,7 @@ export class ServidorDemo extends BaseLocal {
       return ses ? (await this.tabla("seccion").get(ses.seccion_id))?.anio_id ?? null : null;
     }
     if (tabla === "informe_tutor") return f.anio_id;
+    if (tabla === "lista_cotejo") return ((await this.tabla("periodo").get(f.periodo_id)) as Periodo | undefined)?.anio_id ?? null;
     return null;
   }
 
@@ -115,7 +116,7 @@ export class ServidorDemo extends BaseLocal {
   private async validarCierre(tabla: NombreTabla, fila: Fila, actual: Fila | undefined, usuarioId: string) {
     const u = (await this.tabla("usuario").get(usuarioId)) as Usuario | undefined;
     const gestion = !!u?.roles.some((r) => r === "director" || r === "subdirector");
-    if (["calificacion", "asistencia_sesion", "asistencia", "informe_tutor"].includes(tabla)) {
+    if (["calificacion", "asistencia_sesion", "asistencia", "informe_tutor", "lista_cotejo"].includes(tabla)) {
       const anio = await this.anioDe(tabla, fila);
       if (anio && ((await this.tabla("anio_escolar").get(anio)) as AnioEscolar | undefined)?.cerrado_en) {
         throw new Error("El año escolar ya está cerrado: sus registros no se modifican.");

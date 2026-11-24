@@ -7,6 +7,7 @@ import { nombreCompleto, seccionesDetalle, anioActivo } from "@/datos/consultas"
 import { descargarRegistroAuxiliar } from "@/datos/formatos-colegio";
 import { guardarCapacidad, guardarNota } from "@/datos/notas";
 import { capacidadesDe } from "@/dominio/capacidades";
+import { ListasCotejo } from "./ListasCotejo";
 import { guardar, vivas } from "@/db/repositorio";
 import type { Calificacion, Competencia, Estudiante, NivelLogro, Observacion, Periodo } from "@/db/tipos";
 import { DESCRIPCION_NIVEL, NIVELES, PLANTILLAS_CONCLUSION, faltaConclusion, requiereConclusion } from "@/dominio/notas";
@@ -38,7 +39,7 @@ export function RegistroNotas() {
   const [cursoId, setCursoId] = useState("");
   const [periodoId, setPeriodoId] = useState("");
   const [competenciaId, setCompetenciaId] = useState("");
-  const [vista, setVista] = useState<"lista" | "matriz">("lista");
+  const [vista, setVista] = useState<"lista" | "matriz" | "sesiones">("lista");
   // Como el registro auxiliar del colegio: por defecto se califica cada capacidad.
   const [modo, setModoEstado] = useState<"capacidad" | "directo">(() => (localStorage.getItem("cc.modoNotas") === "directo" ? "directo" : "capacidad"));
   const setModo = (m: "capacidad" | "directo") => { setModoEstado(m); localStorage.setItem("cc.modoNotas", m); };
@@ -153,7 +154,7 @@ export function RegistroNotas() {
             <span className="font-semibold">{hechas} de {total} notas</span>
             {pendientesConclusion > 0 && <span className="font-semibold text-amber-700">{pendientesConclusion === 1 ? "1 conclusión pendiente" : `${pendientesConclusion} conclusiones pendientes`}</span>}
             <span className="ml-auto">
-              <Segmentado etiqueta="Vista" valor={vista} onCambio={setVista} opciones={[{ valor: "lista", texto: "Por competencia" }, { valor: "matriz", texto: "Resumen" }]} />
+              <Segmentado etiqueta="Vista" valor={vista} onCambio={setVista} opciones={[{ valor: "lista", texto: "Por competencia" }, { valor: "sesiones", texto: "Sesiones" }, { valor: "matriz", texto: "Resumen" }]} />
             </span>
           </div>
           <div className="mt-3 h-2 overflow-hidden rounded-full bg-white/60">
@@ -206,6 +207,11 @@ export function RegistroNotas() {
             ))}
           </Tarjeta>
         </>
+      )}
+
+      {datos && datos.estudiantes.length > 0 && vista === "sesiones" && (
+        <ListasCotejo seccionId={curso!.seccionId} areaId={curso!.areaId} periodoId={periodoId}
+          estudiantes={datos.estudiantes} competencias={datos.competencias} bloqueado={cerrado} />
       )}
 
       {datos && datos.estudiantes.length > 0 && vista === "matriz" && (

@@ -282,6 +282,22 @@ describe("notas por capacidad", () => {
   });
 });
 
+describe("listas de cotejo", () => {
+  it("el docente registra sus sesiones; el estudiante no las ve", async () => {
+    const id = "7a000000-0000-4000-8000-000000000001";
+    const r = await push(U.docente, [{ tabla: "lista_cotejo", parche: {
+      id, colegio_id: COL, seccion_id: SEC, area_id: "a0000000-0000-4000-8000-00000000000b", periodo_id: PER_ABIERTO, docente_id: U.docente,
+      numero: 26, titulo: "Resolviendo problemas con conjuntos", fecha: "2026-10-19",
+      criterios: [{ competencia_id: C_MAT, capacidad: 1, texto: "Identifica elementos" }], notas: { [E1]: { 0: "A" } },
+    } }]);
+    expect(r[0]).toEqual({ ref: 1, estado: "ok" });
+    expect((await pull(U.docente)).filas.lista_cotejo?.map((l) => l.id)).toEqual([id]);
+    expect((await pull(U.estudiante)).filas.lista_cotejo).toBeUndefined();
+    const [ajeno] = await push(U.estudiante, [{ tabla: "lista_cotejo", parche: { id, notas: {} } }]);
+    expect(ajeno.estado).toBe("rechazado");
+  });
+});
+
 describe("asistencia con QR", () => {
   const SESION = "60000000-0000-4000-8000-000000000001";
   const SECRETO = "secreto-de-prueba-1234567890";
