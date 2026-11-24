@@ -81,6 +81,9 @@ export function Paneles() {
     setPeriodoId((conNotas ?? base.periodos[0])?.id ?? "");
   }, [base, periodoId]);
 
+  // Solo los niveles que el colegio tiene: si no hay primaria, no se ofrece.
+  const niveles = useMemo(() => (["primaria", "secundaria"] as Nivel[]).filter((n) => (base?.secciones ?? []).some((s) => s.grado?.nivel === n)), [base]);
+  const ambos = niveles.length > 1;
   const seccionesFiltradas = useMemo(() => (base?.secciones ?? []).filter((s) => nivel === "todos" || s.grado?.nivel === nivel), [base, nivel]);
   useEffect(() => setSeccionId(""), [nivel]);
 
@@ -96,7 +99,7 @@ export function Paneles() {
         const a = base.areas.get(id);
         if (!a) return "Área";
         // Con ambos niveles a la vista, la misma área aparece dos veces: se indica el nivel.
-        return nivel === "todos" ? `${a.nombre} · ${a.nivel === "primaria" ? "Prim." : "Sec."}` : a.nombre;
+        return nivel === "todos" && ambos ? `${a.nombre} · ${a.nivel === "primaria" ? "Prim." : "Sec."}` : a.nombre;
       }, asignaciones: base.asignaciones, incidencias: base.incidencias, justificaciones: base.justificaciones,
     });
   }, [base, seccionesFiltradas, seccionId, periodoId, nivel]);
@@ -142,10 +145,12 @@ export function Paneles() {
       <Contenido ancho="max-w-6xl">
         {/* Filtros: una sola fila sobre los gráficos */}
         <Tarjeta className="aparecer flex flex-col gap-3 p-4 lg:flex-row lg:items-end" style={orden(1)}>
-          <div>
-            <span className="mb-1.5 block text-sm font-semibold">Nivel</span>
-            <Segmentado etiqueta="Nivel" valor={nivel} onCambio={setNivel} opciones={[{ valor: "todos", texto: "Todos" }, { valor: "primaria", texto: "Primaria" }, { valor: "secundaria", texto: "Secundaria" }]} />
-          </div>
+          {ambos && (
+            <div>
+              <span className="mb-1.5 block text-sm font-semibold">Nivel</span>
+              <Segmentado etiqueta="Nivel" valor={nivel} onCambio={setNivel} opciones={[{ valor: "todos", texto: "Todos" }, { valor: "primaria", texto: "Primaria" }, { valor: "secundaria", texto: "Secundaria" }]} />
+            </div>
+          )}
           <Campo etiqueta="Sección" className="lg:w-64">
             <Selector value={seccionId} onChange={(e) => setSeccionId(e.target.value)}>
               <option value="">Todas</option>

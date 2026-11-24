@@ -1,4 +1,4 @@
-import { useMemo, useState, type ChangeEvent } from "react";
+import { useEffect, useMemo, useState, type ChangeEvent } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { useLiveQuery } from "dexie-react-hooks";
 import { CircleCheck, Download, FileSpreadsheet, FileUp, TriangleAlert, Upload } from "lucide-react";
@@ -27,6 +27,11 @@ export function ImportarPagina() {
   const [modo, setModo] = useState<"seccion" | "columnas">("seccion");
   const [seccionId, setSeccionId] = useState(params.get("seccion") ?? "");
   const [nivel, setNivel] = useState<"primaria" | "secundaria">("secundaria");
+  // Si el colegio tiene un solo nivel, no se pregunta.
+  const nivelesColegio = [...new Set((e?.grados ?? []).map((g) => g.nivel))];
+  useEffect(() => {
+    if (nivelesColegio.length === 1 && nivel !== nivelesColegio[0]) setNivel(nivelesColegio[0]);
+  }, [nivelesColegio.join(), nivel]); // eslint-disable-line react-hooks/exhaustive-deps
   const [actualizar, setActualizar] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [leyendo, setLeyendo] = useState(false);
@@ -200,7 +205,9 @@ export function ImportarPagina() {
                 </CampoForm>
               ) : (
                 <>
-                  <Segmentado etiqueta="Nivel" valor={nivel} onCambio={setNivel} opciones={[{ valor: "primaria", texto: "Primaria" }, { valor: "secundaria", texto: "Secundaria" }]} />
+                  {nivelesColegio.length > 1 && (
+                    <Segmentado etiqueta="Nivel" valor={nivel} onCambio={setNivel} opciones={[{ valor: "primaria", texto: "Primaria" }, { valor: "secundaria", texto: "Secundaria" }]} />
+                  )}
                   {(mapeo.grado === undefined || mapeo.seccion === undefined) && (
                     <Aviso tipo="alerta" icono={TriangleAlert}>Indique arriba las columnas "Grado" y "Sección".</Aviso>
                   )}
