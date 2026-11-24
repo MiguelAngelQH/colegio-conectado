@@ -9,12 +9,12 @@ import { dibujarInsignia } from "./insignia";
 import { anioActivo, nombreCompleto, seccionesDetalle } from "./consultas";
 
 const TEAL: [number, number, number] = [11, 110, 106];
-// Misma paleta que la app (validada para daltonismo): relleno de la celda + texto legible.
+// Misma paleta que la app (la del mapa de calor del colegio): relleno de la celda + texto legible.
 const COLOR_NIVEL: Record<string, { fondo: [number, number, number]; texto: [number, number, number] }> = {
-  AD: { fondo: [29, 79, 145], texto: [255, 255, 255] },
-  A: { fondo: [91, 155, 213], texto: [11, 46, 51] },
-  B: { fondo: [240, 149, 106], texto: [11, 46, 51] },
-  C: { fondo: [184, 50, 42], texto: [255, 255, 255] },
+  AD: { fondo: [0, 112, 192], texto: [255, 255, 255] },
+  A: { fondo: [0, 166, 81], texto: [255, 255, 255] },
+  B: { fondo: [255, 212, 0], texto: [11, 46, 51] },
+  C: { fondo: [224, 36, 36], texto: [255, 255, 255] },
 };
 
 /** Genera un PDF con la libreta de cada estudiante indicado (una o más páginas por estudiante). */
