@@ -130,9 +130,15 @@ export async function descargarRegistroAsistencia(p: { seccionId: string; areaId
     for (const m of vivas(await db.tabla("asistencia").where("sesion_id").equals(s.id).toArray())) marcas.set(`${s.fecha}|${m.estudiante_id}`, m.estado);
   }
 
+  // Desde el primer mes con asistencia registrada hasta el mes actual (o el último con datos).
+  const conDatos = [...new Set([...porFecha.values()].filter((s) => s.fecha.startsWith(String(anio.anio))).map((s) => Number(s.fecha.slice(5, 7)) - 1))].sort((a, b) => a - b);
+  if (!p.meses && !conDatos.length) {
+    throw new Error(`Todavía no hay asistencia registrada de ${area ? area.nombre : "la asistencia del día"} en ${seccion.nombre}. Elija otra clase o tome asistencia primero.`);
+  }
   const hoy = new Date();
-  const ultimoMes = anio.anio < hoy.getFullYear() ? 11 : Math.min(11, hoy.getMonth());
-  const meses = p.meses ?? Array.from({ length: Math.max(0, ultimoMes - 2 + 1) }, (_, i) => i + 2);
+  const ultimoMes = Math.max(conDatos[conDatos.length - 1] ?? 2, anio.anio < hoy.getFullYear() ? 11 : Math.min(11, hoy.getMonth()));
+  const primerMes = conDatos[0] ?? 2;
+  const meses = p.meses ?? Array.from({ length: Math.max(0, ultimoMes - primerMes + 1) }, (_, i) => i + primerMes);
   const wb = new ExcelJS.Workbook();
   wb.creator = "Colegio Conectado";
   wb.calcProperties.fullCalcOnLoad = true;
@@ -234,6 +240,8 @@ export async function descargarRegistroAsistencia(p: { seccionId: string; areaId
     celda(ws, `C${rT + 2}`, "Las tardanzas se registran como asistencia (A). Generado por Colegio Conectado.", { font: { size: 8, italic: true, color: { argb: "FF7F7F7F" } } });
   }
   if (!meses.length) throw new Error("Todavía no hay meses de clase para este año.");
+  // Al abrir el archivo se ve el último mes, no el primero.
+  wb.views = [{ x: 0, y: 0, width: 12000, height: 9000, firstSheet: 0, activeTab: meses.length - 1, visibility: "visible" }];
   await descargar(wb, `Registro de asistencia ${seccion.nombre} ${area?.nombre ?? "diaria"} ${anio.anio}`);
 }
 
