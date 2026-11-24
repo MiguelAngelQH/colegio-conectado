@@ -6,6 +6,7 @@ import type { Borders, Cell, Fill, Font, Workbook, Worksheet } from "exceljs";
 import { db } from "@/app/contexto";
 import { vivas } from "@/db/repositorio";
 import type { Asistencia, AsistenciaSesion, Competencia, NivelLogro, Periodo } from "@/db/tipos";
+import { capacidadesDe, logroPromedio } from "@/dominio/capacidades";
 import { anioActivo, colegioActual, estudiantesDeSeccion, nombreCompleto, NIVEL_TEXTO, seccionesDetalle } from "./consultas";
 
 const MESES = ["ENERO", "FEBRERO", "MARZO", "ABRIL", "MAYO", "JUNIO", "JULIO", "AGOSTO", "SEPTIEMBRE", "OCTUBRE", "NOVIEMBRE", "DICIEMBRE"];
@@ -247,15 +248,7 @@ export async function descargarRegistroAsistencia(p: { seccionId: string; areaId
 
 // ------------------------------------------------------------------ registro auxiliar de evaluación
 
-const VALOR: Record<NivelLogro, number> = { AD: 3, A: 2, B: 1, C: 0 };
-const DE_VALOR: NivelLogro[] = ["C", "B", "A", "AD"];
-/** Misma regla que el registro auxiliar del colegio: AD=3, A=2, B=1, C=0, promedio redondeado. */
-export function logroPromedio(niveles: (NivelLogro | null | undefined)[]): NivelLogro | null {
-  const v = niveles.filter((n): n is NivelLogro => !!n).map((n) => VALOR[n]);
-  if (!v.length) return null;
-  const prom = v.reduce((a, b) => a + b, 0) / v.length;
-  return DE_VALOR[Math.min(3, Math.max(0, Math.round(prom)))];
-}
+export { logroPromedio };
 
 // Colores del mapa de calor del colegio: AD azul, A verde, B amarillo, C rojo.
 const COLOR_NIVEL: Record<NivelLogro, { fondo: string; suave: string; texto: string }> = {
@@ -284,10 +277,20 @@ export async function descargarRegistroAuxiliar(p: { seccionId: string; areaId: 
   const wb = new ExcelJS.Workbook();
   wb.creator = "Colegio Conectado";
   const L = letra;
-  const nC = competencias.length, nT = transversales.length;
-  const cLogro = 4 + nC; // después de las competencias del área
-  const cT0 = cLogro + 1;
-  const cFin = cT0 + Math.max(nT, 1) - 1;
+
+  // Columnas como en la hoja "Bimestre I" del colegio: cada competencia con sus capacidades y su LOGRO.
+  interface Bloque { c: Competencia; caps: string[]; ini: number; logro: number }
+  let col = 4;
+  const armar = (lista: Competencia[]) => lista.map((c): Bloque => {
+    const caps = capacidadesDe(c);
+    const b = { c, caps, ini: col, logro: col + caps.length };
+    col = b.logro + 1;
+    return b;
+  });
+  const bloquesArea = armar(competencias);
+  const cLogro = col++;
+  const bloquesTrv = armar(transversales);
+  const cFin = Math.max(col - 1, cLogro);
 
   // --- Hoja del bimestre
   const ws = wb.addWorksheet(`${periodo.nombre.split(" ")[1] ?? "Periodo"} ${romano}`, {
@@ -297,75 +300,82 @@ export async function descargarRegistroAuxiliar(p: { seccionId: string; areaId: 
   ws.getColumn(1).width = 4;
   ws.getColumn(2).width = 34;
   ws.getColumn(3).width = 1;
-  for (let c = 4; c <= cFin; c++) ws.getColumn(c).width = 13;
-  bloque(ws, `D1:${L(cFin)}2`, `REGISTRO AUXILIAR DE EVALUACIÓN POR COMPETENCIAS ${anio.anio}`, { font: { size: 16, bold: true, color: { argb: "FF1F3864" } }, centro: true });
+  for (let c = 4; c <= cFin; c++) ws.getColumn(c).width = 7;
+  for (const b of [...bloquesArea, ...bloquesTrv]) ws.getColumn(b.logro).width = 8;
+  ws.getColumn(cLogro).width = 10;
+  bloque(ws, `D1:${L(Math.max(cFin, 12))}2`, `REGISTRO AUXILIAR DE EVALUACIÓN POR COMPETENCIAS ${anio.anio}`, { font: { size: 16, bold: true, color: { argb: "FF1F3864" } }, centro: true });
   await agregarInsignia(wb, ws, colegio?.insignia, 0, 0, 60);
   const datos4: [string, string][] = [["I.E", colegio?.nombre ?? ""], ["NIVEL", NIVEL_TEXTO[area.nivel]], ["ÁREA", area.nombre], ["GRADO", seccion.nombre], [periodo.nombre.split(" ")[1]?.toUpperCase() ?? "PERIODO", romano], ["DOCENTE", docente]];
   let cx = 1;
-  const fila4 = ws.getRow(4);
-  fila4.height = 30;
+  ws.getRow(4).height = 30;
   for (const [rot, val] of datos4) {
-    const ancho = rot === "I.E" || rot === "DOCENTE" ? 3 : 2;
+    const ancho = rot === "DOCENTE" ? 6 : 3;
     celda(ws, `${L(cx)}4`, rot, { font: { bold: true, size: 9 }, fill: "FFD9E1F2", borde: true, centro: true });
     bloque(ws, `${L(cx + 1)}4:${L(cx + ancho - 1)}4`, val, { font: { size: 9 }, borde: true, centro: true, envolver: true });
     cx += ancho;
   }
   bloque(ws, "A6:A8", "N°", { font: { bold: true }, centro: true, borde: true, fill: "FFD9E1F2" });
   bloque(ws, "B6:C8", "APELLIDOS Y NOMBRES", { font: { bold: true }, centro: true, borde: true, fill: "FFD9E1F2" });
-  if (nC) bloque(ws, `D6:${L(3 + nC)}6`, "COMPETENCIAS DE ÁREA", { font: { bold: true }, centro: true, borde: true, fill: "FFFCE4D6" });
+  if (bloquesArea.length) bloque(ws, `D6:${L(cLogro - 1)}6`, "COMPETENCIAS DE ÁREA", { font: { bold: true }, centro: true, borde: true, fill: "FFFCE4D6" });
   bloque(ws, `${L(cLogro)}6:${L(cLogro)}8`, "LOGRO BIMESTRAL", { font: { bold: true, size: 9 }, centro: true, borde: true, fill: "FFFFE699", envolver: true });
-  bloque(ws, `${L(cT0)}6:${L(cFin)}6`, "COMPETENCIAS TRANSVERSALES", { font: { bold: true }, centro: true, borde: true, fill: "FFE2EFDA" });
-  ws.getRow(7).height = 75;
-  competencias.forEach((c, i) => {
-    celda(ws, `${L(4 + i)}7`, c.nombre.toUpperCase(), { font: { bold: true, size: 8 }, centro: true, borde: true, envolver: true, fill: "FFFCE4D6" });
-    celda(ws, `${L(4 + i)}8`, "LOGRO", { font: { bold: true, size: 8 }, centro: true, borde: true, fill: "FFFCE4D6" });
-  });
-  transversales.forEach((c, i) => {
-    celda(ws, `${L(cT0 + i)}7`, c.nombre.toUpperCase(), { font: { bold: true, size: 8 }, centro: true, borde: true, envolver: true, fill: "FFE2EFDA" });
-    celda(ws, `${L(cT0 + i)}8`, "LOGRO", { font: { bold: true, size: 8 }, centro: true, borde: true, fill: "FFE2EFDA" });
-  });
-  const pintar = (ref: string, n: NivelLogro | null | undefined, fuerte = false) => {
-    const c = celda(ws, ref, n ?? "", { centro: true, borde: true, font: { bold: true, size: 10, color: { argb: n && fuerte ? COLOR_NIVEL[n].texto : "FF000000" } }, fill: n ? (fuerte ? COLOR_NIVEL[n].fondo : COLOR_NIVEL[n].suave) : undefined });
-    return c;
+  if (bloquesTrv.length) bloque(ws, `${L(cLogro + 1)}6:${L(cFin)}6`, "COMPETENCIAS TRANSVERSALES", { font: { bold: true }, centro: true, borde: true, fill: "FFE2EFDA" });
+  ws.getRow(7).height = 42;
+  ws.getRow(8).height = 110;
+  const cabecera = (b: Bloque, fondo: string) => {
+    if (b.logro > b.ini) bloque(ws, `${L(b.ini)}7:${L(b.logro)}7`, b.c.nombre.toUpperCase(), { font: { bold: true, size: 8 }, centro: true, borde: true, envolver: true, fill: fondo });
+    else celda(ws, `${L(b.ini)}7`, b.c.nombre.toUpperCase(), { font: { bold: true, size: 8 }, centro: true, borde: true, envolver: true, fill: fondo });
+    b.caps.forEach((cap, k) => celda(ws, `${L(b.ini + k)}8`, cap, { font: { size: 7 }, centro: true, borde: true, envolver: true, vertical: true, fill: fondo }));
+    celda(ws, `${L(b.logro)}8`, "LOGRO", { font: { bold: true, size: 8 }, centro: true, borde: true, fill: fondo });
   };
+  bloquesArea.forEach((b) => cabecera(b, "FFFCE4D6"));
+  bloquesTrv.forEach((b) => cabecera(b, "FFE2EFDA"));
+
+  const pintar = (ref: string, n: NivelLogro | null | undefined, fuerte = false) =>
+    celda(ws, ref, n ?? "", { centro: true, borde: true, font: { bold: true, size: 9, color: { argb: n && fuerte ? COLOR_NIVEL[n].texto : "FF000000" } }, fill: n ? (fuerte ? COLOR_NIVEL[n].fondo : COLOR_NIVEL[n].suave) : undefined });
   const logros: NivelLogro[][] = competencias.map(() => []);
   const bimestrales: NivelLogro[] = [];
+  const llenar = (b: Bloque, e: string, r: number) => {
+    const x = nota(e, b.c.id);
+    b.caps.forEach((_, k) => pintar(`${L(b.ini + k)}${r}`, x?.capacidades?.[String(k + 1)]));
+    pintar(`${L(b.logro)}${r}`, x?.nivel_logro, true);
+    return x?.nivel_logro ?? null;
+  };
   estudiantes.forEach((e, i) => {
     const r = 9 + i;
     celda(ws, `A${r}`, i + 1, { centro: true, borde: true, font: { size: 9 } });
     bloque(ws, `B${r}:C${r}`, nombreCompleto(e).toUpperCase(), { borde: true, font: { size: 9 } });
-    const niveles = competencias.map((c, k) => {
-      const n = nota(e.id, c.id)?.nivel_logro ?? null;
+    const niveles = bloquesArea.map((b, k) => {
+      const n = llenar(b, e.id, r);
       if (n) logros[k].push(n);
-      pintar(`${L(4 + k)}${r}`, n);
       return n;
     });
-    const b = logroPromedio(niveles);
-    if (b) bimestrales.push(b);
-    pintar(`${L(cLogro)}${r}`, b, true);
-    transversales.forEach((c, k) => pintar(`${L(cT0 + k)}${r}`, nota(e.id, c.id)?.nivel_logro ?? null));
+    const bim = logroPromedio(niveles);
+    if (bim) bimestrales.push(bim);
+    pintar(`${L(cLogro)}${r}`, bim, true);
+    bloquesTrv.forEach((b) => llenar(b, e.id, r));
   });
 
-  // Resumen por niveles (cantidad y porcentaje)
+  // Resumen por niveles (cantidad y porcentaje), bajo el LOGRO de cada competencia
   let r = 9 + estudiantes.length + 2;
   celda(ws, `B${r}`, "Niveles", { font: { bold: true }, borde: true, fill: "FFD9E1F2" });
-  competencias.forEach((_, k) => celda(ws, `${L(4 + k)}${r}`, `C${k + 1}  cant. / %`, { font: { bold: true, size: 8 }, centro: true, borde: true, fill: "FFD9E1F2" }));
+  bloquesArea.forEach((b, k) => celda(ws, `${L(b.logro)}${r}`, `C${k + 1}`, { font: { bold: true, size: 8 }, centro: true, borde: true, fill: "FFD9E1F2" }));
   celda(ws, `${L(cLogro)}${r}`, "BIMESTRAL", { font: { bold: true, size: 8 }, centro: true, borde: true, fill: "FFD9E1F2" });
   for (const n of ["C", "B", "A", "AD"] as NivelLogro[]) {
     r++;
     celda(ws, `B${r}`, `${NOMBRE_NIVEL[n]} (${n})`, { borde: true, font: { size: 9, bold: true, color: { argb: COLOR_NIVEL[n].texto } }, fill: COLOR_NIVEL[n].fondo });
     const texto = (lista: NivelLogro[]) => {
       const cant = lista.filter((x) => x === n).length;
-      return `${cant}  (${lista.length ? Math.round((cant / lista.length) * 100) : 0}%)`;
+      return `${cant} (${lista.length ? Math.round((cant / lista.length) * 100) : 0}%)`;
     };
-    logros.forEach((lista, k) => celda(ws, `${L(4 + k)}${r}`, texto(lista), { centro: true, borde: true, font: { size: 9 } }));
-    celda(ws, `${L(cLogro)}${r}`, texto(bimestrales), { centro: true, borde: true, font: { size: 9, bold: true } });
+    bloquesArea.forEach((b, k) => celda(ws, `${L(b.logro)}${r}`, texto(logros[k]), { centro: true, borde: true, font: { size: 8 } }));
+    celda(ws, `${L(cLogro)}${r}`, texto(bimestrales), { centro: true, borde: true, font: { size: 8, bold: true } });
   }
   r++;
   celda(ws, `B${r}`, "Total", { font: { bold: true }, borde: true });
-  logros.forEach((lista, k) => celda(ws, `${L(4 + k)}${r}`, lista.length, { centro: true, borde: true, font: { bold: true } }));
+  bloquesArea.forEach((b, k) => celda(ws, `${L(b.logro)}${r}`, logros[k].length, { centro: true, borde: true, font: { bold: true } }));
   celda(ws, `${L(cLogro)}${r}`, bimestrales.length, { centro: true, borde: true, font: { bold: true } });
-  celda(ws, `B${r + 2}`, "Logro bimestral: promedio de las competencias del área con AD=3, A=2, B=1, C=0, redondeado.", { font: { size: 8, italic: true, color: { argb: "FF7F7F7F" } } });
+  celda(ws, `B${r + 2}`, "Logro de cada competencia: promedio de sus capacidades. Logro bimestral: promedio de las competencias del área. AD=3, A=2, B=1, C=0, redondeado.", { font: { size: 8, italic: true, color: { argb: "FF7F7F7F" } } });
+  const nC = competencias.length;
 
   // --- Registro descriptivo
   const wd = wb.addWorksheet("Reg Descriptivo", { pageSetup: { paperSize: 9, orientation: "landscape", fitToPage: true, fitToWidth: 1, fitToHeight: 0 } });
