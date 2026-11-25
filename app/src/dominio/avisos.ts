@@ -1,6 +1,6 @@
 // Bandeja de avisos. Se calcula en el equipo con lo que trajo la sincronización: no necesita un
 // servidor de notificaciones y funciona sin conexión (los avisos llegan con el siguiente sync).
-import type { Asistencia, Calificacion, Comunicado, Evento, Justificacion, Mensaje, Observacion, ObservacionMonitoreo, SolicitudTutoria, Tarea } from "@/db/tipos";
+import type { Asistencia, Calificacion, Comunicado, Evento, Justificacion, Mensaje, Observacion, ObservacionMonitoreo, SolicitudTutoria, Tarea, TareaEntrega } from "@/db/tipos";
 import { esSensible, MOTIVOS } from "./solicitudes";
 
 export type TipoAviso = "falta" | "tardanza" | "nota" | "comunicado" | "observacion" | "justificacion" | "por_revisar" | "monitoreo" | "tutoria" | "tarea" | "evento" | "mensaje";
@@ -44,6 +44,8 @@ export interface EntradaAvisos {
   hoy?: string;
   /** Mensajes recibidos sin leer, con el nombre de quien escribe y del estudiante. */
   mensajes?: { m: Mensaje; autor: string; estudiante: string }[];
+  /** Entregas de tareas ya revisadas o devueltas por el docente (para la familia). */
+  entregas?: { x: TareaEntrega; tarea: string }[];
 }
 
 const fechaCorta = (f: string) => new Date(`${f}T12:00:00`).toLocaleDateString("es-PE", { weekday: "short", day: "numeric", month: "short" });
@@ -153,6 +155,16 @@ export function calcularAvisos(e: EntradaAvisos): Aviso[] {
         estudianteId: null, enlace: "/tareas", importante: false, nuevo: false,
       });
     }
+  }
+
+  for (const { x, tarea } of e.entregas ?? []) {
+    if (x.eliminado || x.estado === "entregada") continue;
+    res.push({
+      id: `ent-${x.id}-${x.estado}`, tipo: "tarea", momento: x.updated_at ?? x.entregado_en,
+      titulo: x.estado === "revisada" ? `Tarea revisada: ${tarea}` : `Corregir la tarea: ${tarea}`,
+      detalle: x.revision ?? (x.estado === "revisada" ? "El docente revisó la entrega." : "El docente pidió corregir la entrega."),
+      estudianteId: x.estudiante_id, enlace: "/tareas", importante: x.estado === "devuelta", nuevo: false,
+    });
   }
 
   for (const { m, autor, estudiante } of e.mensajes ?? []) {

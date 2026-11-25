@@ -99,6 +99,7 @@ export function useAvisos(usuario: Usuario | null): { avisos: Aviso[]; nuevos: n
       eventos: await eventosVisibles(esFamilia ? hijos.map((h) => h.id) : null),
       hoy: hoyLocal(),
       mensajes: await mensajesSinLeer(usuario.id),
+      entregas: esFamilia ? await entregasRevisadas(hijos.map((h) => h.id)) : [],
     });
     return { avisos, nuevos: avisos.filter((a) => a.nuevo).length };
   }, [usuario?.id]);
@@ -130,4 +131,10 @@ async function mensajesSinLeer(usuarioId: string) {
     m, autor: usuarios.get(m.autor_id) ? `${usuarios.get(m.autor_id)!.nombres.split(" ")[0]} ${usuarios.get(m.autor_id)!.apellidos.split(" ")[0]}` : "Colegio",
     estudiante: ests.get(m.estudiante_id)?.nombres.split(" ")[0] ?? "su hijo(a)",
   }));
+}
+
+async function entregasRevisadas(estudianteIds: string[]) {
+  const xs = vivas(await db.tabla("tarea_entrega").where("estudiante_id").anyOf(estudianteIds).toArray()).filter((x) => x.estado !== "entregada");
+  const tareas = new Map((await db.tabla("tarea").bulkGet(xs.map((x) => x.tarea_id))).filter(Boolean).map((t) => [t!.id, t!.titulo]));
+  return xs.map((x) => ({ x, tarea: tareas.get(x.tarea_id) ?? "Tarea" }));
 }

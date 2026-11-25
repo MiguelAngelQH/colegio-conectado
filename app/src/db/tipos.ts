@@ -216,6 +216,18 @@ export interface Mensaje extends Fila {
   leido_en: string | null;
 }
 
+/** Entrega de una tarea por el estudiante (o su apoderado), con la revisión del docente. */
+export interface TareaEntrega extends Fila {
+  tarea_id: string;
+  estudiante_id: string;
+  autor_id: string;
+  comentario: string | null;
+  entregado_en: string;
+  estado: "entregada" | "revisada" | "devuelta";
+  revision: string | null;
+  revisado_por: string | null;
+}
+
 /** Informe del tutor al cerrar el año, para quien reciba al estudiante. Solo lo lee el personal. */
 export interface InformeTutor extends Fila {
   estudiante_id: string;
@@ -366,7 +378,7 @@ export interface ComunicadoLectura extends Fila {
   leido_en: string;
 }
 
-export type EntidadEvidencia = "observacion" | "calificacion" | "incidencia" | "sesion_tutoria" | "entrevista" | "justificacion";
+export type EntidadEvidencia = "observacion" | "calificacion" | "incidencia" | "sesion_tutoria" | "entrevista" | "justificacion" | "tarea_entrega";
 
 export interface Evidencia extends Fila {
   entidad: EntidadEvidencia;
@@ -429,6 +441,7 @@ export interface Tablas {
   tarea: Tarea;
   evento: Evento;
   mensaje: Mensaje;
+  tarea_entrega: TareaEntrega;
   observacion: Observacion;
   sesion_tutoria: SesionTutoria;
   entrevista: Entrevista;
@@ -469,6 +482,7 @@ export const INDICES: Record<NombreTabla, string> = {
   tarea: "id, seccion_id, docente_id, entrega",
   evento: "id, fecha, seccion_id",
   mensaje: "id, [estudiante_id+personal_id], personal_id, estudiante_id",
+  tarea_entrega: "id, tarea_id, estudiante_id",
   observacion: "id, estudiante_id, autor_id",
   sesion_tutoria: "id, seccion_id",
   entrevista: "id, estudiante_id, tutor_id",

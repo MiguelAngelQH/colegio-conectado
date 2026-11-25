@@ -335,6 +335,26 @@ describe("mensajes entre el personal y la familia", () => {
   });
 });
 
+describe("entrega de tareas", () => {
+  const T = "7c000000-0000-4000-8000-000000000001"; // tarea de la sección SEC (prueba de horario y tareas)
+  const EN = "7e000000-0000-4000-8000-000000000001";
+  it("el estudiante entrega su tarea y el docente la revisa; cada uno solo cambia lo suyo", async () => {
+    const r = await push(U.estudiante, [{ tabla: "tarea_entrega", parche: { id: EN, colegio_id: COL, tarea_id: T, estudiante_id: E1, autor_id: U.estudiante, comentario: "Resolví todo", entregado_en: new Date().toISOString(), estado: "entregada", revision: null, revisado_por: null } }]);
+    expect(r[0]).toEqual({ ref: 1, estado: "ok" });
+    expect((await pull(U.docente)).filas.tarea_entrega?.map((x) => x.id)).toEqual([EN]);
+    // El estudiante no puede darse por revisado; el docente no cambia el comentario.
+    expect((await push(U.estudiante, [{ tabla: "tarea_entrega", parche: { id: EN, estado: "revisada" } }]))[0].estado).toBe("rechazado");
+    expect((await push(U.docente, [{ tabla: "tarea_entrega", parche: { id: EN, comentario: "otro" } }]))[0].estado).toBe("rechazado");
+    expect((await push(U.docente, [{ tabla: "tarea_entrega", parche: { id: EN, estado: "devuelta", revision: "Revisa el ejercicio 3" } }]))[0].estado).toBe("ok");
+    // Devuelta: el estudiante corrige y vuelve a entregar.
+    expect((await push(U.estudiante, [{ tabla: "tarea_entrega", parche: { id: EN, estado: "entregada", comentario: "Corregido" } }]))[0].estado).toBe("ok");
+  });
+  it("otro estudiante no ve ni entrega por alguien más", async () => {
+    const r = await push(U.estudiante, [{ tabla: "tarea_entrega", parche: { id: "7e000000-0000-4000-8000-000000000002", colegio_id: COL, tarea_id: T, estudiante_id: E2, autor_id: U.estudiante, comentario: null, entregado_en: new Date().toISOString(), estado: "entregada", revision: null, revisado_por: null } }]);
+    expect(r[0].estado).toBe("rechazado");
+  });
+});
+
 describe("asistencia con QR", () => {
   const SESION = "60000000-0000-4000-8000-000000000001";
   const SECRETO = "secreto-de-prueba-1234567890";
