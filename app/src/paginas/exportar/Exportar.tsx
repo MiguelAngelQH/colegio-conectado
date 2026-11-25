@@ -129,7 +129,7 @@ export function Exportar() {
             <Gema icono={DatabaseBackup} tono="tono-cielo" />
             <div>
               <h2 className="font-bold">Respaldo del colegio</h2>
-              <p className="text-sm text-tinta-suave">Un archivo JSON con toda la información de este equipo y un Excel legible con estudiantes, notas y asistencia. El servidor además hace copias diarias.</p>
+              <p className="text-sm text-tinta-suave">Un archivo JSON con toda la información de este equipo y un Excel legible con estudiantes, notas y asistencia. Descárguelo al cerrar cada bimestre y guárdelo fuera de esta computadora (USB o Drive).</p>
             </div>
           </div>
           <Aviso tipo="alerta" icono={TriangleAlert}>Contiene datos personales de menores de edad (Ley N.° 29733). Guárdelo en un lugar seguro y no lo comparta.</Aviso>
