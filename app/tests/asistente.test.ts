@@ -100,3 +100,14 @@ describe("tema según la hora", () => {
     expect(proximoCambio(new Date(2026, 10, 25, 3, 0))).toEqual(new Date(2026, 10, 25, 6, 0));
   });
 });
+
+describe("buscador", () => {
+  it("encuentra sin importar tildes, mayúsculas ni el orden de las palabras", async () => {
+    const { coincide } = await import("../src/ui/Buscador");
+    expect(coincide("García Pérez, María", "maria garcia")).toBeGreaterThan(0);
+    expect(coincide("Registro de notas", "NOTAS")).toBeGreaterThan(0);
+    expect(coincide("Registro de notas", "asistencia")).toBe(-1);
+    // Vale más cuando la palabra empieza igual.
+    expect(coincide("Ana Torres", "ana")).toBeGreaterThan(coincide("Mariana Torres", "ana"));
+  });
+});

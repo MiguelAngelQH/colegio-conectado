@@ -2,7 +2,7 @@ import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { Link, NavLink, Outlet, useLocation } from "react-router-dom";
 import { useLiveQuery } from "dexie-react-hooks";
 import {
-  ChevronDown, ChevronsLeft, House, LayoutGrid, LoaderCircle, LogOut, Monitor, Moon, RefreshCw, Sun, User, X,
+  ChevronDown, ChevronsLeft, Search, House, LayoutGrid, LoaderCircle, LogOut, Monitor, Moon, RefreshCw, Sun, User, X,
 } from "lucide-react";
 import { db, useApp } from "@/app/contexto";
 import { modulosPara, NOMBRE_ROL, TONO_ROL } from "@/app/modulos";
@@ -14,6 +14,7 @@ import { avancePeriodo, periodoVigente } from "@/dominio/periodos";
 import { vivas } from "@/db/repositorio";
 import { alternarTema, fijarTema, usePreferenciaTema, useTemaOscuro, type PreferenciaTema } from "./tema";
 import { SugerenciaTema } from "./SugerenciaTema";
+import { Buscador } from "./Buscador";
 
 const FUERA_DEL_DOCK = new Set(["inicio", "perfil", "sincronizacion", "avisos"]);
 
@@ -28,6 +29,7 @@ export function Marco() {
   const [confirmarSalida, setConfirmarSalida] = useState(false);
   const [saliendo, setSaliendo] = useState(false);
   const [cuentaAbierta, setCuentaAbierta] = useState(false);
+  const [buscando, setBuscando] = useState(false);
   const ubicacion = useLocation();
   const colegio = useLiveQuery(() => (usuario?.colegio_id ? db.tabla("colegio").get(usuario.colegio_id) : undefined), [usuario?.colegio_id]);
 
@@ -43,6 +45,17 @@ export function Marco() {
   }, [ubicacion.pathname]);
   // Al navegar, el panel muestra el grupo de la página actual.
   useEffect(() => setVisto(null), [activo?.grupo.id]);
+  // Ctrl + K (o Cmd + K) abre el buscador desde cualquier pantalla.
+  useEffect(() => {
+    const atajo = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") {
+        e.preventDefault();
+        setBuscando((b) => !b);
+      }
+    };
+    window.addEventListener("keydown", atajo);
+    return () => window.removeEventListener("keydown", atajo);
+  }, []);
   if (!usuario) return null;
 
   const fijarContraido = (c: boolean) => {
@@ -139,6 +152,12 @@ export function Marco() {
           </Link>
           <span className="ml-auto flex items-center gap-2">
             {colegio?.insignia && <img src={colegio.insignia} alt={`Insignia de ${colegio.nombre}`} className="h-9 w-9 object-contain lg:hidden" />}
+            <button type="button" onClick={() => setBuscando(true)} title="Buscar (Ctrl + K)" aria-label="Buscar"
+              className="vidrio !rounded-full hidden h-10 items-center gap-2 px-3 text-sm text-tinta-suave transition hover:text-tinta active:scale-95 lg:inline-flex">
+              <Search className="h-[18px] w-[18px]" aria-hidden />
+              <span className="hidden pr-1 xl:inline">Buscar</span>
+              <kbd className="hidden rounded-md border border-tinta/15 px-1.5 text-[0.65rem] font-semibold xl:inline">Ctrl K</kbd>
+            </button>
             <EstadoSync />
             <BotonTema />
             <Campana />
@@ -198,6 +217,10 @@ export function Marco() {
                 <p className="truncate text-xs text-tinta-suave">{usuario.roles.map((r) => NOMBRE_ROL[r]).join(" · ")}</p>
               </div>
             </div>
+            <button type="button" onClick={() => { setHojaAbierta(false); setBuscando(true); }}
+              className="mb-5 flex w-full items-center gap-3 rounded-2xl bg-tinta/[.05] px-4 py-3 text-left text-sm text-tinta-suave ring-1 ring-tinta/10">
+              <Search className="h-[18px] w-[18px] text-blue-600" aria-hidden /> Buscar páginas o estudiantes...
+            </button>
             <div className="space-y-5">
               {grupos.map((g) => (
                 <section key={g.id}>
@@ -217,6 +240,7 @@ export function Marco() {
       )}
 
       <SugerenciaTema />
+      <Buscador abierto={buscando} onCerrar={() => setBuscando(false)} />
 
       <Dialogo
         abierto={confirmarSalida}
