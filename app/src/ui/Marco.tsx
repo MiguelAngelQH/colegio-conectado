@@ -1,10 +1,11 @@
-import { Suspense, useEffect, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import { Link, NavLink, Outlet, useLocation } from "react-router-dom";
 import { useLiveQuery } from "dexie-react-hooks";
-import { GraduationCap, LayoutGrid, LoaderCircle, LogOut, X } from "lucide-react";
+import { ChevronDown, GraduationCap, LayoutGrid, LoaderCircle, LogOut, PanelLeftClose, PanelLeftOpen, X } from "lucide-react";
 import { db, useApp } from "@/app/contexto";
-import { modulosPara, NOMBRE_ROL, TONO_ROL, type Modulo } from "@/app/modulos";
-import { Boton, Dialogo, Gema, cx, iniciales, orden } from "./componentes";
+import { modulosPara, NOMBRE_ROL, TONO_ROL } from "@/app/modulos";
+import { itemActivo, menuPara, type GrupoMenu, type ItemMenu } from "@/app/menu";
+import { Boton, Dialogo, Gema, cx, iniciales } from "./componentes";
 import { EstadoSync } from "./EstadoSync";
 import { Campana } from "./Campana";
 
@@ -19,8 +20,24 @@ export function Marco() {
   const ubicacion = useLocation();
   const colegio = useLiveQuery(() => (usuario?.colegio_id ? db.tabla("colegio").get(usuario.colegio_id) : undefined), [usuario?.colegio_id]);
 
+  const [contraido, setContraido] = useState(() => localStorage.getItem("menu-contraido") === "1");
+  const [abiertos, setAbiertos] = useState<Set<string>>(new Set());
+  const menu = useMemo(() => menuPara(usuario?.roles ?? []), [usuario?.roles]);
+  const activo = itemActivo(menu.grupos, ubicacion.pathname);
+  const grupoActivo = menu.grupos.find((g) => activo && g.items.includes(activo))?.id;
+
   useEffect(() => setHojaAbierta(false), [ubicacion.pathname]);
+  // El grupo de la página actual se despliega solo.
+  useEffect(() => {
+    if (grupoActivo) setAbiertos((a) => (a.has(grupoActivo) ? a : new Set(a).add(grupoActivo)));
+  }, [grupoActivo]);
   if (!usuario) return null;
+
+  const alternarMenu = () => setContraido((c) => {
+    localStorage.setItem("menu-contraido", c ? "0" : "1");
+    return !c;
+  });
+  const margen = contraido ? "lg:pl-[7rem]" : "lg:pl-[19.5rem]";
 
   const modulos = modulosPara(usuario.roles);
   const inicio = modulos.find((m) => m.id === "inicio")!;
@@ -42,37 +59,60 @@ export function Marco() {
     <div className="min-h-dvh">
       <div className="fondo-cielo" aria-hidden />
 
-      {/* ---------- PC: barra lateral flotante ---------- */}
-      <aside className="fixed inset-y-4 left-4 z-30 hidden w-72 flex-col lg:flex">
-        <div className="vidrio flex h-full flex-col p-4">
-          <Link to="/" className="flex items-center gap-3 px-1 pb-4">
-            <Gema icono={GraduationCap} tono="tono-laguna" tam="sm" />
-            <span className="titulo-display text-lg font-bold">Colegio Conectado</span>
-          </Link>
-          <Link to="/perfil" className="mb-4 flex items-center gap-3 rounded-2xl bg-white/40 p-3 ring-1 ring-white/70 transition hover:bg-white/60">
+      {/* ---------- PC: barra lateral flotante y contraíble ---------- */}
+      <aside className={cx("fixed inset-y-4 left-4 z-30 hidden flex-col transition-[width] duration-300 lg:flex", contraido ? "w-[5.25rem]" : "w-72")}>
+        <div className={cx("vidrio flex h-full flex-col", contraido ? "items-center px-2 py-4" : "p-4")}>
+          <div className={cx("flex items-center pb-4", contraido ? "flex-col gap-3" : "gap-3 px-1")}>
+            <Link to="/" className="flex min-w-0 flex-1 items-center gap-3" aria-label="Colegio Conectado">
+              <Gema icono={GraduationCap} tono="tono-laguna" tam="sm" />
+              {!contraido && <span className="titulo-display truncate text-lg font-bold">Colegio Conectado</span>}
+            </Link>
+            <button onClick={alternarMenu} className="rounded-xl p-2 text-tinta-suave transition hover:bg-white/60 hover:text-tinta"
+              aria-label={contraido ? "Expandir el menú" : "Contraer el menú"} title={contraido ? "Expandir el menú" : "Contraer el menú"}>
+              {contraido ? <PanelLeftOpen className="h-5 w-5" aria-hidden /> : <PanelLeftClose className="h-5 w-5" aria-hidden />}
+            </button>
+          </div>
+          <Link to="/perfil" title={contraido ? `${usuario.nombres} ${usuario.apellidos}` : undefined}
+            className={cx("mb-4 flex items-center gap-3 rounded-2xl transition hover:bg-white/60", contraido ? "p-1" : "bg-white/40 p-3 ring-1 ring-white/70")}>
             {avatar("h-11 w-11 text-sm")}
-            <span className="min-w-0">
-              <span className="block truncate text-sm font-semibold">{usuario.nombres} {usuario.apellidos}</span>
-              <span className="block truncate text-xs text-tinta-suave">{usuario.roles.map((r) => NOMBRE_ROL[r]).join(" · ")}</span>
-            </span>
+            {!contraido && (
+              <span className="min-w-0">
+                <span className="block truncate text-sm font-semibold">{usuario.nombres} {usuario.apellidos}</span>
+                <span className="block truncate text-xs text-tinta-suave">{usuario.roles.map((r) => NOMBRE_ROL[r]).join(" · ")}</span>
+              </span>
+            )}
           </Link>
-          <nav aria-label="Menú principal" className="-mx-1 flex-1 space-y-1 overflow-y-auto px-1">
-            {modulos.map((m) => <ItemLateral key={m.id} m={m} />)}
+          <nav aria-label="Menú principal" className={cx("flex-1 space-y-1 overflow-y-auto", contraido ? "w-full" : "-mx-1 px-1")}>
+            <NavLink to="/" end title={contraido ? "Inicio" : undefined}
+              className={({ isActive }) => cx(claseItem(isActive), contraido && "justify-center px-0")}>
+              <Gema icono={menu.inicio.icono} tono={menu.inicio.tono} tam="sm" />
+              {!contraido && <span className="truncate">Inicio</span>}
+            </NavLink>
+            {menu.grupos.map((g) => (
+              <GrupoLateral key={g.id} g={g} contraido={contraido} abierto={abiertos.has(g.id)} activo={activo}
+                onAlternar={() => {
+                  if (contraido) { alternarMenu(); setAbiertos((a) => new Set(a).add(g.id)); }
+                  else setAbiertos((a) => { const n = new Set(a); if (n.has(g.id)) n.delete(g.id); else n.add(g.id); return n; });
+                }} />
+            ))}
           </nav>
-          <div className="mt-3 space-y-3 border-t border-white/60 pt-3">
-            <p className="flex items-center gap-2 px-1 text-xs text-tinta-suave">
-              {colegio?.insignia && <img src={colegio.insignia} alt="" className="h-8 w-8 shrink-0 object-contain" />}
-              <span className="truncate">{colegio?.nombre}</span>
-            </p>
-            <button onClick={pedirSalida} className="flex w-full items-center gap-3 rounded-2xl px-3 py-2.5 text-sm font-semibold text-red-700 transition hover:bg-red-50/60">
-              <LogOut className="h-5 w-5" aria-hidden /> Cerrar sesión
+          <div className={cx("mt-3 w-full space-y-3 border-t border-white/60 pt-3", contraido && "flex flex-col items-center")}>
+            {!contraido && (
+              <p className="flex items-center gap-2 px-1 text-xs text-tinta-suave">
+                {colegio?.insignia && <img src={colegio.insignia} alt="" className="h-8 w-8 shrink-0 object-contain" />}
+                <span className="truncate">{colegio?.nombre}</span>
+              </p>
+            )}
+            <button onClick={pedirSalida} title={contraido ? "Cerrar sesión" : undefined}
+              className={cx("flex items-center gap-3 rounded-2xl py-2.5 text-sm font-semibold text-red-700 transition hover:bg-red-50/60", contraido ? "justify-center px-3" : "w-full px-3")}>
+              <LogOut className="h-5 w-5" aria-hidden /> {contraido ? <span className="sr-only">Cerrar sesión</span> : "Cerrar sesión"}
             </button>
           </div>
         </div>
       </aside>
 
       {/* ---------- Barra superior ---------- */}
-      <header className="sticky top-0 z-20 px-3 pt-3 lg:pl-[19.5rem] lg:pr-6">
+      <header className={cx("sticky top-0 z-20 px-3 pt-3 lg:pr-6", margen)}>
         <div className="vidrio-fuerte mx-auto flex max-w-5xl items-center gap-3 !rounded-full p-1.5 lg:!bg-none lg:!border-transparent lg:!shadow-none lg:![backdrop-filter:none] lg:before:hidden">
           <Link to="/perfil" className="flex min-w-0 items-center gap-2.5 lg:hidden" aria-label="Mi perfil">
             {avatar("h-10 w-10 text-sm")}
@@ -89,7 +129,7 @@ export function Marco() {
         </div>
       </header>
 
-      <main className="lg:pl-[19.5rem] lg:pr-2">
+      <main className={cx("lg:pr-2", margen)}>
         {/* Los módulos se cargan bajo demanda: mientras tanto se mantiene el marco y se muestra un indicador. */}
         <Suspense fallback={<div className="flex justify-center p-12" role="status"><LoaderCircle className="h-7 w-7 animate-spin text-teal-600" aria-label="Cargando" /></div>}>
           <Outlet />
@@ -141,13 +181,10 @@ export function Marco() {
                 <p className="truncate text-xs text-tinta-suave">{usuario.roles.map((r) => NOMBRE_ROL[r]).join(" · ")}</p>
               </div>
             </div>
-            <div className="grid grid-cols-3 gap-2">
-              {modulos.map((m, i) => (
-                <Link key={m.id} to={m.ruta} style={orden(i)}
-                  className="aparecer flex flex-col items-center gap-2 rounded-2xl p-2 text-center transition hover:bg-white/50 active:scale-95">
-                  <Gema icono={m.icono} tono={m.tono} />
-                  <span className="text-[0.7rem] font-semibold leading-tight">{m.titulo}</span>
-                </Link>
+            <div className="space-y-1">
+              {menu.grupos.map((g) => (
+                <GrupoLateral key={g.id} g={g} contraido={false} abierto={abiertos.has(g.id)} activo={activo}
+                  onAlternar={() => setAbiertos((a) => { const n = new Set(a); if (n.has(g.id)) n.delete(g.id); else n.add(g.id); return n; })} />
               ))}
             </div>
             <button onClick={pedirSalida} className="mt-5 flex w-full items-center justify-center gap-2 rounded-full bg-red-50/70 py-3 text-sm font-semibold text-red-700 ring-1 ring-red-200/70">
@@ -175,20 +212,49 @@ export function Marco() {
   );
 }
 
-function ItemLateral({ m }: { m: Modulo }) {
+const claseItem = (activo: boolean) =>
+  cx(
+    "group flex w-full items-center gap-3 rounded-2xl px-2 py-1.5 text-sm font-semibold transition",
+    activo ? "bg-white/75 text-tinta shadow-[inset_0_1px_0_white,0_6px_16px_-10px_rgba(15,23,42,.45)] ring-1 ring-white" : "text-tinta-suave hover:bg-white/40 hover:text-tinta",
+  );
+
+/** Grupo del menú: al tocarlo se desliza y muestra sus opciones; contraído solo muestra su ícono. */
+function GrupoLateral({ g, contraido, abierto, activo, onAlternar }: {
+  g: GrupoMenu; contraido: boolean; abierto: boolean; activo?: ItemMenu; onAlternar: () => void;
+}) {
+  const contieneActivo = !!activo && g.items.includes(activo);
+  const idLista = `menu-${g.id}`;
   return (
-    <NavLink
-      to={m.ruta}
-      end={m.ruta === "/"}
-      className={({ isActive }) =>
-        cx(
-          "group flex items-center gap-3 rounded-2xl px-2 py-1.5 text-sm font-semibold transition",
-          isActive ? "bg-white/70 shadow-[inset_0_1px_0_white,0_6px_16px_-10px_rgba(11,46,51,.5)] ring-1 ring-white" : "text-tinta-suave hover:bg-white/40 hover:text-tinta",
-        )
-      }
-    >
-      <Gema icono={m.icono} tono={m.tono} tam="sm" />
-      <span className="truncate">{m.titulo}</span>
-    </NavLink>
+    <div>
+      <button onClick={onAlternar} aria-expanded={contraido ? undefined : abierto} aria-controls={contraido ? undefined : idLista}
+        title={contraido ? g.titulo : undefined}
+        className={cx(claseItem(contraido && contieneActivo), contraido && "justify-center px-0", !contraido && contieneActivo && "text-tinta")}>
+        <Gema icono={g.icono} tono={g.tono} tam="sm" />
+        {contraido ? <span className="sr-only">{g.titulo}</span> : (
+          <>
+            <span className="flex-1 truncate text-left">{g.titulo}</span>
+            <ChevronDown className={cx("h-4 w-4 shrink-0 transition-transform duration-300", abierto && "rotate-180")} aria-hidden />
+          </>
+        )}
+      </button>
+      {!contraido && (
+        <div id={idLista} className={cx("grid transition-[grid-template-rows,opacity] duration-300 ease-out", abierto ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0")}>
+          <ul className={cx("ml-[1.35rem] overflow-hidden border-l border-tinta/10 pl-2 transition-[visibility] duration-300", !abierto && "invisible")}>
+            {g.items.map((i) => (
+              <li key={i.id} className="pt-0.5 first:pt-1">
+                <Link to={i.ruta} aria-current={activo === i ? "page" : undefined}
+                  className={cx(
+                    "flex items-center gap-2.5 rounded-xl px-2.5 py-2 text-[0.82rem] font-medium transition",
+                    activo === i ? "bg-white/75 font-semibold text-blue-800 ring-1 ring-white" : "text-tinta-suave hover:bg-white/45 hover:text-tinta",
+                  )}>
+                  <i.icono className="h-4 w-4 shrink-0" aria-hidden />
+                  <span className="truncate">{i.titulo}</span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </div>
   );
 }
