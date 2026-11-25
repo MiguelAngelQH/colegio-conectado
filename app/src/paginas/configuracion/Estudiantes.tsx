@@ -14,6 +14,7 @@ import { normalizar, normalizarDni, nombrePropio } from "@/dominio/texto";
 import { textoGuardado, useAvisar } from "@/ui/avisos";
 import { Aviso, Boton, BotonRegresar, Contenido, Dato, Dialogo, Encabezado, Gema, Tarjeta, cx, iniciales, orden } from "@/ui/componentes";
 import { Buscador, Campo, Entrada, FilaLista, Segmentado, Selector, Vacio } from "@/ui/formulario";
+import { FichaComplementaria } from "@/ui/FichaComplementaria";
 import { AccesoFicha, DialogoCuentasSeccion } from "./CuentasFamilias";
 
 const ESTADO_MATRICULA = { matriculado: "Matriculado", retirado: "Retirado", trasladado: "Trasladado" } as const;
@@ -239,6 +240,8 @@ export function FichaEstudiante() {
           <Dato etiqueta="Fecha de nacimiento">{est.fecha_nacimiento ? new Date(`${est.fecha_nacimiento}T12:00:00`).toLocaleDateString("es-PE", { dateStyle: "long" }) : "No registrada"}</Dato>
           <Dato etiqueta="Sexo">{est.sexo === "M" ? "Hombre" : est.sexo === "F" ? "Mujer" : "No registrado"}</Dato>
         </Tarjeta>
+
+        <FichaComplementaria est={est} editable />
 
         {mat && (
           <Tarjeta className="aparecer space-y-3 p-5" style={orden(3)}>

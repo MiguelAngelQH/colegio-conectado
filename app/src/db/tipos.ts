@@ -119,6 +119,17 @@ export interface Estudiante extends Fila {
   sexo: "M" | "F" | null;
   /** Código impreso en el carné (QR del modo "escanear carnés"). */
   codigo_carne: string;
+  // Ficha complementaria (salud y emergencias)
+  direccion?: string | null;
+  contacto_emergencia?: string | null;
+  telefono_emergencia?: string | null;
+  seguro?: "SIS" | "EsSalud" | "Privado" | "Ninguno" | null;
+  /** Alergias, enfermedades, medicamentos. */
+  salud?: string | null;
+  /** Necesidades educativas especiales o discapacidad, y apoyos que necesita. */
+  nee?: string | null;
+  lengua_materna?: string | null;
+  vive_con?: string | null;
 }
 
 export type SituacionFinal = "PRO" | "RR" | "PER";

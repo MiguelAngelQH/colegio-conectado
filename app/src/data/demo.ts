@@ -89,7 +89,7 @@ const hoyLocal = () => {
 };
 
 /** Cambia este número cuando cambien los datos de demo: los equipos vuelven a sembrar. */
-export const VERSION_DEMO = 15;
+export const VERSION_DEMO = 16;
 
 export async function datosDemo(hoyReal = hoyLocal()): Promise<Partial<Record<NombreTabla, Fila[]>>> {
   const r = rng(42);
@@ -425,7 +425,10 @@ export async function datosDemo(hoyReal = hoyLocal()): Promise<Partial<Record<No
   return {
     colegio: [colegio], usuario: usuarios, anio_escolar: [anioPrevio, anio], periodo: [...periodosPrevios, ...periodos], grado: grados,
     seccion: [secPrevia, ...secciones], area: areas, competencia: competencias, docente_asignacion: asignaciones,
-    estudiante: estudiantes, matricula: [...matriculasPrevias, ...matriculas], apoderado: [apoderado], estudiante_apoderado: [vinculo],
+    estudiante: estudiantes.map((e) => (e.id === id("f5000000", 1) ? {
+      ...e, direccion: "Jr. Los Andes 123, Cayma", contacto_emergencia: "Rosa Quispe Apaza (madre)", telefono_emergencia: "987654321",
+      seguro: "SIS" as const, salud: "Asma leve: usa inhalador en clase de Educación Física", nee: null, lengua_materna: "Castellano", vive_con: "Madre y abuela",
+    } : e)), matricula: [...matriculasPrevias, ...matriculas], apoderado: [apoderado], estudiante_apoderado: [vinculo],
     calificacion: [...califsPrevias, ...califs], comunicado: comunicados, observacion: [...observacionesPrevias, ...observaciones], sesion_tutoria: sesionesTutoria,
     informe_tutor: informesPrevios,
     incidencia: incidencias, incidencia_accion: acciones, asistencia_sesion: sesionesAsis, asistencia: marcasAsis,

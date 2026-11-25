@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link, useParams } from "react-router-dom";
+import { FichaComplementaria } from "@/ui/FichaComplementaria";
 import { useLiveQuery } from "dexie-react-hooks";
 import { CalendarX, History, MessageSquarePlus, MessagesSquare, Phone, ShieldAlert, StickyNote, TriangleAlert } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
@@ -105,6 +106,8 @@ export function FichaSeguimiento() {
             </ul>
           )}
         </Tarjeta>
+
+        <FichaComplementaria est={est} editable={false} />
 
         {datos.apoderados.length > 0 && (
           <Tarjeta className="aparecer divide-y divide-white/70" style={orden(2)}>
