@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useLiveQuery } from "dexie-react-hooks";
-import { BookOpen, KeyRound, Plus, Save, Trash2, UserPlus, Users } from "lucide-react";
+import { BookOpen, KeyRound, Plus, Save, Trash2, UserPlus, UserX, Users } from "lucide-react";
 import { db, useApp } from "@/app/contexto";
 import { NOMBRE_ROL, TONO_ROL } from "@/app/modulos";
 import { useCuentas } from "@/datos/cuentas";
@@ -150,7 +150,7 @@ export function FichaPersonal() {
   const { colegioId, usuario: yo } = useApp();
   const avisar = useAvisar();
   const e = useEstructura();
-  const persona = useLiveQuery(() => db.tabla("usuario").get(id!), [id]);
+  const persona = useLiveQuery(async () => (await db.tabla("usuario").get(id!)) ?? null, [id]);
   const datos = useLiveQuery(async () => {
     const asig = vivas(await db.tabla("docente_asignacion").where("docente_id").equals(id!).toArray());
     const todas = vivas(await db.tabla("docente_asignacion").toArray());
@@ -164,6 +164,7 @@ export function FichaPersonal() {
   const [nuevaClave, setNuevaClave] = useState<string | null>(null);
   const [ocupado, setOcupado] = useState<"clave" | "estado" | null>(null);
 
+  if (persona === null) return <Contenido><Vacio icono={UserX} titulo="No se encontró a la persona" accion={<BotonRegresar a="/configuracion/personal" />} /></Contenido>;
   if (!persona || !datos || !e) return null;
   const tutorDe = e.secciones.filter((s) => s.tutor_id === persona.id);
   const areaPorId = new Map(datos.areas.map((a) => [a.id, a]));

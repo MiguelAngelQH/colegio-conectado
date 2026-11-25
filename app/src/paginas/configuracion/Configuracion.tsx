@@ -1,4 +1,4 @@
-import { Link, Route, Routes } from "react-router-dom";
+import { Link, Navigate, Route, Routes } from "react-router-dom";
 import { ArrowRight, BookMarked, CalendarRange, CircleCheck, ClipboardCheck, LayoutGrid, School, Users, GraduationCap } from "lucide-react";
 import { useLiveQuery } from "dexie-react-hooks";
 import { db } from "@/app/contexto";
@@ -28,6 +28,7 @@ export function Configuracion() {
       <Route path="cierre" element={<CierreAnio />} />
       <Route path="colegio" element={<DatosColegio />} />
       <Route path="areas" element={<AreasPropias />} />
+      <Route path="*" element={<Navigate to="/configuracion" replace />} />
     </Routes>
   );
 }

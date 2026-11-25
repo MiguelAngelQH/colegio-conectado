@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { useLiveQuery } from "dexie-react-hooks";
-import { Download, FileDown, FileSpreadsheet, GraduationCap, HeartHandshake, History, IdCard, KeyRound, LayoutGrid, Phone, Plus, Save, Trash2, UserPlus } from "lucide-react";
+import { Download, FileDown, FileSpreadsheet, GraduationCap, HeartHandshake, History, IdCard, KeyRound, LayoutGrid, Phone, Plus, Save, Trash2, UserPlus, UserX } from "lucide-react";
 import { db, useApp } from "@/app/contexto";
 import { descargarPlantilla } from "@/datos/excel";
 import { descargarLibretas } from "@/datos/libreta";
@@ -193,6 +193,7 @@ export function FichaEstudiante() {
   const e = useEstructura();
   const datos = useLiveQuery(async () => {
     const est = await db.tabla("estudiante").get(id!);
+    if (!est || est.eliminado) return null;
     const mats = vivas(await db.tabla("matricula").where("estudiante_id").equals(id!).toArray());
     const vinculos = vivas(await db.tabla("estudiante_apoderado").where("estudiante_id").equals(id!).toArray()).sort((a, b) => a.orden - b.orden);
     const apoderados = await db.tabla("apoderado").bulkGet(vinculos.map((v) => v.apoderado_id));
@@ -201,6 +202,7 @@ export function FichaEstudiante() {
   const [editando, setEditando] = useState(false);
   const [agregandoApo, setAgregandoApo] = useState(false);
 
+  if (datos === null) return <Contenido><Vacio icono={UserX} titulo="No se encontró al estudiante" accion={<BotonRegresar a="/configuracion/estudiantes" />} /></Contenido>;
   if (!datos?.est || !e) return null;
   const { est } = datos;
   const mat = datos.mats.find((m) => m.anio_id === e.anio?.id);

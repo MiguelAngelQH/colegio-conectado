@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Route, Routes, useNavigate } from "react-router-dom";
+import { Navigate, Route, Routes, useNavigate } from "react-router-dom";
 import { useLiveQuery } from "dexie-react-hooks";
 import { CalendarDays, ChevronRight, ClipboardCheck, FileCheck, FileSpreadsheet, History, IdCard } from "lucide-react";
 import { db, useApp } from "@/app/contexto";
@@ -21,6 +21,7 @@ export function Asistencia() {
       <Route path="sesion/:id" element={<TomaAsistencia />} />
       <Route path="carnes" element={<Carnes />} />
       <Route path="justificaciones" element={<Justificaciones />} />
+      <Route path="*" element={<Navigate to="/asistencia" replace />} />
     </Routes>
   );
 }

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Route, Routes, useNavigate } from "react-router-dom";
+import { Navigate, Route, Routes, useNavigate } from "react-router-dom";
 import { useLiveQuery } from "dexie-react-hooks";
 import { CalendarDays, ChevronRight, HandHeart, LifeBuoy, MessagesSquare, Plus, Save, TriangleAlert, UserRound, Users } from "lucide-react";
 import { db, useApp } from "@/app/contexto";
@@ -25,6 +25,7 @@ export function Tutoria() {
       <Route index element={<InicioTutoria />} />
       <Route path="estudiante/:id" element={<FichaSeguimiento />} />
       <Route path="pedidos" element={<Pedidos />} />
+      <Route path="*" element={<Navigate to="/tutoria" replace />} />
     </Routes>
   );
 }
