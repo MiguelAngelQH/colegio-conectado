@@ -269,10 +269,48 @@ body {
 /* Anillo de cuenta regresiva del QR. */
 .anillo { transition: stroke-dashoffset 1s linear; }
 
-/* Aviso de modo nocturno: estrellas que titilan y astro que flota. */
+/* Aviso de modo nocturno / claro: la tarjeta aparece, el astro cae y rebota, suelta destellos y queda flotando. */
+.destello { opacity: 0; }
 @media (prefers-reduced-motion: no-preference) {
+  .tarjeta-astro { animation: tarjeta-entra 0.5s cubic-bezier(0.2, 0.9, 0.3, 1.2) both; }
+  .astro-salto { animation: astro-cae 1s cubic-bezier(0.3, 0, 0.3, 1) 0.15s both, astro-flota 4s ease-in-out 1.3s infinite; }
+  .luna-mece { display: inline-block; animation: luna-mece 3.2s ease-in-out 1.3s infinite; transform-origin: 60% 60%; }
+  .sol-late { display: inline-block; animation: sol-late 2.4s ease-in-out 1.3s infinite; }
+  .rayos { animation: rayos-aparecen 0.6s ease-out 0.9s both, rayos-giran 18s linear 0.9s infinite; }
+  .destello { animation: destello-sale 0.9s ease-out both, destello-titila 2.6s ease-in-out infinite; }
   .estrella { animation: titilar 2.4s ease-in-out infinite; }
-  .astro { animation: flotar 4s ease-in-out infinite; }
+  .fugaz { opacity: 0; transform: rotate(18deg); animation: fugaz 5s ease-in 1.4s infinite; }
+  .resplandor { animation: resplandor 3s ease-in-out infinite; }
+  .nube { animation: nube 14s linear infinite; }
+  .nube-lenta { animation-duration: 22s; animation-delay: -6s; }
 }
+@media (prefers-reduced-motion: reduce) { .destello { opacity: 0.8; } }
+@keyframes tarjeta-entra { from { opacity: 0; transform: translateY(24px) scale(0.92); filter: blur(6px); } to { opacity: 1; transform: none; filter: none; } }
+@keyframes astro-cae {
+  0%   { transform: translateY(-140px) scale(0.6); opacity: 0; }
+  35%  { transform: translateY(0) scale(1.08, 0.9); opacity: 1; }
+  52%  { transform: translateY(-26px) scale(0.96, 1.05); }
+  68%  { transform: translateY(0) scale(1.04, 0.95); }
+  82%  { transform: translateY(-8px) scale(1); }
+  100% { transform: translateY(0) scale(1); }
+}
+@keyframes astro-flota { 0%, 100% { translate: 0 0; } 50% { translate: 0 -7px; } }
+@keyframes luna-mece { 0%, 100% { transform: rotate(-10deg); } 50% { transform: rotate(12deg); } }
+@keyframes sol-late { 0%, 100% { transform: scale(1) rotate(0deg); } 50% { transform: scale(1.12) rotate(20deg); } }
+@keyframes rayos-aparecen { from { opacity: 0; scale: 0.6; } to { opacity: 1; scale: 1; } }
+@keyframes rayos-giran { to { rotate: 360deg; } }
+@keyframes destello-sale {
+  0%   { opacity: 0; transform: translate(var(--dx, 0), var(--dy, 0)) scale(0) rotate(0deg); }
+  50%  { opacity: 1; transform: scale(1.4) rotate(90deg); }
+  100% { opacity: 0.9; transform: scale(1) rotate(180deg); }
+}
+@keyframes destello-titila { 0%, 100% { opacity: 0.25; scale: 0.6; } 50% { opacity: 1; scale: 1.1; } }
+@keyframes fugaz {
+  0%   { opacity: 0; transform: translate(0, 0) rotate(18deg); }
+  4%   { opacity: 1; }
+  14%  { opacity: 0; transform: translate(260px, 84px) rotate(18deg); }
+  100% { opacity: 0; transform: translate(260px, 84px) rotate(18deg); }
+}
+@keyframes resplandor { 0%, 100% { opacity: 0.8; scale: 1; } 50% { opacity: 1; scale: 1.15; } }
+@keyframes nube { from { transform: translateX(0); } to { transform: translateX(520px); } }
 @keyframes titilar { 0%, 100% { opacity: 0.2; transform: scale(0.7); } 50% { opacity: 1; transform: scale(1.2); } }
-@keyframes flotar { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
