@@ -1,7 +1,7 @@
-import { useEffect, useMemo, useState } from "react";
-import { Navigate, Route, Routes, useNavigate } from "react-router-dom";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Navigate, Route, Routes, useNavigate, useSearchParams } from "react-router-dom";
 import { useLiveQuery } from "dexie-react-hooks";
-import { CalendarDays, ChevronRight, ClipboardCheck, FileCheck, FileSpreadsheet, History, IdCard } from "lucide-react";
+import { Sparkles, CalendarDays, ChevronRight, ClipboardCheck, FileCheck, FileSpreadsheet, History, IdCard } from "lucide-react";
 import { db, useApp } from "@/app/contexto";
 import { abrirSesion, hoyLocal } from "@/datos/asistencia";
 import { anioActivo, seccionesDetalle } from "@/datos/consultas";
@@ -41,7 +41,7 @@ function InicioAsistencia() {
   const datos = useLiveQuery(async () => {
     if (!usuario) return null;
     const anio = await anioActivo();
-    if (!anio) return { secciones: [], asig: [], areas: new Map(), sesiones: [], justificacionesPendientes: 0 };
+    if (!anio) return { secciones: [], asig: [], areas: new Map(), sesiones: [], justificacionesPendientes: 0, claseAhora: undefined };
     const todas = await seccionesDetalle(anio.id);
     const asig = vivas(await db.tabla("docente_asignacion").where("docente_id").equals(usuario.id).toArray());
     const mias = new Set([...asig.map((a) => a.seccion_id), ...todas.filter((s) => s.tutor_id === usuario.id).map((s) => s.id)]);
@@ -61,18 +61,40 @@ function InicioAsistencia() {
       });
     }
     const justificacionesPendientes = vivas(await db.tabla("justificacion").where("estado").equals("pendiente").toArray()).length;
-    return { secciones, asig, areas, justificacionesPendientes, sesiones: sesiones.map((s) => ({ s, c: conteos.get(s.id)! })) };
+    // La clase que le toca ahora según su horario (desde 10 minutos antes de empezar).
+    const ahora = new Date();
+    const min = ahora.getHours() * 60 + ahora.getMinutes();
+    const aMin = (h: string) => Number(h.slice(0, 2)) * 60 + Number(h.slice(3, 5));
+    const claseAhora = vivas(await db.tabla("horario_clase").where("docente_id").equals(usuario.id).toArray())
+      .find((c) => c.dia === ahora.getDay() && secciones.some((x) => x.id === c.seccion_id) && aMin(c.inicio) - 10 <= min && min < aMin(c.fin));
+    return { secciones, asig, areas, justificacionesPendientes, claseAhora, sesiones: sesiones.map((s) => ({ s, c: conteos.get(s.id)! })) };
   }, [usuario?.id, verTodo]);
 
+  // Selección inicial: la que llega en el enlace (desde "Tu día"), si no la clase de ahora, si no la primera sección.
+  const [params] = useSearchParams();
+  const elegido = useRef(false);
+  const areaInicial = useRef("");
   useEffect(() => {
-    if (datos?.secciones[0] && !seccionId) setSeccionId(datos.secciones[0].id);
-  }, [datos, seccionId]);
+    if (!datos?.secciones.length || elegido.current) return;
+    elegido.current = true;
+    const ps = params.get("seccion");
+    if (ps && datos.secciones.some((x) => x.id === ps)) {
+      areaInicial.current = params.get("area") ?? "";
+      setSeccionId(ps);
+    } else if (datos.claseAhora) {
+      areaInicial.current = datos.claseAhora.area_id ?? "";
+      setSeccionId(datos.claseAhora.seccion_id);
+    } else setSeccionId(datos.secciones[0].id);
+  }, [datos, params]);
 
   const areasSeccion = useMemo(
     () => (datos?.asig ?? []).filter((a) => a.seccion_id === seccionId).map((a) => datos!.areas.get(a.area_id)).filter(Boolean),
     [datos, seccionId],
   );
-  useEffect(() => setAreaId(""), [seccionId]);
+  useEffect(() => {
+    setAreaId(areaInicial.current);
+    areaInicial.current = "";
+  }, [seccionId]);
 
   if (!datos) return null;
   const nombreSeccion = (id: string) => datos.secciones.find((s) => s.id === id)?.nombre ?? "Sección";
@@ -109,6 +131,15 @@ function InicioAsistencia() {
           <Vacio icono={ClipboardCheck} tono="tono-laguna" titulo="No tiene secciones asignadas">La dirección debe asignarle secciones en Configuración.</Vacio>
         ) : (
           <Tarjeta className="aparecer space-y-4 p-5" style={orden(1)}>
+            {datos.claseAhora && seccionId === datos.claseAhora.seccion_id && areaId === (datos.claseAhora.area_id ?? "") && (
+              <p className="flex items-start gap-2.5 rounded-2xl bg-blue-50/80 p-3 text-sm text-blue-900 ring-1 ring-blue-200/70">
+                <Sparkles className="mt-0.5 h-4 w-4 shrink-0 text-blue-600" aria-hidden />
+                <span>
+                  <b>Según su horario, ahora le toca {(datos.claseAhora.area_id && datos.areas.get(datos.claseAhora.area_id)?.nombre) || "clase"}</b> con{" "}
+                  {datos.secciones.find((x) => x.id === datos.claseAhora!.seccion_id)?.nombre} ({datos.claseAhora.inicio} a {datos.claseAhora.fin}). Ya la dejamos elegida.
+                </span>
+              </p>
+            )}
             <div className="grid grid-cols-[minmax(0,1fr)] gap-3 sm:grid-cols-2">
               <Campo etiqueta="Sección">
                 <Selector value={seccionId} onChange={(e) => setSeccionId(e.target.value)}>
