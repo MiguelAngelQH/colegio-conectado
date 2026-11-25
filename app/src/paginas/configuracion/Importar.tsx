@@ -142,7 +142,7 @@ export function ImportarPagina() {
       <Encabezado etiqueta="Estudiantes" titulo="Importar desde Excel" subtitulo="Sirve la plantilla o la nómina que ya tiene (por ejemplo, exportada del SIAGIE)." />
       <Contenido ancho="max-w-4xl">
         <Tarjeta className="aparecer p-5" style={orden(1)}>
-          <label className={cx("flex cursor-pointer flex-col items-center gap-3 rounded-[1.25rem] border-2 border-dashed border-teal-600/30 bg-white/30 px-4 py-8 text-center transition hover:bg-white/50", leyendo && "opacity-60")}>
+          <label className={cx("flex cursor-pointer flex-col items-center gap-3 rounded-[1.25rem] border-2 border-dashed border-blue-600/30 bg-white/30 px-4 py-8 text-center transition hover:bg-white/50", leyendo && "opacity-60")}>
             <Gema icono={FileUp} tono="tono-laguna" tam="lg" />
             <span className="font-bold">{nombreArchivo || "Elegir archivo"}</span>
             <span className="text-xs text-tinta-suave">{libro ? "Toque para elegir otro" : ".xlsx, .xls o .csv · se lee en este equipo, sin internet"}</span>
@@ -240,7 +240,7 @@ export function ImportarPagina() {
                         <td className="px-3 py-2 text-xs">
                           {f.errores.length ? <span className="font-semibold text-red-700">{f.errores.join("; ")}</span>
                             : f.avisos.length ? <span className="text-amber-800">{f.avisos.join("; ")}</span>
-                              : <CircleCheck className="h-4 w-4 text-teal-600" aria-label="Correcta" />}
+                              : <CircleCheck className="h-4 w-4 text-blue-600" aria-label="Correcta" />}
                         </td>
                       </tr>
                     ))}

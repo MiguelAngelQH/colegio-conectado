@@ -19,7 +19,7 @@ export function EstadoSync({ compacto }: { compacto?: boolean }) {
   } else if (sync.sincronizando) {
     Icono = LoaderCircle;
     texto = "Sincronizando";
-    punto = "bg-cyan-500";
+    punto = "bg-sky-500";
   } else if (sync.rechazados) {
     Icono = TriangleAlert;
     texto = `${sync.rechazados} por revisar`;
@@ -28,7 +28,7 @@ export function EstadoSync({ compacto }: { compacto?: boolean }) {
   } else if (sync.pendientes) {
     Icono = CloudUpload;
     texto = sync.pendientes === 1 ? "1 pendiente" : `${sync.pendientes} pendientes`;
-    punto = "bg-cyan-500";
+    punto = "bg-sky-500";
   }
 
   return (

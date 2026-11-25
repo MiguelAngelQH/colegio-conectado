@@ -83,14 +83,14 @@ export function Mensajes() {
           <Tarjeta className="aparecer divide-y divide-white/70 overflow-hidden">
             {conversaciones.map((c) => (
               <button key={`${c.estudianteId}|${c.personalId}`} onClick={() => setAbierta(c)} className="flex w-full items-start gap-3 px-4 py-3 text-left transition hover:bg-white/40">
-                <span className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white/70 ring-1 ring-white"><MessageSquare className="h-5 w-5 text-teal-700" aria-hidden /></span>
+                <span className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white/70 ring-1 ring-white"><MessageSquare className="h-5 w-5 text-blue-700" aria-hidden /></span>
                 <span className="min-w-0 flex-1">
                   <span className="block truncate font-semibold">{titulo(c)}</span>
                   <span className="block truncate text-sm text-tinta-suave">{c.ultimo.autor_id === usuario.id ? "Usted: " : ""}{c.ultimo.texto}</span>
                 </span>
                 <span className="flex flex-col items-end gap-1">
                   <span className="text-[0.65rem] text-tinta-suave">{hora(c.ultimo.enviado_en)}</span>
-                  {c.sinLeer > 0 && <span className="rounded-full bg-teal-600 px-2 py-0.5 text-[0.65rem] font-bold text-white">{c.sinLeer}</span>}
+                  {c.sinLeer > 0 && <span className="rounded-full bg-blue-600 px-2 py-0.5 text-[0.65rem] font-bold text-white">{c.sinLeer}</span>}
                 </span>
               </button>
             ))}
@@ -168,7 +168,7 @@ function Hilo({ conv, datos, onVolver }: {
             const mio = m.autor_id === usuario?.id;
             return (
               <div key={m.id} className={cx("flex", mio ? "justify-end" : "justify-start")}>
-                <div className={cx("max-w-[80%] rounded-2xl px-3.5 py-2 text-sm shadow-sm", mio ? "rounded-br-md bg-teal-600 text-white" : "rounded-bl-md bg-white/85 text-tinta ring-1 ring-white")}>
+                <div className={cx("max-w-[80%] rounded-2xl px-3.5 py-2 text-sm shadow-sm", mio ? "rounded-br-md bg-blue-600 text-white" : "rounded-bl-md bg-white/85 text-tinta ring-1 ring-white")}>
                   {!mio && <p className="text-[0.7rem] font-bold opacity-70">{corto(datos.usuarios.get(m.autor_id))}</p>}
                   <p className="whitespace-pre-line">{m.texto}</p>
                   <p className={cx("mt-0.5 text-right text-[0.65rem]", mio ? "text-white/75" : "text-tinta-suave")}>{hora(m.enviado_en)}{mio && m.leido_en ? " · Leído" : ""}</p>

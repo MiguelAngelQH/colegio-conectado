@@ -6,4 +6,4 @@ import type { NivelLogro } from "@/db/tipos";
 
 export const NIVEL_HEX: Record<NivelLogro, string> = { AD: "#0070c0", A: "#00a651", B: "#ffd400", C: "#e02424" };
 /** Texto sobre cada relleno (el amarillo lleva tinta oscura). */
-export const NIVEL_TEXTO: Record<NivelLogro, string> = { AD: "#ffffff", A: "#ffffff", B: "#0b2e33", C: "#ffffff" };
+export const NIVEL_TEXTO: Record<NivelLogro, string> = { AD: "#ffffff", A: "#ffffff", B: "#0f1e36", C: "#ffffff" };

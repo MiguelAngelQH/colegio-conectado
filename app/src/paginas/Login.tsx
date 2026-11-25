@@ -83,7 +83,7 @@ export function Login() {
     <div className="relative min-h-dvh overflow-hidden px-4 py-8 sm:py-14">
       <div className="fondo-cielo" aria-hidden />
       {/* Orbes de luz decorativos detrás del vidrio. */}
-      <div aria-hidden className="pointer-events-none absolute -left-16 top-24 h-56 w-56 rounded-full bg-gradient-to-br from-cyan-300/70 to-teal-500/60 blur-2xl" />
+      <div aria-hidden className="pointer-events-none absolute -left-16 top-24 h-56 w-56 rounded-full bg-gradient-to-br from-sky-300/70 to-blue-500/60 blur-2xl" />
       <div aria-hidden className="pointer-events-none absolute -right-10 top-[55%] h-64 w-64 rounded-full bg-gradient-to-br from-amber-200/80 to-orange-400/50 blur-2xl" />
 
       <div className="relative mx-auto grid max-w-5xl grid-cols-[minmax(0,1fr)] items-center gap-8 lg:grid-cols-[1.1fr_1fr]">

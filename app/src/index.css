@@ -6,25 +6,25 @@
 @tailwind utilities;
 
 /* ------------------------------------------------------------------
-   Sistema visual "Cielo andino": liquid glass sobre una malla de luz.
+   Sistema visual institucional: liquid glass azul sobre un fondo gris azulado.
    ------------------------------------------------------------------ */
 :root {
-  --tinta: #0b2e33;          /* texto principal: verde petróleo muy oscuro */
-  --tinta-suave: #3f5f63;
-  --laguna: #0fb5a6;
-  --laguna-honda: #0b6e6a;
-  --cielo: #4cb8f0;
-  --ambar: #f6b44b;
-  --coral: #f2857a;
+  --tinta: #0f1e36;          /* texto principal: azul marino muy oscuro */
+  --tinta-suave: #4a5a72;
+  --laguna: #2563eb;
+  --laguna-honda: #1e3a8a;
+  --cielo: #3b82f6;
+  --ambar: #d4a03a;
+  --coral: #d0645a;
   --vidrio: rgba(255, 255, 255, 0.46);
   --vidrio-fuerte: rgba(255, 255, 255, 0.68);
   --borde-luz: rgba(255, 255, 255, 0.72);
-  --sombra: 0 10px 40px -12px rgba(11, 46, 51, 0.28);
+  --sombra: 0 10px 40px -12px rgba(15, 30, 54, 0.24);
   --radio: 1.5rem;
   color-scheme: light;
 }
 
-html { -webkit-tap-highlight-color: transparent; background: #dff1ee; }
+html { -webkit-tap-highlight-color: transparent; background: #eef2f7; }
 body {
   @apply antialiased;
   color: var(--tinta);
@@ -39,18 +39,18 @@ body {
   inset: 0;
   z-index: -1;
   background:
-    radial-gradient(55vmax 45vmax at 0% 0%, rgba(56, 182, 246, 0.85), transparent 62%),
-    radial-gradient(50vmax 42vmax at 100% 8%, rgba(13, 196, 176, 0.85), transparent 62%),
-    radial-gradient(40vmax 34vmax at 55% 45%, rgba(167, 243, 208, 0.55), transparent 65%),
-    radial-gradient(50vmax 42vmax at 92% 96%, rgba(250, 178, 62, 0.8), transparent 62%),
-    radial-gradient(45vmax 38vmax at 0% 92%, rgba(244, 128, 116, 0.6), transparent 62%),
-    linear-gradient(160deg, #d4f1ee 0%, #cfe9ea 45%, #f7e6cf 100%);
+    radial-gradient(55vmax 45vmax at 0% 0%, rgba(96, 140, 220, 0.55), transparent 62%),
+    radial-gradient(50vmax 42vmax at 100% 8%, rgba(148, 178, 230, 0.6), transparent 62%),
+    radial-gradient(40vmax 34vmax at 55% 45%, rgba(226, 232, 240, 0.7), transparent 65%),
+    radial-gradient(50vmax 42vmax at 92% 96%, rgba(30, 58, 138, 0.28), transparent 62%),
+    radial-gradient(45vmax 38vmax at 0% 92%, rgba(186, 200, 222, 0.6), transparent 62%),
+    linear-gradient(160deg, #e7edf6 0%, #e3e9f2 45%, #edf0f5 100%);
 }
 .fondo-cielo::after {
   content: "";
   position: absolute;
   inset: 0;
-  opacity: 0.22;
+  opacity: 0.14;
   mix-blend-mode: soft-light;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
 }
@@ -96,19 +96,19 @@ body {
   /* Vidrio casi opaco para diálogos y hojas: se lee bien sobre cualquier contenido. */
   .vidrio-solido {
     @apply vidrio;
-    background: linear-gradient(145deg, rgba(255, 255, 255, 0.94), rgba(244, 251, 250, 0.88));
+    background: linear-gradient(145deg, rgba(255, 255, 255, 0.95), rgba(244, 247, 252, 0.9));
   }
   /* Vidrio tintado (botón principal, elementos activos). */
   .vidrio-laguna {
     position: relative;
     isolation: isolate;
     color: white;
-    background: linear-gradient(150deg, rgba(20, 196, 179, 0.95), rgba(11, 110, 106, 0.95));
+    background: linear-gradient(150deg, rgba(37, 99, 235, 0.96), rgba(30, 58, 138, 0.96));
     border: 1px solid rgba(255, 255, 255, 0.45);
     box-shadow:
       inset 0 1px 0 rgba(255, 255, 255, 0.55),
-      inset 0 -2px 6px rgba(0, 40, 40, 0.25),
-      0 10px 24px -10px rgba(11, 110, 106, 0.75);
+      inset 0 -2px 6px rgba(10, 20, 60, 0.25),
+      0 10px 24px -10px rgba(30, 58, 138, 0.7);
   }
 
   /* Ficha de ícono: gema de color con reflejo. El color viene de --t1/--t2. */
@@ -141,20 +141,21 @@ body {
     @apply block w-full rounded-2xl px-4 py-3 text-base outline-none transition;
     background: rgba(255, 255, 255, 0.55);
     border: 1px solid rgba(255, 255, 255, 0.8);
-    box-shadow: inset 0 2px 6px rgba(11, 46, 51, 0.08);
+    box-shadow: inset 0 2px 6px rgba(15, 30, 54, 0.08);
   }
-  .campo:focus { border-color: var(--laguna); box-shadow: 0 0 0 4px rgba(15, 181, 166, 0.2); }
+  .campo:focus { border-color: var(--laguna); box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.18); }
 }
 
 /* Tonos de módulo para las gemas. */
-.tono-laguna { --t1: #2dd4bf; --t2: #0b7f78; }
-.tono-cielo  { --t1: #60c3f5; --t2: #1d6fb8; }
-.tono-ambar  { --t1: #fcc867; --t2: #d97a06; }
-.tono-coral  { --t1: #f99b8f; --t2: #d94a45; }
-.tono-lila   { --t1: #b9a3fb; --t2: #6d4fd6; }
-.tono-musgo  { --t1: #8fd694; --t2: #2f8f4e; }
-.tono-pizarra{ --t1: #9fb3bd; --t2: #46606b; }
-.tono-rosa   { --t1: #f7a6c8; --t2: #c2457d; }
+/* Tonos sobrios: el azul institucional manda y el resto son acentos apagados. */
+.tono-laguna { --t1: #4f86f0; --t2: #1e3a8a; }
+.tono-cielo  { --t1: #5b9bd5; --t2: #1f4e79; }
+.tono-ambar  { --t1: #e2b35a; --t2: #9a6a0c; }
+.tono-coral  { --t1: #e0857b; --t2: #a8322a; }
+.tono-lila   { --t1: #8e93e6; --t2: #3b3f9e; }
+.tono-musgo  { --t1: #6fb48c; --t2: #1f6b43; }
+.tono-pizarra{ --t1: #94a3b8; --t2: #334155; }
+.tono-rosa   { --t1: #c38fb0; --t2: #7e3a68; }
 
 /* Entrada escalonada. */
 @media (prefers-reduced-motion: no-preference) {

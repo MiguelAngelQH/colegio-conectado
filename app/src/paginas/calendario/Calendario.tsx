@@ -98,7 +98,7 @@ export function Calendario() {
               return (
                 <button key={d} onClick={() => setDia(d)} aria-label={`${Number(d.slice(8))}${feriado ? `, ${feriado}` : ""}${evs.length ? `, ${evs.length} eventos` : ""}`}
                   className={cx("flex min-h-14 flex-col items-center gap-1 rounded-xl p-1 text-sm transition sm:min-h-16",
-                    d === dia ? "bg-teal-600 text-white" : d === hoy ? "bg-white/80 ring-2 ring-teal-500" : "bg-white/40 hover:bg-white/70",
+                    d === dia ? "bg-blue-600 text-white" : d === hoy ? "bg-white/80 ring-2 ring-blue-500" : "bg-white/40 hover:bg-white/70",
                     feriado && d !== dia && "text-red-700")}>
                   <span className="font-bold">{Number(d.slice(8))}</span>
                   <span className="flex flex-wrap justify-center gap-0.5">

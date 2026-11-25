@@ -81,7 +81,7 @@ function Miniatura({ ev, blob, pendiente, onAbrir }: { ev: Evidencia; blob: Blob
   const url = useUrl(ev.tipo.startsWith("image/") ? blob : null);
   return (
     <button type="button" onClick={onAbrir} aria-label={`Ver ${ev.nombre}`}
-      className="group relative aspect-square overflow-hidden rounded-2xl bg-white/60 ring-1 ring-white transition hover:ring-teal-400">
+      className="group relative aspect-square overflow-hidden rounded-2xl bg-white/60 ring-1 ring-white transition hover:ring-blue-400">
       {url ? <img src={url} alt="" className="h-full w-full object-cover" />
         : <span className="flex h-full flex-col items-center justify-center gap-1 p-2 text-center text-[0.65rem] text-tinta-suave">
             <FileText className="h-6 w-6" aria-hidden /> <span className="line-clamp-2 break-all">{ev.nombre}</span>

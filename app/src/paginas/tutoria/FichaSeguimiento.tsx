@@ -143,7 +143,7 @@ export function FichaSeguimiento() {
                   <Tarjeta className="min-w-0 flex-1 space-y-2 p-3">
                     <div>
                       <p className="text-xs text-tinta-suave">{fechaLarga(e.fecha)}</p>
-                      {e.enlace ? <Link to={e.enlace} className="font-semibold underline decoration-teal-500/40 underline-offset-2">{e.titulo}</Link> : <p className="font-semibold">{e.titulo}</p>}
+                      {e.enlace ? <Link to={e.enlace} className="font-semibold underline decoration-blue-500/40 underline-offset-2">{e.titulo}</Link> : <p className="font-semibold">{e.titulo}</p>}
                       {e.texto && <p className="mt-0.5 text-sm">{e.texto}</p>}
                     </div>
                     {e.evidencia && <Evidencias entidad={e.evidencia.entidad} entidadId={e.id} estudianteId={est.id} editable={e.evidencia.editable} />}

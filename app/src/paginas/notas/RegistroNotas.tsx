@@ -158,7 +158,7 @@ export function RegistroNotas() {
             </span>
           </div>
           <div className="mt-3 h-2 overflow-hidden rounded-full bg-white/60">
-            <div className="h-full rounded-full bg-gradient-to-r from-teal-400 to-sky-500 transition-all" style={{ width: `${total ? (hechas / total) * 100 : 0}%` }} />
+            <div className="h-full rounded-full bg-gradient-to-r from-blue-400 to-sky-500 transition-all" style={{ width: `${total ? (hechas / total) * 100 : 0}%` }} />
           </div>
         </Tarjeta>
       )}

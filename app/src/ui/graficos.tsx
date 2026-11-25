@@ -18,9 +18,9 @@ import { NIVEL_HEX, NIVEL_TEXTO } from "./colores-niveles";
 
 export { NIVEL_HEX, NIVEL_TEXTO };
 
-const TINTA = "#0b2e33";
+const TINTA = "#0f1e36";
 const SUAVE = "#5b7478";
-const REJILLA = "rgba(11, 46, 51, 0.08)";
+const REJILLA = "rgba(15, 30, 54, 0.08)";
 const SUPERFICIE = "#ffffff";
 /** Serie única (asistencia, avance, conteos). */
 export const MARCA = "#0f8f84";

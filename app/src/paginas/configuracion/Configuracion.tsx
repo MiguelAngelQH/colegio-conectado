@@ -77,7 +77,7 @@ function Centro() {
           </div>
           <div className="mt-3 grid grid-cols-4 gap-1.5">
             {pasos.map((p) => (
-              <div key={p.a} className={cx("h-2.5 rounded-full", p.listo ? "bg-gradient-to-r from-teal-400 to-sky-500 shadow-[0_0_10px_rgba(45,212,191,.6)]" : "bg-white/60")} />
+              <div key={p.a} className={cx("h-2.5 rounded-full", p.listo ? "bg-gradient-to-r from-blue-400 to-sky-500 shadow-[0_0_10px_rgba(45,212,191,.6)]" : "bg-white/60")} />
             ))}
           </div>
         </Tarjeta>
@@ -103,7 +103,7 @@ function Centro() {
                 <span className="block font-bold">{p.titulo}</span>
                 <span className="block truncate text-sm text-tinta-suave">{p.estado}</span>
               </span>
-              {p.listo ? <CircleCheck className="h-6 w-6 text-teal-600" aria-label="Listo" /> : <ArrowRight className="h-5 w-5 text-tinta-suave transition group-hover:translate-x-0.5" aria-hidden />}
+              {p.listo ? <CircleCheck className="h-6 w-6 text-blue-600" aria-label="Listo" /> : <ArrowRight className="h-5 w-5 text-tinta-suave transition group-hover:translate-x-0.5" aria-hidden />}
             </Link>
           ))}
         </div>

@@ -204,7 +204,7 @@ export function FichaPersonal() {
               {!persona.activo && <span className="rounded-full bg-slate-200/80 px-3 py-1 text-xs font-bold">Inactivo</span>}
             </div>
             <p className="mt-1.5 text-sm text-tinta-suave">{persona.dni ? `DNI ${persona.dni}` : "Sin DNI"}{persona.email && ` · ${persona.email}`}</p>
-            {tutorDe.length > 0 && <p className="mt-0.5 text-sm font-semibold text-teal-700">Tutor(a) de {tutorDe.map((s) => s.nombre).join(", ")}</p>}
+            {tutorDe.length > 0 && <p className="mt-0.5 text-sm font-semibold text-blue-700">Tutor(a) de {tutorDe.map((s) => s.nombre).join(", ")}</p>}
           </div>
           <Boton variante="vidrio" onClick={() => setEditando(true)}>Editar</Boton>
         </Tarjeta>

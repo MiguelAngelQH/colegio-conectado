@@ -86,7 +86,7 @@ export function Horario() {
                 <tr>
                   <th className="w-20 text-left text-xs uppercase tracking-wider text-tinta-suave">Hora</th>
                   {DIAS.map((d, i) => (
-                    <th key={d} className={cx("rounded-xl py-1.5 text-xs uppercase tracking-wider", hoy === i + 1 ? "bg-teal-600 text-white" : "text-tinta-suave")}>{d}</th>
+                    <th key={d} className={cx("rounded-xl py-1.5 text-xs uppercase tracking-wider", hoy === i + 1 ? "bg-blue-600 text-white" : "text-tinta-suave")}>{d}</th>
                   ))}
                 </tr>
               </thead>

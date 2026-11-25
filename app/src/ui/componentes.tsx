@@ -97,7 +97,7 @@ export function Aviso({ tipo = "info", titulo, children, icono: Icono }: {
   tipo?: "info" | "alerta" | "error" | "ok"; titulo?: string; children: ReactNode; icono?: LucideIcon;
 }) {
   const estilos = {
-    info: "bg-cyan-50/60 text-cyan-950 ring-cyan-200/70",
+    info: "bg-sky-50/60 text-sky-950 ring-sky-200/70",
     alerta: "bg-amber-50/70 text-amber-950 ring-amber-200/80",
     error: "bg-red-50/75 text-red-950 ring-red-200/80",
     ok: "bg-emerald-50/70 text-emerald-950 ring-emerald-200/80",

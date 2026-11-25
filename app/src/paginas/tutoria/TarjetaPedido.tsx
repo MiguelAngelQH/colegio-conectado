@@ -48,8 +48,8 @@ export function TarjetaPedido({ s, quien, para = "estudiante", acciones }: {
         </p>
       )}
       {s.respuesta && (
-        <div className="rounded-2xl bg-teal-50/80 px-3 py-2 text-sm ring-1 ring-teal-100">
-          <p className="etiqueta !text-teal-800">Respuesta</p>
+        <div className="rounded-2xl bg-blue-50/80 px-3 py-2 text-sm ring-1 ring-blue-100">
+          <p className="etiqueta !text-blue-800">Respuesta</p>
           <p className="whitespace-pre-line text-tinta">{s.respuesta}</p>
         </div>
       )}

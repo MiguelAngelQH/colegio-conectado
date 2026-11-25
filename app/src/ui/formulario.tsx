@@ -57,7 +57,7 @@ export function Segmentado<T extends string>({ opciones, valor, onCambio, etique
 export function Casilla({ marcada, onCambio, children }: { marcada: boolean; onCambio(v: boolean): void; children: ReactNode }) {
   return (
     <label className="flex min-h-11 cursor-pointer items-center gap-3 rounded-2xl bg-white/40 px-3 py-2 ring-1 ring-white/80">
-      <input type="checkbox" checked={marcada} onChange={(e) => onCambio(e.target.checked)} className="h-5 w-5 accent-teal-600" />
+      <input type="checkbox" checked={marcada} onChange={(e) => onCambio(e.target.checked)} className="h-5 w-5 accent-blue-600" />
       <span className="text-sm font-semibold">{children}</span>
     </label>
   );

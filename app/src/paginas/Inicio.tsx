@@ -86,7 +86,7 @@ export function Inicio() {
           <p className="etiqueta">{new Date().toLocaleDateString("es-PE", { weekday: "long", day: "numeric", month: "long" })}</p>
           <h1 className="titulo-display mt-1 text-[2.1rem] font-bold leading-[1.05] sm:text-5xl">
             {saludo()},<br />
-            <span className="bg-gradient-to-r from-teal-600 via-cyan-600 to-sky-600 bg-clip-text text-transparent">{usuario.nombres}</span>
+            <span className="bg-gradient-to-r from-blue-600 via-sky-600 to-sky-600 bg-clip-text text-transparent">{usuario.nombres}</span>
           </h1>
           {datos?.anio && <p className="mt-2 text-sm text-tinta-suave">Año escolar {datos.anio.anio}</p>}
         </div>
@@ -104,7 +104,7 @@ export function Inicio() {
               </span>
             </div>
             <div className="mt-4 h-2.5 overflow-hidden rounded-full bg-white/60 shadow-[inset_0_1px_3px_rgba(11,46,51,.15)]">
-              <div className="h-full rounded-full bg-gradient-to-r from-teal-400 to-sky-500 shadow-[0_0_12px_rgba(56,189,248,.6)]" style={{ width: `${aunNoEmpieza ? 0 : avance}%` }} />
+              <div className="h-full rounded-full bg-gradient-to-r from-blue-400 to-sky-500 shadow-[0_0_12px_rgba(56,189,248,.6)]" style={{ width: `${aunNoEmpieza ? 0 : avance}%` }} />
             </div>
             <p className="mt-2 text-xs text-tinta-suave">
               {aunNoEmpieza ? `Empieza el ${fechaLarga(p.inicio)}` : `Del ${fechaLarga(p.inicio)} al ${fechaLarga(p.fin)}`}
@@ -167,7 +167,7 @@ export function Inicio() {
                 <div className="min-w-0 flex-1">
                   <p className="font-bold">{s.nombre} <span className="font-normal text-tinta-suave">· {s.nivel}</span></p>
                   <p className="truncate text-sm text-tinta-suave">{s.areas.join(", ") || "Sin áreas asignadas"}</p>
-                  <p className="mt-1 flex items-center gap-1.5 text-xs font-semibold text-teal-700">
+                  <p className="mt-1 flex items-center gap-1.5 text-xs font-semibold text-blue-700">
                     <Users className="h-3.5 w-3.5" aria-hidden /> {s.estudiantes} estudiantes{s.tutor && " · Tutor(a)"}
                   </p>
                 </div>

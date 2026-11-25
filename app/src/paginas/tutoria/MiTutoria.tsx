@@ -55,7 +55,7 @@ function DialogoPedirAyuda({ estudianteId, para, tutor, onCerrar }: {
             {(Object.keys(MOTIVOS) as MotivoSolicitud[]).map((m) => (
               <button key={m} type="button" role="radio" aria-checked={motivo === m} onClick={() => setMotivo(m)}
                 className={cx("rounded-2xl px-3 py-2.5 text-left text-sm font-semibold ring-1 transition",
-                  motivo === m ? "bg-teal-50 text-teal-900 ring-2 ring-teal-500" : "bg-white/60 ring-white hover:bg-white")}>
+                  motivo === m ? "bg-blue-50 text-blue-900 ring-2 ring-blue-500" : "bg-white/60 ring-white hover:bg-white")}>
                 {MOTIVOS[m][para]}
               </button>
             ))}

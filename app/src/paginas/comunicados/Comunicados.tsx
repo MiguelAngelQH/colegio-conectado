@@ -78,7 +78,7 @@ export function Comunicados() {
                       <p className="mt-2 whitespace-pre-line text-sm leading-relaxed">{c.cuerpo}</p>
                       {verLecturas && (
                         <button onClick={() => setLectoresDe(c)} className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-white/60 px-3 py-1 text-xs font-semibold ring-1 ring-white hover:bg-white">
-                          <CheckCheck className="h-3.5 w-3.5 text-teal-600" aria-hidden /> Leído por {lectores} {lectores === 1 ? "persona" : "personas"}
+                          <CheckCheck className="h-3.5 w-3.5 text-blue-600" aria-hidden /> Leído por {lectores} {lectores === 1 ? "persona" : "personas"}
                         </button>
                       )}
                     </div>

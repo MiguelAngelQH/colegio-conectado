@@ -195,7 +195,7 @@ export function DialogoCuentasSeccion({ seccionId, seccionNombre, colegio, onCer
           {sinDni.length > 0 && <li className="text-amber-800"><strong>{sinDni.length}</strong> sin DNI registrado: complete su DNI en la ficha para crearles cuenta.</li>}
         </ul>
         {avance && <div className="h-2 overflow-hidden rounded-full bg-white/70" role="progressbar" aria-valuenow={avance.hechas} aria-valuemax={avance.total}>
-          <div className="h-full rounded-full bg-teal-600 transition-all" style={{ width: `${(avance.hechas / Math.max(1, avance.total)) * 100}%` }} />
+          <div className="h-full rounded-full bg-blue-600 transition-all" style={{ width: `${(avance.hechas / Math.max(1, avance.total)) * 100}%` }} />
         </div>}
         <p className="text-xs text-tinta-suave">
           Al terminar podrá descargar un Excel con todos los usuarios (DNI) y contraseñas temporales, y un PDF con tarjetas para repartir.

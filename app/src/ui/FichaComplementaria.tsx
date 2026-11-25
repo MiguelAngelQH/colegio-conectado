@@ -37,7 +37,7 @@ export function FichaComplementaria({ est, editable }: { est: Estudiante; editab
             <p className="etiqueta">Contacto de emergencia</p>
             <p className="mt-0.5 font-semibold">{est.contacto_emergencia || <span className="font-normal text-tinta-suave">No registrado</span>}</p>
             {est.telefono_emergencia && (
-              <a href={`tel:${est.telefono_emergencia.replace(/\s+/g, "")}`} className="mt-1 inline-flex items-center gap-1.5 text-sm font-semibold text-teal-700 underline">
+              <a href={`tel:${est.telefono_emergencia.replace(/\s+/g, "")}`} className="mt-1 inline-flex items-center gap-1.5 text-sm font-semibold text-blue-700 underline">
                 <Phone className="h-4 w-4" aria-hidden /> {est.telefono_emergencia}
               </a>
             )}

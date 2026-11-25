@@ -68,7 +68,7 @@ function TarjetaMonitoreo({ o, i, esUgel, autor }: { o: ObservacionMonitoreo; i:
           <p className="mt-1.5 whitespace-pre-line">{o.texto}</p>
           {o.respuesta && (
             <div className="mt-2 rounded-2xl bg-white/55 p-3 ring-1 ring-white">
-              <p className="text-xs font-semibold text-teal-700">Respuesta de la dirección{o.respondido_en && ` · ${new Date(o.respondido_en).toLocaleDateString("es-PE")}`}</p>
+              <p className="text-xs font-semibold text-blue-700">Respuesta de la dirección{o.respondido_en && ` · ${new Date(o.respondido_en).toLocaleDateString("es-PE")}`}</p>
               <p className="whitespace-pre-line">{o.respuesta}</p>
             </div>
           )}

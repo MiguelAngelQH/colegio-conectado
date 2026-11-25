@@ -119,7 +119,7 @@ export function CambiarClaveObligatorio() {
               <ul className="mt-3 space-y-2">
                 {tareas.map((t) => (
                   <li key={t} className="flex items-start gap-2 text-sm">
-                    <CircleCheck className="mt-0.5 h-4 w-4 shrink-0 text-teal-600" aria-hidden /> <span>{t}</span>
+                    <CircleCheck className="mt-0.5 h-4 w-4 shrink-0 text-blue-600" aria-hidden /> <span>{t}</span>
                   </li>
                 ))}
               </ul>

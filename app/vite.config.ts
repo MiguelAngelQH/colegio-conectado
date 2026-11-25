@@ -23,7 +23,7 @@ export default defineConfig(({ command, mode }) => {
           short_name: "Colegio",
           description: "Gestión escolar: notas por competencias, asistencia, tutoría. Funciona sin internet.",
           lang: "es-PE",
-          theme_color: "#0f766e",
+          theme_color: "#1e3a8a",
           background_color: "#ffffff",
           display: "standalone",
           start_url: "/",

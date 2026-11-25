@@ -114,7 +114,7 @@ export function MarcarAsistencia() {
           <Tarjeta fuerte className="aparecer flex flex-col items-center gap-4 p-8 text-center">
             {resultado.tipo === "enviando" ? (
               <>
-                <LoaderCircle className="h-12 w-12 animate-spin text-teal-600" aria-hidden />
+                <LoaderCircle className="h-12 w-12 animate-spin text-blue-600" aria-hidden />
                 <h2 className="titulo-display text-xl font-bold">Enviando tu asistencia...</h2>
               </>
             ) : (
@@ -190,7 +190,7 @@ function MiQr({ yo }: { yo: Estudiante }) {
   );
 }
 
-const CONFETI = ["bg-teal-400", "bg-amber-300", "bg-rose-400", "bg-sky-400", "bg-lime-400", "bg-violet-400"];
+const CONFETI = ["bg-blue-400", "bg-amber-300", "bg-rose-400", "bg-sky-400", "bg-lime-400", "bg-violet-400"];
 
 /** Ventana de felicitación al registrar la asistencia. */
 function Felicitacion({ yo, sesionId, sinSenal, onCerrar }: { yo: Estudiante; sesionId: string; sinSenal: boolean; onCerrar(): void }) {

@@ -12,7 +12,7 @@ import { Aviso, Boton, Contenido, Dialogo, Gema, Tarjeta, cx, orden } from "@/ui
 import { Campo, Segmentado, Selector, Vacio } from "@/ui/formulario";
 
 function Barra({ porcentaje }: { porcentaje: number }) {
-  const color = porcentaje >= 100 ? "from-emerald-400 to-teal-500" : porcentaje >= 60 ? "from-amber-300 to-amber-500" : "from-red-400 to-red-500";
+  const color = porcentaje >= 100 ? "from-emerald-400 to-blue-500" : porcentaje >= 60 ? "from-amber-300 to-amber-500" : "from-red-400 to-red-500";
   return (
     <div className="h-2 overflow-hidden rounded-full bg-white/60">
       <div className={cx("h-full rounded-full bg-gradient-to-r transition-all", color)} style={{ width: `${Math.min(100, porcentaje)}%` }} />

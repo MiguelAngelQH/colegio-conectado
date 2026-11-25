@@ -236,7 +236,7 @@ function VistaQr({ sesionId, secreto, recibidas, total, conectado, sincronizar }
       <div className="flex items-center gap-4">
         <svg viewBox="0 0 52 52" className="h-12 w-12 -rotate-90" aria-hidden>
           <circle cx="26" cy="26" r="22" fill="none" stroke="rgba(11,46,51,.12)" strokeWidth="5" />
-          <circle cx="26" cy="26" r="22" fill="none" stroke="#0fb5a6" strokeWidth="5" strokeLinecap="round" className="anillo"
+          <circle cx="26" cy="26" r="22" fill="none" stroke="#2563eb" strokeWidth="5" strokeLinecap="round" className="anillo"
             strokeDasharray={circ} strokeDashoffset={circ * (1 - restante / 15)} />
         </svg>
         <p className="text-sm font-semibold" aria-live="off">El código cambia en {restante} s</p>

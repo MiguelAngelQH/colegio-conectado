@@ -8,7 +8,7 @@ export function CodigoQr({ texto, className }: { texto: string; className?: stri
   useEffect(() => {
     let vivo = true;
     void import("qrcode").then((QR) =>
-      QR.toString(texto, { type: "svg", margin: 1, errorCorrectionLevel: "M", color: { dark: "#0b2e33", light: "#ffffff" } })
+      QR.toString(texto, { type: "svg", margin: 1, errorCorrectionLevel: "M", color: { dark: "#0f1e36", light: "#ffffff" } })
         .then((s) => vivo && setSvg(s)),
     );
     return () => { vivo = false; };
@@ -131,9 +131,9 @@ export function Escaner({ onLeer, pausado, textoManual = "Escribir el código", 
               <div aria-hidden className="pointer-events-none absolute inset-[14%] rounded-3xl shadow-[0_0_0_999px_rgba(11,46,51,.45)]">
                 {["left-0 top-0 border-l-4 border-t-4 rounded-tl-3xl", "right-0 top-0 border-r-4 border-t-4 rounded-tr-3xl",
                   "left-0 bottom-0 border-l-4 border-b-4 rounded-bl-3xl", "right-0 bottom-0 border-r-4 border-b-4 rounded-br-3xl"].map((c) => (
-                  <span key={c} className={cx("absolute h-10 w-10 border-teal-300", c)} />
+                  <span key={c} className={cx("absolute h-10 w-10 border-blue-300", c)} />
                 ))}
-                <span className="linea-escaneo absolute inset-x-4 h-0.5 rounded-full bg-teal-300 shadow-[0_0_12px_rgba(94,234,212,.9)]" />
+                <span className="linea-escaneo absolute inset-x-4 h-0.5 rounded-full bg-blue-300 shadow-[0_0_12px_rgba(94,234,212,.9)]" />
               </div>
               {pausado && <div className="absolute inset-0 bg-tinta/40" />}
             </>

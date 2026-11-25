@@ -75,7 +75,7 @@ export function Perfil() {
               <span className="block text-xs text-tinta-suave">Para practicar o comprobar que todo funciona sin internet.</span>
             </span>
             <input type="checkbox" role="switch" checked={forzado} onChange={(e) => forzarSinConexion(e.target.checked)} className="peer sr-only" />
-            <span aria-hidden className="relative h-8 w-14 shrink-0 rounded-full bg-tinta/15 shadow-[inset_0_2px_4px_rgba(11,46,51,.2)] transition peer-checked:bg-amber-400 peer-focus-visible:ring-4 peer-focus-visible:ring-teal-300 after:absolute after:left-1 after:top-1 after:h-6 after:w-6 after:rounded-full after:bg-white after:shadow-md after:transition peer-checked:after:translate-x-6" />
+            <span aria-hidden className="relative h-8 w-14 shrink-0 rounded-full bg-tinta/15 shadow-[inset_0_2px_4px_rgba(11,46,51,.2)] transition peer-checked:bg-amber-400 peer-focus-visible:ring-4 peer-focus-visible:ring-blue-300 after:absolute after:left-1 after:top-1 after:h-6 after:w-6 after:rounded-full after:bg-white after:shadow-md after:transition peer-checked:after:translate-x-6" />
           </label>
           <label className="mt-2 flex cursor-pointer items-center gap-4 rounded-2xl bg-white/40 p-3 ring-1 ring-white/80">
             <span className="min-w-0 flex-1 text-sm">
@@ -83,7 +83,7 @@ export function Perfil() {
               <span className="block text-xs text-tinta-suave">Ahorra datos móviles. Las notas y la asistencia se envían igual.</span>
             </span>
             <input type="checkbox" role="switch" checked={wifi} onChange={(e) => { fijarSoloWifi(e.target.checked); setWifi(e.target.checked); }} className="peer sr-only" />
-            <span aria-hidden className="relative h-8 w-14 shrink-0 rounded-full bg-tinta/15 shadow-[inset_0_2px_4px_rgba(11,46,51,.2)] transition peer-checked:bg-teal-500 peer-focus-visible:ring-4 peer-focus-visible:ring-teal-300 after:absolute after:left-1 after:top-1 after:h-6 after:w-6 after:rounded-full after:bg-white after:shadow-md after:transition peer-checked:after:translate-x-6" />
+            <span aria-hidden className="relative h-8 w-14 shrink-0 rounded-full bg-tinta/15 shadow-[inset_0_2px_4px_rgba(11,46,51,.2)] transition peer-checked:bg-blue-500 peer-focus-visible:ring-4 peer-focus-visible:ring-blue-300 after:absolute after:left-1 after:top-1 after:h-6 after:w-6 after:rounded-full after:bg-white after:shadow-md after:transition peer-checked:after:translate-x-6" />
           </label>
         </Tarjeta>
 
