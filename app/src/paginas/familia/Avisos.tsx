@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import { Bell, BellRing, BookCheck, CalendarX, ClipboardList, Eye, FileCheck, HandHeart, Megaphone, StickyNote, type LucideIcon } from "lucide-react";
+import { Bell, BellRing, BookCheck, CalendarDays, CalendarX, ClipboardList, Eye, FileCheck, HandHeart, Megaphone, StickyNote, type LucideIcon } from "lucide-react";
 import { useApp } from "@/app/contexto";
 import { marcarAvisosVistos, useAvisos } from "@/datos/familia";
 import type { TipoAviso } from "@/dominio/avisos";
@@ -18,6 +18,7 @@ const ICONO: Record<TipoAviso, { icono: LucideIcon; tono: string }> = {
   monitoreo: { icono: Eye, tono: "tono-lila" },
   tutoria: { icono: HandHeart, tono: "tono-rosa" },
   tarea: { icono: BookCheck, tono: "tono-cielo" },
+  evento: { icono: CalendarDays, tono: "tono-ambar" },
 };
 
 const cuando = (iso: string) => (iso ? new Date(iso).toLocaleString("es-PE", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }) : "");

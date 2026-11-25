@@ -192,6 +192,20 @@ export interface Tarea extends Fila {
   entrega: string; // aaaa-mm-dd
 }
 
+export type TipoEvento = "examen" | "reunion" | "actividad" | "sin_clases" | "otro";
+
+/** Evento del calendario escolar (seccion_id null = todo el colegio). */
+export interface Evento extends Fila {
+  autor_id: string;
+  seccion_id: string | null;
+  tipo: TipoEvento;
+  titulo: string;
+  descripcion: string | null;
+  fecha: string;
+  fecha_fin: string | null;
+  hora: string | null;
+}
+
 /** Informe del tutor al cerrar el año, para quien reciba al estudiante. Solo lo lee el personal. */
 export interface InformeTutor extends Fila {
   estudiante_id: string;
@@ -403,6 +417,7 @@ export interface Tablas {
   lista_cotejo: ListaCotejo;
   horario_clase: HorarioClase;
   tarea: Tarea;
+  evento: Evento;
   observacion: Observacion;
   sesion_tutoria: SesionTutoria;
   entrevista: Entrevista;
@@ -441,6 +456,7 @@ export const INDICES: Record<NombreTabla, string> = {
   lista_cotejo: "id, [seccion_id+area_id+periodo_id], docente_id",
   horario_clase: "id, seccion_id, docente_id",
   tarea: "id, seccion_id, docente_id, entrega",
+  evento: "id, fecha, seccion_id",
   observacion: "id, estudiante_id, autor_id",
   sesion_tutoria: "id, seccion_id",
   entrevista: "id, estudiante_id, tutor_id",

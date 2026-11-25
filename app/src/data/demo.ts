@@ -89,7 +89,7 @@ const hoyLocal = () => {
 };
 
 /** Cambia este número cuando cambien los datos de demo: los equipos vuelven a sembrar. */
-export const VERSION_DEMO = 16;
+export const VERSION_DEMO = 17;
 
 export async function datosDemo(hoyReal = hoyLocal()): Promise<Partial<Record<NombreTabla, Fila[]>>> {
   const r = rng(42);
@@ -434,5 +434,10 @@ export async function datosDemo(hoyReal = hoyLocal()): Promise<Partial<Record<No
     incidencia: incidencias, incidencia_accion: acciones, asistencia_sesion: sesionesAsis, asistencia: marcasAsis,
     justificacion: justificaciones, observacion_monitoreo: monitoreo,
     horario_clase: horario as never, tarea: tareas as never,
+    evento: [
+      { id: id("fe400000", 1), colegio_id: CID, autor_id: id("e0000000", 2), seccion_id: null, tipo: "reunion", titulo: "Reunión de padres de familia", descripcion: "Entrega de informes del bimestre en cada aula.", fecha: sumarDias(hoy, 3), fecha_fin: null, hora: "18:00" },
+      { id: id("fe400000", 2), colegio_id: CID, autor_id: uRojas.id, seccion_id: secSec.id, tipo: "examen", titulo: "Evaluación de Matemática: fracciones", descripcion: "Traer regla y calculadora.", fecha: sumarDias(hoy, 1), fecha_fin: null, hora: "08:00" },
+      { id: id("fe400000", 3), colegio_id: CID, autor_id: id("e0000000", 2), seccion_id: null, tipo: "actividad", titulo: "Feria de ciencias", descripcion: null, fecha: sumarDias(hoy, 9), fecha_fin: sumarDias(hoy, 10), hora: null },
+    ] as never,
   };
 }

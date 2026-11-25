@@ -2,6 +2,7 @@ import { useSyncExternalStore } from "react";
 import { useLiveQuery } from "dexie-react-hooks";
 import { db } from "@/app/contexto";
 import { vivas } from "@/db/repositorio";
+import { hoyLocal } from "./asistencia";
 import type { Estudiante, Usuario } from "@/db/tipos";
 import { calcularAvisos, type Aviso } from "@/dominio/avisos";
 import { puedeVer } from "@/dominio/solicitudes";
@@ -95,6 +96,8 @@ export function useAvisos(usuario: Usuario | null): { avisos: Aviso[]; nuevos: n
       esUgel: usuario.roles.includes("ugel"),
       solicitudes,
       tareas: esFamilia ? await tareasDeFamilia(hijos.map((h) => h.id), areas) : [],
+      eventos: await eventosVisibles(esFamilia ? hijos.map((h) => h.id) : null),
+      hoy: hoyLocal(),
     });
     return { avisos, nuevos: avisos.filter((a) => a.nuevo).length };
   }, [usuario?.id]);
@@ -106,4 +109,13 @@ async function tareasDeFamilia(estudianteIds: string[], areas: Map<string, { nom
   const secciones = [...new Set(mats.map((m) => m.seccion_id))];
   const tareas = vivas(await db.tabla("tarea").where("seccion_id").anyOf(secciones).toArray());
   return tareas.map((t) => ({ t, area: areas.get(t.area_id)?.nombre ?? "Clase" }));
+}
+
+/** Eventos del calendario: la familia ve los del colegio y los de sus secciones; el personal, todos. */
+async function eventosVisibles(estudianteIds: string[] | null) {
+  const eventos = vivas(await db.tabla("evento").toArray());
+  if (!estudianteIds) return eventos;
+  const mats = vivas(await db.tabla("matricula").where("estudiante_id").anyOf(estudianteIds).toArray()).filter((m) => m.estado === "matriculado");
+  const secciones = new Set(mats.map((m) => m.seccion_id));
+  return eventos.filter((e) => !e.seccion_id || secciones.has(e.seccion_id));
 }

@@ -1,9 +1,9 @@
 // Bandeja de avisos. Se calcula en el equipo con lo que trajo la sincronización: no necesita un
 // servidor de notificaciones y funciona sin conexión (los avisos llegan con el siguiente sync).
-import type { Asistencia, Calificacion, Comunicado, Justificacion, Observacion, ObservacionMonitoreo, SolicitudTutoria, Tarea } from "@/db/tipos";
+import type { Asistencia, Calificacion, Comunicado, Evento, Justificacion, Observacion, ObservacionMonitoreo, SolicitudTutoria, Tarea } from "@/db/tipos";
 import { esSensible, MOTIVOS } from "./solicitudes";
 
-export type TipoAviso = "falta" | "tardanza" | "nota" | "comunicado" | "observacion" | "justificacion" | "por_revisar" | "monitoreo" | "tutoria" | "tarea";
+export type TipoAviso = "falta" | "tardanza" | "nota" | "comunicado" | "observacion" | "justificacion" | "por_revisar" | "monitoreo" | "tutoria" | "tarea" | "evento";
 
 export interface Aviso {
   id: string;
@@ -39,6 +39,9 @@ export interface EntradaAvisos {
   solicitudes?: SolicitudTutoria[];
   /** Tareas de las secciones de la familia, con el nombre del área. */
   tareas?: { t: Tarea; area: string }[];
+  /** Eventos del calendario que el usuario puede ver, y la fecha de hoy (aaaa-mm-dd). */
+  eventos?: Evento[];
+  hoy?: string;
 }
 
 const fechaCorta = (f: string) => new Date(`${f}T12:00:00`).toLocaleDateString("es-PE", { weekday: "short", day: "numeric", month: "short" });
@@ -146,6 +149,22 @@ export function calcularAvisos(e: EntradaAvisos): Aviso[] {
         id: `tarea-${t.id}`, tipo: "tarea", momento: t.updated_at ?? t.entrega,
         titulo: `Tarea de ${area}: ${t.titulo}`, detalle: `Entrega: ${fechaCorta(t.entrega)}${t.descripcion ? `. ${t.descripcion}` : ""}`,
         estudianteId: null, enlace: "/tareas", importante: false, nuevo: false,
+      });
+    }
+  }
+
+  // Recordatorio del calendario: el día anterior y el mismo día.
+  if (e.hoy) {
+    const [a, m, d] = e.hoy.split("-").map(Number);
+    const manana = new Date(a, m - 1, d + 1);
+    const mananaTxt = `${manana.getFullYear()}-${String(manana.getMonth() + 1).padStart(2, "0")}-${String(manana.getDate()).padStart(2, "0")}`;
+    for (const ev of e.eventos ?? []) {
+      if (ev.eliminado || (ev.fecha !== e.hoy && ev.fecha !== mananaTxt)) continue;
+      const esHoy = ev.fecha === e.hoy;
+      res.push({
+        id: `ev-${ev.id}-${ev.fecha}`, tipo: "evento", momento: `${e.hoy}T${esHoy ? "06" : "00"}:00:00`,
+        titulo: `${esHoy ? "Hoy" : "Mañana"}: ${ev.titulo}`, detalle: [ev.hora ? `A las ${ev.hora}` : null, ev.descripcion].filter(Boolean).join(". ") || "Revise el calendario escolar.",
+        estudianteId: null, enlace: "/calendario", importante: ev.tipo === "examen" || ev.tipo === "reunion", nuevo: false,
       });
     }
   }

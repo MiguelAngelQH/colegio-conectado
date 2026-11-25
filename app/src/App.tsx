@@ -26,6 +26,7 @@ const Paneles = lazy(() => import("@/paginas/paneles/Paneles").then((m) => ({ de
 const Monitoreo = lazy(() => import("@/paginas/paneles/Monitoreo").then((m) => ({ default: m.Monitoreo })));
 const Exportar = lazy(() => import("@/paginas/exportar/Exportar").then((m) => ({ default: m.Exportar })));
 const HistorialEstudiante = lazy(() => import("@/paginas/HistorialEstudiante").then((m) => ({ default: m.HistorialEstudiante })));
+const Calendario = lazy(() => import("@/paginas/calendario/Calendario").then((m) => ({ default: m.Calendario })));
 const Horario = lazy(() => import("@/paginas/horario/Horario").then((m) => ({ default: m.Horario })));
 const Tareas = lazy(() => import("@/paginas/tareas/Tareas").then((m) => ({ default: m.Tareas })));
 const Comunicados = lazy(() => import("@/paginas/comunicados/Comunicados").then((m) => ({ default: m.Comunicados })));
@@ -41,6 +42,7 @@ const IMPLEMENTADAS: Record<string, JSX.Element> = {
   "/tutoria": <Tutoria />,
   "/convivencia": <Convivencia />,
   "/comunicados": <Comunicados />,
+  "/calendario": <Calendario />,
   "/horario": <Horario />,
   "/tareas": <Tareas />,
   "/mis-notas": <MisNotas />,
