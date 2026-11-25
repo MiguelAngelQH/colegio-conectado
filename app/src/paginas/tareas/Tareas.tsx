@@ -98,7 +98,7 @@ export function Tareas() {
             <Boton variante="fantasma" className="!min-h-9 !px-3" onClick={() => setEntregando(t)}>Ver entrega</Boton>
           )}
           {!familia && (
-            <Boton variante="vidrio" icono={Inbox} className="!min-h-9 !px-3" onClick={() => setRevisando(t)}>{recibidas} entregas</Boton>
+            <Boton variante="vidrio" icono={Inbox} className="!min-h-9 !px-3" onClick={() => setRevisando(t)}>{recibidas === 1 ? "1 entrega" : `${recibidas} entregas`}</Boton>
           )}
           {!familia && (gestion || t.docente_id === usuario?.id) && (
             <Boton variante="fantasma" icono={Pencil} className="!min-h-9 !px-3" onClick={() => setEditando(t)}>Editar</Boton>
