@@ -1,6 +1,6 @@
 import type { LucideIcon } from "lucide-react";
 import {
-  Bell, BookCheck, BookOpenCheck, CalendarClock, CalendarDays, ChartColumn, ClipboardList, Eye, FileSpreadsheet, HandHeart, House, ListChecks, Megaphone,
+  Bell, BookCheck, BookOpenCheck, CalendarClock, CalendarDays, MessagesSquare, ChartColumn, ClipboardList, Eye, FileSpreadsheet, HandHeart, House, ListChecks, Megaphone,
   QrCode, RefreshCw, Settings, ShieldAlert, User,
 } from "lucide-react";
 import type { Rol } from "@/db/tipos";
@@ -32,6 +32,7 @@ export const MODULOS: Modulo[] = [
   { id: "asistencia", titulo: "Asistencia", descripcion: "Con QR, escaneo de carnés o lista", icono: QrCode, ruta: "/asistencia", roles: ["docente", "tutor", "auxiliar", "director", "subdirector"], fase: 3, enInicio: true, tono: "tono-laguna" },
   { id: "marcar", titulo: "Marcar asistencia", descripcion: "Escanear el QR del docente", icono: QrCode, ruta: "/marcar", roles: ["estudiante"], fase: 3, enInicio: true, tono: "tono-laguna" },
   { id: "mi-asistencia", titulo: "Asistencia", descripcion: "Faltas, tardanzas y justificaciones", icono: ListChecks, ruta: "/mi-asistencia", roles: ["apoderado", "estudiante"], fase: 5, enInicio: true, tono: "tono-laguna" },
+  { id: "mensajes", titulo: "Mensajes", descripcion: "Conversaciones entre docentes y familias", icono: MessagesSquare, ruta: "/mensajes", roles: ["director", "subdirector", "docente", "tutor", "apoderado"], fase: 4, enInicio: true, tono: "tono-laguna" },
   { id: "calendario", titulo: "Calendario", descripcion: "Evaluaciones, reuniones y feriados", icono: CalendarDays, ruta: "/calendario", roles: ["director", "subdirector", "docente", "tutor", "auxiliar", "estudiante", "apoderado"], fase: 4, enInicio: true, tono: "tono-ambar" },
   { id: "horario", titulo: "Horario", descripcion: "Clases de la semana", icono: CalendarClock, ruta: "/horario", roles: ["director", "subdirector", "docente", "tutor", "auxiliar", "estudiante", "apoderado"], fase: 4, enInicio: true, tono: "tono-cielo" },
   { id: "tareas", titulo: "Tareas", descripcion: "Tareas y fechas de entrega", icono: BookCheck, ruta: "/tareas", roles: ["docente", "tutor", "director", "subdirector", "estudiante", "apoderado"], fase: 4, enInicio: true, tono: "tono-musgo" },

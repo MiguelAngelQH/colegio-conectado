@@ -1,5 +1,5 @@
 import { BaseLocal } from "@/db/local";
-import type { AnioEscolar, Asistencia, AsistenciaSesion, Calificacion, Fila, InformeTutor, Justificacion, Matricula, NombreTabla, ObservacionMonitoreo, Periodo, SolicitudTutoria, Usuario } from "@/db/tipos";
+import type { AnioEscolar, Asistencia, AsistenciaSesion, Calificacion, Fila, InformeTutor, Justificacion, Matricula, Mensaje, NombreTabla, ObservacionMonitoreo, Periodo, SolicitudTutoria, Usuario } from "@/db/tipos";
 import { ABIERTAS, puedeVer, validarSolicitud } from "@/dominio/solicitudes";
 import { evaluarMarca, leerTokenQr, ventanaValida } from "@/dominio/qr";
 import { TABLAS } from "@/db/tipos";
@@ -245,6 +245,12 @@ export class TransporteDemo implements Transporte {
     return res;
   }
 
+  private async hijosDeApoderado(usuarioId: string): Promise<Set<string>> {
+    const apos = (await this.servidor.tabla("apoderado").where("usuario_id").equals(usuarioId).toArray()).filter((a) => !a.eliminado).map((a) => a.id);
+    const vinculos = (await this.servidor.tabla("estudiante_apoderado").toArray()).filter((v) => !v.eliminado && apos.includes(v.apoderado_id));
+    return new Set(vinculos.map((v) => v.estudiante_id));
+  }
+
   async pull(cursor: string | null): Promise<RespuestaPull> {
     if (!this.conectado()) throw new SinConexion();
     const filas: Partial<Record<NombreTabla, Fila[]>> = {};
@@ -257,6 +263,11 @@ export class TransporteDemo implements Transporte {
       ) as Fila[];
       // Los pedidos de ayuda son privados (como la política leer de la migración 0012).
       if (t === "solicitud_tutoria") cambiadas = cambiadas.filter((f) => !!yo && puedeVer(f as SolicitudTutoria, yo));
+      // Los mensajes solo los reciben sus participantes (como la política leer de la migración 0024).
+      if (t === "mensaje") {
+        const mios = yo ? await this.hijosDeApoderado(yo.id) : new Set<string>();
+        cambiadas = cambiadas.filter((f) => !!yo && ((f as Mensaje).personal_id === yo.id || mios.has((f as Mensaje).estudiante_id)));
+      }
       // El informe del tutor es interno: solo el personal lo recibe (política leer de la migración 0013).
       if (t === "informe_tutor" && !yo?.roles.some((r) => ["director", "subdirector", "docente", "tutor", "auxiliar"].includes(r))) cambiadas = [];
       if (cambiadas.length) filas[t] = cambiadas;

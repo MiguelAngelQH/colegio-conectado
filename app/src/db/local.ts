@@ -50,22 +50,24 @@ export class BaseLocal extends Dexie {
     const internas = { outbox: "++id, estado, [tabla+fila_id], proximo_intento", sombra: "clave", meta: "clave" };
     const nuevasV3 = { entrevista: null, incidencia_accion: null, comunicado_lectura: null, evidencia: null };
     // Al cambiar índices o tablas se agrega una versión nueva; Dexie migra los datos existentes.
-    this.version(1).stores({ ...INDICES, evento: null, horario_clase: null, tarea: null, lista_cotejo: null, ...nuevasV3, justificacion: null, solicitud_tutoria: null, informe_tutor: null, asistencia_sesion: "id, seccion_id, docente_id, fecha", asistencia_secreto: null, ...internas });
-    this.version(2).stores({ ...INDICES, evento: null, horario_clase: null, tarea: null, lista_cotejo: null, ...nuevasV3, justificacion: null, solicitud_tutoria: null, informe_tutor: null, ...internas });
+    this.version(1).stores({ ...INDICES, mensaje: null, evento: null, horario_clase: null, tarea: null, lista_cotejo: null, ...nuevasV3, justificacion: null, solicitud_tutoria: null, informe_tutor: null, asistencia_sesion: "id, seccion_id, docente_id, fecha", asistencia_secreto: null, ...internas });
+    this.version(2).stores({ ...INDICES, mensaje: null, evento: null, horario_clase: null, tarea: null, lista_cotejo: null, ...nuevasV3, justificacion: null, solicitud_tutoria: null, informe_tutor: null, ...internas });
     // v3: tablas de tutoría, convivencia y comunicados, y "archivo" (binarios de evidencias; solo local, no se sincroniza como fila).
-    this.version(3).stores({ ...INDICES, evento: null, horario_clase: null, tarea: null, lista_cotejo: null, ...internas, justificacion: null, solicitud_tutoria: null, informe_tutor: null, archivo: "id, subido" });
+    this.version(3).stores({ ...INDICES, mensaje: null, evento: null, horario_clase: null, tarea: null, lista_cotejo: null, ...internas, justificacion: null, solicitud_tutoria: null, informe_tutor: null, archivo: "id, subido" });
     // v4: justificaciones de la familia.
-    this.version(4).stores({ ...INDICES, evento: null, horario_clase: null, tarea: null, lista_cotejo: null, ...internas, solicitud_tutoria: null, informe_tutor: null, archivo: "id, subido" });
+    this.version(4).stores({ ...INDICES, mensaje: null, evento: null, horario_clase: null, tarea: null, lista_cotejo: null, ...internas, solicitud_tutoria: null, informe_tutor: null, archivo: "id, subido" });
     // v5: pedidos de ayuda al tutor.
-    this.version(5).stores({ ...INDICES, evento: null, horario_clase: null, tarea: null, lista_cotejo: null, ...internas, informe_tutor: null, archivo: "id, subido" });
+    this.version(5).stores({ ...INDICES, mensaje: null, evento: null, horario_clase: null, tarea: null, lista_cotejo: null, ...internas, informe_tutor: null, archivo: "id, subido" });
     // v6: informe del tutor (historial del estudiante).
-    this.version(6).stores({ ...INDICES, evento: null, horario_clase: null, tarea: null, ...internas, lista_cotejo: null, archivo: "id, subido" });
+    this.version(6).stores({ ...INDICES, mensaje: null, evento: null, horario_clase: null, tarea: null, ...internas, lista_cotejo: null, archivo: "id, subido" });
     // v7: listas de cotejo por sesión.
-    this.version(7).stores({ ...INDICES, evento: null, horario_clase: null, tarea: null, ...internas, archivo: "id, subido" });
+    this.version(7).stores({ ...INDICES, mensaje: null, evento: null, horario_clase: null, tarea: null, ...internas, archivo: "id, subido" });
     // v8: horario de clases y tareas.
-    this.version(8).stores({ ...INDICES, evento: null, ...internas, archivo: "id, subido" });
+    this.version(8).stores({ ...INDICES, mensaje: null, evento: null, ...internas, archivo: "id, subido" });
     // v9: calendario escolar.
-    this.version(9).stores({ ...INDICES, ...internas, archivo: "id, subido" });
+    this.version(9).stores({ ...INDICES, mensaje: null, ...internas, archivo: "id, subido" });
+    // v10: mensajes entre el personal y las familias.
+    this.version(10).stores({ ...INDICES, ...internas, archivo: "id, subido" });
   }
 
   tabla<K extends NombreTabla>(nombre: K): Table<Tablas[K], string> {

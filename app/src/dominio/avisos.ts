@@ -1,9 +1,9 @@
 // Bandeja de avisos. Se calcula en el equipo con lo que trajo la sincronización: no necesita un
 // servidor de notificaciones y funciona sin conexión (los avisos llegan con el siguiente sync).
-import type { Asistencia, Calificacion, Comunicado, Evento, Justificacion, Observacion, ObservacionMonitoreo, SolicitudTutoria, Tarea } from "@/db/tipos";
+import type { Asistencia, Calificacion, Comunicado, Evento, Justificacion, Mensaje, Observacion, ObservacionMonitoreo, SolicitudTutoria, Tarea } from "@/db/tipos";
 import { esSensible, MOTIVOS } from "./solicitudes";
 
-export type TipoAviso = "falta" | "tardanza" | "nota" | "comunicado" | "observacion" | "justificacion" | "por_revisar" | "monitoreo" | "tutoria" | "tarea" | "evento";
+export type TipoAviso = "falta" | "tardanza" | "nota" | "comunicado" | "observacion" | "justificacion" | "por_revisar" | "monitoreo" | "tutoria" | "tarea" | "evento" | "mensaje";
 
 export interface Aviso {
   id: string;
@@ -42,6 +42,8 @@ export interface EntradaAvisos {
   /** Eventos del calendario que el usuario puede ver, y la fecha de hoy (aaaa-mm-dd). */
   eventos?: Evento[];
   hoy?: string;
+  /** Mensajes recibidos sin leer, con el nombre de quien escribe y del estudiante. */
+  mensajes?: { m: Mensaje; autor: string; estudiante: string }[];
 }
 
 const fechaCorta = (f: string) => new Date(`${f}T12:00:00`).toLocaleDateString("es-PE", { weekday: "short", day: "numeric", month: "short" });
@@ -151,6 +153,15 @@ export function calcularAvisos(e: EntradaAvisos): Aviso[] {
         estudianteId: null, enlace: "/tareas", importante: false, nuevo: false,
       });
     }
+  }
+
+  for (const { m, autor, estudiante } of e.mensajes ?? []) {
+    if (m.eliminado || m.leido_en || m.autor_id === e.usuarioId) continue;
+    res.push({
+      id: `msg-${m.id}`, tipo: "mensaje", momento: m.enviado_en, titulo: `Mensaje de ${autor}`,
+      detalle: `Sobre ${estudiante}: ${m.texto.length > 120 ? `${m.texto.slice(0, 117)}...` : m.texto}`,
+      estudianteId: m.estudiante_id, enlace: "/mensajes", importante: true, nuevo: false,
+    });
   }
 
   // Recordatorio del calendario: el día anterior y el mismo día.

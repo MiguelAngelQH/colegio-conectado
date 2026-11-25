@@ -98,6 +98,7 @@ export function useAvisos(usuario: Usuario | null): { avisos: Aviso[]; nuevos: n
       tareas: esFamilia ? await tareasDeFamilia(hijos.map((h) => h.id), areas) : [],
       eventos: await eventosVisibles(esFamilia ? hijos.map((h) => h.id) : null),
       hoy: hoyLocal(),
+      mensajes: await mensajesSinLeer(usuario.id),
     });
     return { avisos, nuevos: avisos.filter((a) => a.nuevo).length };
   }, [usuario?.id]);
@@ -118,4 +119,15 @@ async function eventosVisibles(estudianteIds: string[] | null) {
   const mats = vivas(await db.tabla("matricula").where("estudiante_id").anyOf(estudianteIds).toArray()).filter((m) => m.estado === "matriculado");
   const secciones = new Set(mats.map((m) => m.seccion_id));
   return eventos.filter((e) => !e.seccion_id || secciones.has(e.seccion_id));
+}
+
+/** Mensajes recibidos sin leer (la base local solo trae las conversaciones del usuario). */
+async function mensajesSinLeer(usuarioId: string) {
+  const ms = vivas(await db.tabla("mensaje").toArray()).filter((m) => m.autor_id !== usuarioId && !m.leido_en);
+  const usuarios = new Map((await db.tabla("usuario").bulkGet([...new Set(ms.map((m) => m.autor_id))])).filter(Boolean).map((u) => [u!.id, u!]));
+  const ests = new Map((await db.tabla("estudiante").bulkGet([...new Set(ms.map((m) => m.estudiante_id))])).filter(Boolean).map((e) => [e!.id, e!]));
+  return ms.map((m) => ({
+    m, autor: usuarios.get(m.autor_id) ? `${usuarios.get(m.autor_id)!.nombres.split(" ")[0]} ${usuarios.get(m.autor_id)!.apellidos.split(" ")[0]}` : "Colegio",
+    estudiante: ests.get(m.estudiante_id)?.nombres.split(" ")[0] ?? "su hijo(a)",
+  }));
 }

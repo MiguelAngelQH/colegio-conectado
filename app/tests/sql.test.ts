@@ -314,6 +314,27 @@ describe("horario y tareas", () => {
   });
 });
 
+describe("mensajes entre el personal y la familia", () => {
+  const M1 = "7d000000-0000-4000-8000-000000000001";
+  const M2 = "7d000000-0000-4000-8000-000000000002";
+  it("el docente escribe a la familia, el apoderado responde y nadie más los lee", async () => {
+    const r1 = await push(U.docente, [{ tabla: "mensaje", parche: { id: M1, colegio_id: COL, estudiante_id: E1, personal_id: U.docente, autor_id: U.docente, texto: "Luis no trajo su tarea", enviado_en: new Date().toISOString(), leido_en: null } }]);
+    expect(r1[0]).toEqual({ ref: 1, estado: "ok" });
+    const r2 = await push(U.apoderado, [{ tabla: "mensaje", parche: { id: M2, colegio_id: COL, estudiante_id: E1, personal_id: U.docente, autor_id: U.apoderado, texto: "Gracias, la revisamos hoy", enviado_en: new Date().toISOString(), leido_en: null } }]);
+    expect(r2[0]).toEqual({ ref: 1, estado: "ok" });
+    expect((await pull(U.apoderado)).filas.mensaje?.map((m) => m.id).sort()).toEqual([M1, M2]);
+    expect((await pull(U.docente)).filas.mensaje?.map((m) => m.id).sort()).toEqual([M1, M2]);
+    expect((await pull(U.estudiante)).filas.mensaje).toBeUndefined();
+    expect((await pull(U.director)).filas.mensaje).toBeUndefined();
+  });
+  it("quien recibe lo marca como leído, pero nadie cambia el texto ni escribe en nombre de otro", async () => {
+    expect((await push(U.apoderado, [{ tabla: "mensaje", parche: { id: M1, leido_en: new Date().toISOString() } }]))[0].estado).toBe("ok");
+    expect((await push(U.apoderado, [{ tabla: "mensaje", parche: { id: M1, texto: "cambiado" } }]))[0].estado).toBe("rechazado");
+    const falso = await push(U.estudiante, [{ tabla: "mensaje", parche: { id: "7d000000-0000-4000-8000-000000000003", colegio_id: COL, estudiante_id: E1, personal_id: U.docente, autor_id: U.estudiante, texto: "hola", enviado_en: new Date().toISOString(), leido_en: null } }]);
+    expect(falso[0].estado).toBe("rechazado");
+  });
+});
+
 describe("asistencia con QR", () => {
   const SESION = "60000000-0000-4000-8000-000000000001";
   const SECRETO = "secreto-de-prueba-1234567890";

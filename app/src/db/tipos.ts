@@ -206,6 +206,16 @@ export interface Evento extends Fila {
   hora: string | null;
 }
 
+/** Mensaje directo entre una persona del personal y la familia de un estudiante. */
+export interface Mensaje extends Fila {
+  estudiante_id: string;
+  personal_id: string;
+  autor_id: string;
+  texto: string;
+  enviado_en: string;
+  leido_en: string | null;
+}
+
 /** Informe del tutor al cerrar el año, para quien reciba al estudiante. Solo lo lee el personal. */
 export interface InformeTutor extends Fila {
   estudiante_id: string;
@@ -418,6 +428,7 @@ export interface Tablas {
   horario_clase: HorarioClase;
   tarea: Tarea;
   evento: Evento;
+  mensaje: Mensaje;
   observacion: Observacion;
   sesion_tutoria: SesionTutoria;
   entrevista: Entrevista;
@@ -457,6 +468,7 @@ export const INDICES: Record<NombreTabla, string> = {
   horario_clase: "id, seccion_id, docente_id",
   tarea: "id, seccion_id, docente_id, entrega",
   evento: "id, fecha, seccion_id",
+  mensaje: "id, [estudiante_id+personal_id], personal_id, estudiante_id",
   observacion: "id, estudiante_id, autor_id",
   sesion_tutoria: "id, seccion_id",
   entrevista: "id, estudiante_id, tutor_id",

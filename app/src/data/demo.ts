@@ -89,7 +89,7 @@ const hoyLocal = () => {
 };
 
 /** Cambia este número cuando cambien los datos de demo: los equipos vuelven a sembrar. */
-export const VERSION_DEMO = 17;
+export const VERSION_DEMO = 18;
 
 export async function datosDemo(hoyReal = hoyLocal()): Promise<Partial<Record<NombreTabla, Fila[]>>> {
   const r = rng(42);
@@ -438,6 +438,12 @@ export async function datosDemo(hoyReal = hoyLocal()): Promise<Partial<Record<No
       { id: id("fe400000", 1), colegio_id: CID, autor_id: id("e0000000", 2), seccion_id: null, tipo: "reunion", titulo: "Reunión de padres de familia", descripcion: "Entrega de informes del bimestre en cada aula.", fecha: sumarDias(hoy, 3), fecha_fin: null, hora: "18:00" },
       { id: id("fe400000", 2), colegio_id: CID, autor_id: uRojas.id, seccion_id: secSec.id, tipo: "examen", titulo: "Evaluación de Matemática: fracciones", descripcion: "Traer regla y calculadora.", fecha: sumarDias(hoy, 1), fecha_fin: null, hora: "08:00" },
       { id: id("fe400000", 3), colegio_id: CID, autor_id: id("e0000000", 2), seccion_id: null, tipo: "actividad", titulo: "Feria de ciencias", descripcion: null, fecha: sumarDias(hoy, 9), fecha_fin: sumarDias(hoy, 10), hora: null },
+    ] as never,
+    mensaje: [
+      { id: id("fe500000", 1), colegio_id: CID, estudiante_id: id("f5000000", 1), personal_id: uRojas.id, autor_id: uRojas.id,
+        texto: "Buenas tardes, señora Rosa. Luis no presentó la ficha de fracciones. ¿Podría revisarla con él en casa?", enviado_en: `${hace(2)}T15:10:00.000Z`, leido_en: `${hace(2)}T19:00:00.000Z` },
+      { id: id("fe500000", 2), colegio_id: CID, estudiante_id: id("f5000000", 1), personal_id: uRojas.id, autor_id: id("e0000000", 7),
+        texto: "Buenas tardes, profesora. Sí, la revisamos esta noche y mañana la entrega. Gracias por avisar.", enviado_en: `${hace(2)}T19:05:00.000Z`, leido_en: null },
     ] as never,
   };
 }
