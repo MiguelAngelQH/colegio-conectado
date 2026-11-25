@@ -10,7 +10,8 @@
       // Aplica el modo nocturno antes de pintar, para que no se vea un destello claro.
       try {
         var t = localStorage.getItem("tema");
-        if (t === "oscuro" || (t !== "claro" && matchMedia("(prefers-color-scheme: dark)").matches)) document.documentElement.classList.add("dark");
+        var h = new Date().getHours();
+        if (t === "oscuro" || (t === "auto" && (h >= 18 || h < 6))) document.documentElement.classList.add("dark");
       } catch (e) {}
     </script>
   </head>

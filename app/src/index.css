@@ -268,3 +268,11 @@ body {
 
 /* Anillo de cuenta regresiva del QR. */
 .anillo { transition: stroke-dashoffset 1s linear; }
+
+/* Aviso de modo nocturno: estrellas que titilan y astro que flota. */
+@media (prefers-reduced-motion: no-preference) {
+  .estrella { animation: titilar 2.4s ease-in-out infinite; }
+  .astro { animation: flotar 4s ease-in-out infinite; }
+}
+@keyframes titilar { 0%, 100% { opacity: 0.2; transform: scale(0.7); } 50% { opacity: 1; transform: scale(1.2); } }
+@keyframes flotar { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }

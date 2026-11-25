@@ -67,7 +67,7 @@ export function Perfil() {
             <Gema icono={Moon} tono="tono-lila" tam="sm" />
             <div>
               <h2 className="font-bold">Apariencia</h2>
-              <p className="text-xs text-tinta-suave">El modo nocturno cansa menos la vista de noche. "Automático" sigue la configuración del equipo.</p>
+              <p className="text-xs text-tinta-suave">El modo nocturno cansa menos la vista de noche. "Automático" lo activa solo de 6:00 p. m. a 6:00 a. m.; en Claro u Oscuro la app le pregunta si desea cambiar cuando oscurece o amanece.</p>
             </div>
           </div>
           <div className="mt-4">

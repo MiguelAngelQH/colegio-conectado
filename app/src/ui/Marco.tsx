@@ -12,7 +12,8 @@ import { EstadoSync } from "./EstadoSync";
 import { Campana } from "./Campana";
 import { avancePeriodo, periodoVigente } from "@/dominio/periodos";
 import { vivas } from "@/db/repositorio";
-import { fijarTema, usePreferenciaTema, useTemaOscuro, type PreferenciaTema } from "./tema";
+import { alternarTema, fijarTema, usePreferenciaTema, useTemaOscuro, type PreferenciaTema } from "./tema";
+import { SugerenciaTema } from "./SugerenciaTema";
 
 const FUERA_DEL_DOCK = new Set(["inicio", "perfil", "sincronizacion", "avisos"]);
 
@@ -215,6 +216,8 @@ export function Marco() {
         </div>
       )}
 
+      <SugerenciaTema />
+
       <Dialogo
         abierto={confirmarSalida}
         titulo="Hay cambios sin enviar"
@@ -412,7 +415,7 @@ function BotonTema() {
   const oscuro = useTemaOscuro();
   const texto = oscuro ? "Cambiar a modo claro" : "Cambiar a modo nocturno";
   return (
-    <button type="button" onClick={() => fijarTema(oscuro ? "claro" : "oscuro")} aria-label={texto} title={texto}
+    <button type="button" onClick={alternarTema} aria-label={texto} title={texto}
       className="vidrio !rounded-full relative inline-flex h-10 w-10 items-center justify-center transition active:scale-95">
       <span className="relative h-[18px] w-[18px]">
         <Sun className={cx("absolute inset-0 h-[18px] w-[18px] text-amber-500 transition-all duration-500", oscuro ? "rotate-90 scale-0 opacity-0" : "rotate-0 scale-100 opacity-100")} aria-hidden />
