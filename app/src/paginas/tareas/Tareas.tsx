@@ -133,13 +133,13 @@ export function Tareas() {
             {pendientes.length > 0 && (
               <section className="space-y-2">
                 <h2 className="etiqueta px-1">Por entregar</h2>
-                <Tarjeta className="divide-y divide-white/70">{pendientes.map((t) => <Item key={t.id} t={t} />)}</Tarjeta>
+                <Tarjeta className="divide-y divide-sup/70">{pendientes.map((t) => <Item key={t.id} t={t} />)}</Tarjeta>
               </section>
             )}
             {pasadas.length > 0 && (
               <section className="space-y-2">
                 <h2 className="etiqueta px-1">Anteriores</h2>
-                <Tarjeta className="divide-y divide-white/70 opacity-80">{pasadas.slice(0, 30).map((t) => <Item key={t.id} t={t} />)}</Tarjeta>
+                <Tarjeta className="divide-y divide-sup/70 opacity-80">{pasadas.slice(0, 30).map((t) => <Item key={t.id} t={t} />)}</Tarjeta>
               </section>
             )}
           </>
@@ -274,7 +274,7 @@ function DialogoEntregas({ tarea, entregas, onCerrar }: { tarea: Tarea; entregas
         </>}>
         <div className="space-y-3 pt-2 text-tinta">
           <p className="text-xs text-tinta-suave">Entregada el {new Date(viendo.entregado_en).toLocaleString("es-PE", { day: "numeric", month: "long", hour: "2-digit", minute: "2-digit" })}</p>
-          {viendo.comentario && <p className="rounded-2xl bg-white/60 p-3 text-sm ring-1 ring-white">{viendo.comentario}</p>}
+          {viendo.comentario && <p className="rounded-2xl bg-sup/60 p-3 text-sm ring-1 ring-sup">{viendo.comentario}</p>}
           <Evidencias entidad="tarea_entrega" entidadId={viendo.id} estudianteId={viendo.estudiante_id} editable={false} />
           <Campo etiqueta="Devolución para el estudiante (opcional)">
             <textarea value={revision} onChange={(e) => setRevision(e.target.value)} rows={2} className="campo resize-y" placeholder="Muy bien resuelto; revisa el ejercicio 3" />
@@ -288,12 +288,12 @@ function DialogoEntregas({ tarea, entregas, onCerrar }: { tarea: Tarea; entregas
     <Dialogo abierto titulo={`Entregas: ${tarea.titulo}`} onCerrar={onCerrar} acciones={<Boton onClick={onCerrar}>Cerrar</Boton>}>
       <div className="pt-2 text-tinta">
         <p className="mb-2 text-sm text-tinta-suave">{entregas.length} de {estudiantes.length} entregaron.</p>
-        <div className="max-h-96 divide-y divide-white/70 overflow-y-auto rounded-2xl bg-white/40">
+        <div className="max-h-96 divide-y divide-sup/70 overflow-y-auto rounded-2xl bg-sup/40">
           {estudiantes.map((e: Estudiante) => {
             const x = porEst.get(e.id);
             return (
               <button key={e.id} disabled={!x} onClick={() => { if (x) { setViendo(x); setRevision(x.revision ?? ""); } }}
-                className="flex w-full items-center justify-between gap-2 px-3 py-2.5 text-left text-sm enabled:hover:bg-white/60">
+                className="flex w-full items-center justify-between gap-2 px-3 py-2.5 text-left text-sm enabled:hover:bg-sup/60">
                 <span className="font-semibold">{nombreCompleto(e)}</span>
                 <span className={cx("rounded-full px-2 py-0.5 text-[0.65rem] font-bold", x ? ESTADO_ENTREGA[x.estado].clase : "bg-slate-100/80 text-slate-600")}>
                   {x ? ESTADO_ENTREGA[x.estado].texto : "Sin entregar"}

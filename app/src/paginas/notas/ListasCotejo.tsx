@@ -65,10 +65,10 @@ export function ListasCotejo(p: Props) {
       {listas.length === 0 ? (
         <Vacio icono={ListChecks} tono="tono-cielo" titulo="Aún no hay sesiones en este bimestre">Cree la primera con sus criterios de evaluación.</Vacio>
       ) : (
-        <Tarjeta className="divide-y divide-white/70 overflow-hidden">
+        <Tarjeta className="divide-y divide-sup/70 overflow-hidden">
           {listas.map((l) => (
-            <button key={l.id} onClick={() => setAbiertaId(l.id)} className="flex w-full items-center gap-3 px-4 py-3 text-left transition hover:bg-white/40">
-              <span className="titulo-display flex h-10 w-12 shrink-0 items-center justify-center rounded-xl bg-white/70 text-sm font-bold ring-1 ring-white">{l.numero ? `S${l.numero}` : "S"}</span>
+            <button key={l.id} onClick={() => setAbiertaId(l.id)} className="flex w-full items-center gap-3 px-4 py-3 text-left transition hover:bg-sup/40">
+              <span className="titulo-display flex h-10 w-12 shrink-0 items-center justify-center rounded-xl bg-sup/70 text-sm font-bold ring-1 ring-sup">{l.numero ? `S${l.numero}` : "S"}</span>
               <span className="min-w-0 flex-1">
                 <span className="block truncate font-semibold">{l.titulo}</span>
                 <span className="block text-xs text-tinta-suave">
@@ -135,7 +135,7 @@ function CalificarLista({ lista, estudiantes, competencias, bloqueado, onVolver,
             <p className="text-sm font-semibold leading-snug">{c.texto}</p>
             <p className="text-xs text-tinta-suave">{comp?.nombre}{comp && c.capacidad ? ` · Capacidad ${c.capacidad}: ${capacidadesDe(comp)[c.capacidad - 1] ?? ""}` : ""}</p>
           </div>
-          <Tarjeta className="divide-y divide-white/70 overflow-hidden">
+          <Tarjeta className="divide-y divide-sup/70 overflow-hidden">
             {estudiantes.map((e, i) => (
               <div key={e.id} className="flex flex-wrap items-center gap-x-3 gap-y-2 px-3 py-2.5 sm:px-4">
                 <span className="w-5 shrink-0 text-right text-xs text-tinta-suave">{i + 1}</span>
@@ -203,12 +203,12 @@ function EditorLista({ lista, seccionId, areaId, periodoId, competencias, onCerr
             const comp = competencias.find((x) => x.id === c.competencia_id);
             const caps = comp ? capacidadesDe(comp) : [];
             return (
-              <div key={i} className="space-y-2 rounded-2xl bg-white/50 p-3 ring-1 ring-white">
+              <div key={i} className="space-y-2 rounded-2xl bg-sup/50 p-3 ring-1 ring-sup">
                 <div className="flex items-center gap-2">
                   <span className="text-xs font-bold text-tinta-suave">{i + 1}.</span>
                   <Entrada value={c.texto} onChange={(e) => cambiar(i, { texto: e.target.value })} placeholder="Identifica los elementos de un conjunto" aria-label={`Criterio ${i + 1}`} />
                   {criterios.length > 1 && (
-                    <button type="button" onClick={() => setCriterios(criterios.filter((_, k) => k !== i))} className="rounded-full p-2 text-red-700 hover:bg-white/70" aria-label={`Quitar criterio ${i + 1}`}>
+                    <button type="button" onClick={() => setCriterios(criterios.filter((_, k) => k !== i))} className="rounded-full p-2 text-red-700 hover:bg-sup/70" aria-label={`Quitar criterio ${i + 1}`}>
                       <Trash2 className="h-4 w-4" aria-hidden />
                     </button>
                   )}

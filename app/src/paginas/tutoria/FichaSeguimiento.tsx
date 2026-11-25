@@ -110,7 +110,7 @@ export function FichaSeguimiento() {
         <FichaComplementaria est={est} editable={false} />
 
         {datos.apoderados.length > 0 && (
-          <Tarjeta className="aparecer divide-y divide-white/70" style={orden(2)}>
+          <Tarjeta className="aparecer divide-y divide-sup/70" style={orden(2)}>
             {datos.apoderados.map(({ a, parentesco }) => a && (
               <div key={a.id} className="flex items-center gap-3 px-4 py-3 text-sm">
                 <span className="flex-1"><strong>{nombreCompleto(a)}</strong> <span className="text-tinta-suave">· {parentesco}</span></span>
@@ -136,7 +136,7 @@ export function FichaSeguimiento() {
         <section className="space-y-2">
           <h2 className="etiqueta px-1">Historial</h2>
           {datos.eventos.length === 0 ? <Vacio icono={StickyNote} titulo="Sin registros todavía" /> : (
-            <ol className="relative space-y-3 before:absolute before:bottom-2 before:left-[1.35rem] before:top-2 before:w-0.5 before:bg-white/70">
+            <ol className="relative space-y-3 before:absolute before:bottom-2 before:left-[1.35rem] before:top-2 before:w-0.5 before:bg-sup/70">
               {datos.eventos.map((e) => (
                 <li key={e.id} className="relative flex gap-3">
                   <Gema icono={e.icono} tono={e.tono} tam="sm" />

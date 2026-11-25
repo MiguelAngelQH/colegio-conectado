@@ -91,7 +91,7 @@ export function Sincronizacion() {
         {pendientes.length > 0 && (
           <section className="aparecer" style={orden(3)}>
             <h2 className="etiqueta mb-2 px-1">En cola ({pendientes.length})</h2>
-            <Tarjeta className="divide-y divide-white/70">
+            <Tarjeta className="divide-y divide-sup/70">
               {pendientes.slice(0, 50).map((e) => (
                 <div key={e.id} className="flex items-center justify-between gap-3 px-5 py-3 text-sm">
                   <span className="font-semibold">{NOMBRE_TABLA[e.tabla] ?? e.tabla}</span>
@@ -181,7 +181,7 @@ function PaqueteArchivo({ pendientes, archivos }: { pendientes: number; archivos
         <Boton variante="vidrio" icono={FileDown} onClick={exportar} cargando={trabajando} disabled={!pendientes && !archivos}>Exportar {pendientes} cambios</Boton>
         <label className={trabajando ? "pointer-events-none opacity-60" : ""}>
           <input type="file" accept=".json,application/json" className="sr-only" onChange={(e) => { void importar(e.target.files?.[0]); e.target.value = ""; }} />
-          <span className="inline-flex min-h-12 cursor-pointer items-center gap-2 rounded-full px-5 text-sm font-semibold text-tinta transition hover:bg-white/40"><FileUp className="h-[18px] w-[18px]" aria-hidden /> Importar archivo</span>
+          <span className="inline-flex min-h-12 cursor-pointer items-center gap-2 rounded-full px-5 text-sm font-semibold text-tinta transition hover:bg-sup/40"><FileUp className="h-[18px] w-[18px]" aria-hidden /> Importar archivo</span>
         </label>
       </div>
     </Tarjeta>

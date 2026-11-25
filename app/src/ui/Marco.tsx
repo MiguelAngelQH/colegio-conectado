@@ -67,13 +67,13 @@ export function Marco() {
               <Gema icono={GraduationCap} tono="tono-laguna" tam="sm" />
               {!contraido && <span className="titulo-display truncate text-lg font-bold">Colegio Conectado</span>}
             </Link>
-            <button onClick={alternarMenu} className="rounded-xl p-2 text-tinta-suave transition hover:bg-white/60 hover:text-tinta"
+            <button onClick={alternarMenu} className="rounded-xl p-2 text-tinta-suave transition hover:bg-sup/60 hover:text-tinta"
               aria-label={contraido ? "Expandir el menú" : "Contraer el menú"} title={contraido ? "Expandir el menú" : "Contraer el menú"}>
               {contraido ? <PanelLeftOpen className="h-5 w-5" aria-hidden /> : <PanelLeftClose className="h-5 w-5" aria-hidden />}
             </button>
           </div>
           <Link to="/perfil" title={contraido ? `${usuario.nombres} ${usuario.apellidos}` : undefined}
-            className={cx("mb-4 flex items-center gap-3 rounded-2xl transition hover:bg-white/60", contraido ? "p-1" : "bg-white/40 p-3 ring-1 ring-white/70")}>
+            className={cx("mb-4 flex items-center gap-3 rounded-2xl transition hover:bg-sup/60", contraido ? "p-1" : "bg-sup/40 p-3 ring-1 ring-sup/70")}>
             {avatar("h-11 w-11 text-sm")}
             {!contraido && (
               <span className="min-w-0">
@@ -96,7 +96,7 @@ export function Marco() {
                 }} />
             ))}
           </nav>
-          <div className={cx("mt-3 w-full space-y-3 border-t border-white/60 pt-3", contraido && "flex flex-col items-center")}>
+          <div className={cx("mt-3 w-full space-y-3 border-t border-sup/60 pt-3", contraido && "flex flex-col items-center")}>
             {!contraido && (
               <p className="flex items-center gap-2 px-1 text-xs text-tinta-suave">
                 {colegio?.insignia && <img src={colegio.insignia} alt="" className="h-8 w-8 shrink-0 object-contain" />}
@@ -168,10 +168,10 @@ export function Marco() {
       {/* ---------- Hoja "Más" ---------- */}
       {hojaAbierta && (
         <div className="fixed inset-0 z-40 lg:hidden" role="dialog" aria-modal="true" aria-label="Todos los módulos">
-          <div className="absolute inset-0 bg-tinta/25" onClick={() => setHojaAbierta(false)} />
+          <div className="absolute inset-0 bg-noche/40" onClick={() => setHojaAbierta(false)} />
           <div className="vidrio-solido hoja absolute inset-x-2 bottom-2 max-h-[85dvh] overflow-y-auto !rounded-[2rem] p-5 pb-seguro">
             <div className="mx-auto mb-4 h-1.5 w-10 rounded-full bg-tinta/20" />
-            <button onClick={() => setHojaAbierta(false)} className="absolute right-4 top-4 rounded-full p-2 hover:bg-white/50" aria-label="Cerrar">
+            <button onClick={() => setHojaAbierta(false)} className="absolute right-4 top-4 rounded-full p-2 hover:bg-sup/50" aria-label="Cerrar">
               <X className="h-5 w-5" aria-hidden />
             </button>
             <div className="mb-5 flex items-center gap-3">
@@ -215,7 +215,7 @@ export function Marco() {
 const claseItem = (activo: boolean) =>
   cx(
     "group flex w-full items-center gap-3 rounded-2xl px-2 py-1.5 text-sm font-semibold transition",
-    activo ? "bg-white/75 text-tinta shadow-[inset_0_1px_0_white,0_6px_16px_-10px_rgba(15,23,42,.45)] ring-1 ring-white" : "text-tinta-suave hover:bg-white/40 hover:text-tinta",
+    activo ? "bg-sup/75 text-tinta shadow-[inset_0_1px_0_white,0_6px_16px_-10px_rgba(15,23,42,.45)] ring-1 ring-sup" : "text-tinta-suave hover:bg-sup/40 hover:text-tinta",
   );
 
 /** Grupo del menú: al tocarlo se desliza y muestra sus opciones; contraído solo muestra su ícono. */
@@ -245,7 +245,7 @@ function GrupoLateral({ g, contraido, abierto, activo, onAlternar }: {
                 <Link to={i.ruta} aria-current={activo === i ? "page" : undefined}
                   className={cx(
                     "flex items-center gap-2.5 rounded-xl px-2.5 py-2 text-[0.82rem] font-medium transition",
-                    activo === i ? "bg-white/75 font-semibold text-blue-800 ring-1 ring-white" : "text-tinta-suave hover:bg-white/45 hover:text-tinta",
+                    activo === i ? "bg-sup/75 font-semibold text-blue-800 ring-1 ring-sup" : "text-tinta-suave hover:bg-sup/45 hover:text-tinta",
                   )}>
                   <i.icono className="h-4 w-4 shrink-0" aria-hidden />
                   <span className="truncate">{i.titulo}</span>

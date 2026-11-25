@@ -43,7 +43,7 @@ export function AreasPropias() {
               Por ejemplo: "Taller de Oratoria" o "Robótica", con las competencias que el colegio evalúa en ellos.
             </Vacio>
           ) : (
-            <div className="divide-y divide-white/70">
+            <div className="divide-y divide-sup/70">
               {propias.map((a) => (
                 <div key={a.id} className="flex items-start gap-3 py-3">
                   <Gema icono={BookMarked} tono="tono-lila" tam="sm" />
@@ -64,7 +64,7 @@ export function AreasPropias() {
             <h2 className="font-bold">Currículo nacional · {NIVEL_TEXTO[n]}</h2>
             <div className="grid gap-1.5 sm:grid-cols-2">
               {datos.areas.filter((a) => !a.colegio_id && a.nivel === n).sort((a, b) => a.orden - b.orden).map((a) => (
-                <p key={a.id} className="rounded-xl bg-white/45 px-3 py-2 text-sm ring-1 ring-white/80">
+                <p key={a.id} className="rounded-xl bg-sup/45 px-3 py-2 text-sm ring-1 ring-sup/80">
                   <span className="font-semibold">{a.nombre}</span>
                   <span className="text-xs text-tinta-suave"> · {compsDe(a.id).length} {compsDe(a.id).length === 1 ? "competencia" : "competencias"}</span>
                 </p>
@@ -149,7 +149,7 @@ function EditorTaller({ area, niveles, competencias, ordenSiguiente, onCerrar }:
               <Entrada value={c.nombre} onChange={(ev) => setComps(comps.map((x, k) => (k === i ? { ...x, nombre: ev.target.value } : x)))}
                 placeholder="Se expresa en público con claridad y seguridad" aria-label={`Competencia ${i + 1}`} />
               {comps.length > 1 && (
-                <button type="button" onClick={() => setComps(comps.filter((_, k) => k !== i))} className="rounded-full p-2 text-red-700 hover:bg-white/70" aria-label={`Quitar competencia ${i + 1}`}>
+                <button type="button" onClick={() => setComps(comps.filter((_, k) => k !== i))} className="rounded-full p-2 text-red-700 hover:bg-sup/70" aria-label={`Quitar competencia ${i + 1}`}>
                   <Trash2 className="h-4 w-4" aria-hidden />
                 </button>
               )}

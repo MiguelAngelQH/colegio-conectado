@@ -148,9 +148,9 @@ function InicioAsistencia() {
         {datos.sesiones.length > 0 && (
           <section className="space-y-2">
             <h2 className="etiqueta flex items-center gap-1.5 px-1"><History className="h-3.5 w-3.5" aria-hidden /> Últimas tres semanas</h2>
-            <Tarjeta className="divide-y divide-white/70 overflow-hidden">
+            <Tarjeta className="divide-y divide-sup/70 overflow-hidden">
               {datos.sesiones.map(({ s, c }) => (
-                <button key={s.id} onClick={() => navegar(`sesion/${s.id}`)} className="flex w-full items-center gap-3 px-4 py-3 text-left transition hover:bg-white/40">
+                <button key={s.id} onClick={() => navegar(`sesion/${s.id}`)} className="flex w-full items-center gap-3 px-4 py-3 text-left transition hover:bg-sup/40">
                   <Gema icono={CalendarDays} tono={s.fecha === hoy ? "tono-laguna" : "tono-pizarra"} tam="sm" />
                   <span className="min-w-0 flex-1">
                     <span className="block truncate font-semibold">

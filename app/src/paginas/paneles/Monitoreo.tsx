@@ -59,7 +59,7 @@ function TarjetaMonitoreo({ o, i, esUgel, autor }: { o: ObservacionMonitoreo; i:
         <Gema icono={o.estado === "atendida" ? CircleCheck : Eye} tono={o.estado === "atendida" ? "tono-musgo" : "tono-lila"} tam="sm" />
         <div className="min-w-0 flex-1 text-sm">
           <div className="flex flex-wrap items-center gap-2">
-            <span className="rounded-full bg-white/70 px-2.5 py-0.5 text-[0.65rem] font-bold ring-1 ring-white">{CATEGORIA[o.categoria] ?? o.categoria}</span>
+            <span className="rounded-full bg-sup/70 px-2.5 py-0.5 text-[0.65rem] font-bold ring-1 ring-sup">{CATEGORIA[o.categoria] ?? o.categoria}</span>
             <span className={cx("rounded-full px-2.5 py-0.5 text-[0.65rem] font-bold", o.estado === "atendida" ? "bg-emerald-100/80 text-emerald-800" : "bg-amber-100/80 text-amber-800")}>
               {o.estado === "atendida" ? "Atendida" : "Pendiente"}
             </span>
@@ -67,7 +67,7 @@ function TarjetaMonitoreo({ o, i, esUgel, autor }: { o: ObservacionMonitoreo; i:
           <p className="mt-1 text-xs text-tinta-suave">{fecha(o.fecha)}{autor && ` · ${autor} (UGEL)`}</p>
           <p className="mt-1.5 whitespace-pre-line">{o.texto}</p>
           {o.respuesta && (
-            <div className="mt-2 rounded-2xl bg-white/55 p-3 ring-1 ring-white">
+            <div className="mt-2 rounded-2xl bg-sup/55 p-3 ring-1 ring-sup">
               <p className="text-xs font-semibold text-blue-700">Respuesta de la dirección{o.respondido_en && ` · ${new Date(o.respondido_en).toLocaleDateString("es-PE")}`}</p>
               <p className="whitespace-pre-line">{o.respuesta}</p>
             </div>

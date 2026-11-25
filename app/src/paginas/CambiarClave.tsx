@@ -124,7 +124,7 @@ export function CambiarClaveObligatorio() {
                 ))}
               </ul>
             )}
-            <div className="mt-5 rounded-2xl bg-white/60 p-3 text-sm ring-1 ring-white">
+            <div className="mt-5 rounded-2xl bg-sup/60 p-3 text-sm ring-1 ring-sup">
               <p className="flex items-center gap-2 font-semibold"><KeyRound className="h-4 w-4" aria-hidden /> {esEstudiante ? "Primero, crea tu propia contraseña" : "Primero, cree su propia contraseña"}</p>
               <p className="mt-0.5 text-xs text-tinta-suave">
                 {esEstudiante

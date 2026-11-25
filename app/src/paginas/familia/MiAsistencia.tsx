@@ -71,7 +71,7 @@ export function MiAsistencia() {
             [ind.tardanzas, "tardanzas"],
             [ind.justificadas, "justificadas"],
           ].map(([v, t]) => (
-            <div key={t as string} className="rounded-2xl bg-white/45 py-2 ring-1 ring-white/80">
+            <div key={t as string} className="rounded-2xl bg-sup/45 py-2 ring-1 ring-sup/80">
               <p className={cx("titulo-display text-2xl font-bold", t === "faltas" && ind.faltas >= 3 && "text-red-700")}>{v}</p>
               <p className="text-[0.65rem] font-semibold text-tinta-suave">{t}</p>
             </div>
@@ -92,7 +92,7 @@ export function MiAsistencia() {
               : <Vacio icono={CalendarCheck} titulo="Todavía no hay asistencias registradas este año" />;
           }
           return (
-          <Tarjeta className="aparecer divide-y divide-white/70" style={orden(2)}>
+          <Tarjeta className="aparecer divide-y divide-sup/70" style={orden(2)}>
             {lista.map((r) => {
               const puedeJustificar = esApoderado && (r.a.estado === "F" || r.a.estado === "T") && (!r.j || r.j.estado === "rechazada");
               return (

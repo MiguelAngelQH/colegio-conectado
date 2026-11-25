@@ -31,8 +31,8 @@ export function FichaComplementaria({ est, editable }: { est: Estudiante; editab
       {vacio && editable && (
         <p className="flex items-center gap-2 px-5 pt-2 text-xs text-amber-800"><TriangleAlert className="h-4 w-4" aria-hidden /> Complete estos datos: el tutor los necesita ante una emergencia.</p>
       )}
-      <div className="grid divide-y divide-white/70 sm:grid-cols-2 sm:divide-y-0">
-        <div className="divide-y divide-white/70">
+      <div className="grid divide-y divide-sup/70 sm:grid-cols-2 sm:divide-y-0">
+        <div className="divide-y divide-sup/70">
           <div className="px-5 py-3">
             <p className="etiqueta">Contacto de emergencia</p>
             <p className="mt-0.5 font-semibold">{est.contacto_emergencia || <span className="font-normal text-tinta-suave">No registrado</span>}</p>
@@ -45,7 +45,7 @@ export function FichaComplementaria({ est, editable }: { est: Estudiante; editab
           {fila("Seguro de salud", est.seguro)}
           {fila("Alergias, enfermedades o medicamentos", est.salud, true)}
         </div>
-        <div className="divide-y divide-white/70">
+        <div className="divide-y divide-sup/70">
           {fila("Necesidades educativas especiales", est.nee, true)}
           {fila("Vive con", est.vive_con)}
           {fila("Lengua materna", est.lengua_materna)}

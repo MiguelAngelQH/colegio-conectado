@@ -27,7 +27,7 @@ function SelectorRango({ valor, onCambio }: { valor: number; onCambio(v: (typeof
     <span className="inline-flex rounded-full bg-slate-100 p-0.5" role="group" aria-label="Semanas a mostrar">
       {RANGOS.map((r) => (
         <button key={r} type="button" onClick={() => onCambio(r)} aria-pressed={valor === r}
-          className={cx("rounded-full px-2.5 py-1 text-xs font-semibold tabular-nums transition", valor === r ? "bg-white text-tinta shadow-sm" : "text-tinta-suave hover:text-tinta")}>
+          className={cx("rounded-full px-2.5 py-1 text-xs font-semibold tabular-nums transition", valor === r ? "bg-sup text-tinta shadow-sm" : "text-tinta-suave hover:text-tinta")}>
           {r} sem.
         </button>
       ))}
@@ -215,7 +215,7 @@ export function Paneles() {
         <section className="space-y-2">
           <h2 className="etiqueta flex items-center gap-1.5 px-1"><TriangleAlert className="h-3.5 w-3.5" aria-hidden /> Estudiantes que necesitan atención ({panel.enRiesgo.length})</h2>
           {panel.enRiesgo.length === 0 ? <Vacio icono={GraduationCap} tono="tono-musgo" titulo="Ningún estudiante con alertas" /> : (
-            <Tarjeta className="divide-y divide-white/70 overflow-hidden">
+            <Tarjeta className="divide-y divide-sup/70 overflow-hidden">
               {panel.enRiesgo.slice(0, 30).map((r) => {
                 const fila = (
                   <>
@@ -228,7 +228,7 @@ export function Paneles() {
                 );
                 return esUgel
                   ? <div key={r.estudiante.id} className="flex items-center gap-3 px-4 py-3">{fila}</div>
-                  : <Link key={r.estudiante.id} to={`/tutoria/estudiante/${r.estudiante.id}`} className="flex items-center gap-3 px-4 py-3 transition hover:bg-white/40">{fila}</Link>;
+                  : <Link key={r.estudiante.id} to={`/tutoria/estudiante/${r.estudiante.id}`} className="flex items-center gap-3 px-4 py-3 transition hover:bg-sup/40">{fila}</Link>;
               })}
               {panel.enRiesgo.length > 30 && <p className="px-4 py-3 text-xs text-tinta-suave">y {panel.enRiesgo.length - 30} más (ver el reporte PDF).</p>}
             </Tarjeta>

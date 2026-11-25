@@ -25,7 +25,7 @@ export function ChipNivel({ nivel, activo, onClick, deshabilitado, pequeno }: { 
     <button type="button" onClick={onClick} disabled={deshabilitado} aria-pressed={activo} aria-label={`${nivel}: ${DESCRIPCION_NIVEL[nivel].nombre}`} style={estilo}
       className={cx("titulo-display shrink-0 rounded-xl font-bold transition active:scale-90 disabled:active:scale-100",
         pequeno ? "h-8 w-8 text-xs" : "h-11 w-11 text-sm",
-        !activo && cx("bg-white/60 text-tinta", !deshabilitado && "hover:bg-white"),
+        !activo && cx("bg-sup/60 text-tinta", !deshabilitado && "hover:bg-sup"),
         deshabilitado && !activo && "opacity-40")}>
       {nivel}
     </button>
@@ -157,7 +157,7 @@ export function RegistroNotas() {
               <Segmentado etiqueta="Vista" valor={vista} onCambio={setVista} opciones={[{ valor: "lista", texto: "Por competencia" }, { valor: "sesiones", texto: "Sesiones" }, { valor: "matriz", texto: "Resumen" }]} />
             </span>
           </div>
-          <div className="mt-3 h-2 overflow-hidden rounded-full bg-white/60">
+          <div className="mt-3 h-2 overflow-hidden rounded-full bg-sup/60">
             <div className="h-full rounded-full bg-gradient-to-r from-blue-400 to-sky-500 transition-all" style={{ width: `${total ? (hechas / total) * 100 : 0}%` }} />
           </div>
         </Tarjeta>
@@ -178,7 +178,7 @@ export function RegistroNotas() {
                     className={cx("flex min-h-11 items-center gap-2 rounded-full px-4 text-sm font-semibold transition",
                       c.id === competenciaId ? "vidrio-laguna" : "vidrio !rounded-full text-tinta-suave")}>
                     C{i + 1}
-                    <span className={cx("rounded-full px-1.5 text-[0.65rem]", c.id === competenciaId ? "bg-white/25" : "bg-white/70")}>{n}/{datos.estudiantes.length}</span>
+                    <span className={cx("rounded-full px-1.5 text-[0.65rem]", c.id === competenciaId ? "bg-sup/25" : "bg-sup/70")}>{n}/{datos.estudiantes.length}</span>
                   </button>
                 );
               })}
@@ -200,7 +200,7 @@ export function RegistroNotas() {
             </ol>
           )}
 
-          <Tarjeta className="divide-y divide-white/70 overflow-hidden">
+          <Tarjeta className="divide-y divide-sup/70 overflow-hidden">
             {competencia && datos.estudiantes.map((e, i) => (
               <FilaEstudiante key={`${e.id}-${competencia.id}`} n={i + 1} estudiante={e} competencia={competencia} nota={nota(e.id, competencia.id)}
                 periodoId={periodoId} seccionId={curso!.seccionId} bloqueado={cerrado} porCapacidad={modo === "capacidad"} />
@@ -277,13 +277,13 @@ function FilaEstudiante({ n, estudiante, competencia, nota, periodoId, seccionId
           <Link to={`/estudiantes/${estudiante.id}`} className="block truncate text-sm font-semibold hover:underline" title="Ver historial del estudiante">{nombreCompleto(estudiante)}</Link>
           {falta && <p className="text-[0.7rem] font-semibold text-amber-700">Falta la conclusión descriptiva</p>}
         </div>
-        <button onClick={() => setObservando(true)} className="rounded-full p-2 text-tinta-suave hover:bg-white/60" aria-label={`Observación sobre ${estudiante.nombres}`}>
+        <button onClick={() => setObservando(true)} className="rounded-full p-2 text-tinta-suave hover:bg-sup/60" aria-label={`Observación sobre ${estudiante.nombres}`}>
           <MessageSquarePlus className="h-4 w-4" aria-hidden />
         </button>
         {capacidades.length > 0 ? (
           <span className="flex items-center gap-1.5 text-xs font-semibold text-tinta-suave">
             Logro
-            {nota?.nivel_logro ? <ChipNivel nivel={nota.nivel_logro} activo pequeno deshabilitado /> : <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-white/50">-</span>}
+            {nota?.nivel_logro ? <ChipNivel nivel={nota.nivel_logro} activo pequeno deshabilitado /> : <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-sup/50">-</span>}
           </span>
         ) : (
           /* En celular los botones bajan a su propia línea para no cortar el nombre. */
@@ -318,7 +318,7 @@ function FilaEstudiante({ n, estudiante, competencia, nota, periodoId, seccionId
             <div className="mt-1.5 flex flex-wrap gap-1.5">
               {PLANTILLAS_CONCLUSION[nota!.nivel_logro as "B" | "C"].map((p) => (
                 <button key={p} type="button" onClick={() => escribir(p)}
-                  className="flex items-center gap-1 rounded-full bg-white/60 px-2.5 py-1 text-left text-[0.7rem] font-semibold text-tinta-suave ring-1 ring-white hover:bg-white">
+                  className="flex items-center gap-1 rounded-full bg-sup/60 px-2.5 py-1 text-left text-[0.7rem] font-semibold text-tinta-suave ring-1 ring-sup hover:bg-sup">
                   <PenLine className="h-3 w-3" aria-hidden /> {p.trim()}...
                 </button>
               ))}
@@ -343,12 +343,12 @@ function Matriz({ estudiantes, competencias, nota, onElegir }: {
             <th className="px-4 py-3">Estudiante</th>
             {competencias.map((c, i) => (
               <th key={c.id} className="px-2 py-3 text-center">
-                <button onClick={() => onElegir(c.id)} title={c.nombre} className="rounded-full px-2 py-1 hover:bg-white/60">C{i + 1}</button>
+                <button onClick={() => onElegir(c.id)} title={c.nombre} className="rounded-full px-2 py-1 hover:bg-sup/60">C{i + 1}</button>
               </th>
             ))}
           </tr>
         </thead>
-        <tbody className="divide-y divide-white/70">
+        <tbody className="divide-y divide-sup/70">
           {estudiantes.map((e) => (
             <tr key={e.id}>
               <td className="max-w-[14rem] truncate px-4 py-2 font-semibold">{nombreCompleto(e)}</td>
@@ -359,7 +359,7 @@ function Matriz({ estudiantes, competencias, nota, onElegir }: {
                     {n?.nivel_logro ? (
                       <span className="relative inline-flex">
                         <ChipNivel nivel={n.nivel_logro} activo pequeno deshabilitado />
-                        {faltaConclusion(n) && <span className="absolute -right-0.5 -top-0.5 h-2.5 w-2.5 rounded-full bg-amber-500 ring-2 ring-white" aria-label="Falta conclusión" />}
+                        {faltaConclusion(n) && <span className="absolute -right-0.5 -top-0.5 h-2.5 w-2.5 rounded-full bg-amber-500 ring-2 ring-sup" aria-label="Falta conclusión" />}
                       </span>
                     ) : <span className="text-tinta-suave/50">-</span>}
                   </td>

@@ -69,7 +69,7 @@ export function AccesoFicha({ estudiante, apoderados }: { estudiante: Estudiante
   return (
     <section className="aparecer space-y-2">
       <h2 className="etiqueta px-1">Acceso a la app</h2>
-      <Tarjeta className="divide-y divide-white/70">
+      <Tarjeta className="divide-y divide-sup/70">
         <FilaAcceso persona={{ tabla: "estudiante", fila: estudiante, detalle: "Estudiante" }} />
         {apoderados.filter((x): x is { a: Apoderado; parentesco: string } => !!x.a).map(({ a, parentesco }) => (
           <FilaAcceso key={a.id} persona={{ tabla: "apoderado", fila: a, detalle: parentesco }} />
@@ -194,7 +194,7 @@ export function DialogoCuentasSeccion({ seccionId, seccionNombre, colegio, onCer
           <li><strong>{conCuenta.length}</strong> ya tienen cuenta.</li>
           {sinDni.length > 0 && <li className="text-amber-800"><strong>{sinDni.length}</strong> sin DNI registrado: complete su DNI en la ficha para crearles cuenta.</li>}
         </ul>
-        {avance && <div className="h-2 overflow-hidden rounded-full bg-white/70" role="progressbar" aria-valuenow={avance.hechas} aria-valuemax={avance.total}>
+        {avance && <div className="h-2 overflow-hidden rounded-full bg-sup/70" role="progressbar" aria-valuenow={avance.hechas} aria-valuemax={avance.total}>
           <div className="h-full rounded-full bg-blue-600 transition-all" style={{ width: `${(avance.hechas / Math.max(1, avance.total)) * 100}%` }} />
         </div>}
         <p className="text-xs text-tinta-suave">

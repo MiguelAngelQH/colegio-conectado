@@ -6,6 +6,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <meta name="theme-color" content="#1e3a8a" />
     <title>Colegio Conectado</title>
+    <script>
+      // Aplica el modo nocturno antes de pintar, para que no se vea un destello claro.
+      try {
+        var t = localStorage.getItem("tema");
+        if (t === "oscuro" || (t !== "claro" && matchMedia("(prefers-color-scheme: dark)").matches)) document.documentElement.classList.add("dark");
+      } catch (e) {}
+    </script>
   </head>
   <body>
     <div id="root"></div>

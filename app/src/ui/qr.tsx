@@ -118,7 +118,7 @@ export function Escaner({ onLeer, pausado, textoManual = "Escribir el código", 
   return (
     <div className="space-y-3">
       {!manual && (
-        <div className="relative mx-auto aspect-square w-full max-w-sm overflow-hidden rounded-[1.75rem] bg-tinta shadow-[0_20px_50px_-20px_rgba(11,46,51,.8)]">
+        <div className="relative mx-auto aspect-square w-full max-w-sm overflow-hidden rounded-[1.75rem] bg-noche shadow-[0_20px_50px_-20px_rgba(11,46,51,.8)]">
           {error ? (
             <div className="flex h-full flex-col items-center justify-center gap-3 p-6 text-center text-white">
               <CameraOff className="h-10 w-10 opacity-80" aria-hidden />
@@ -135,7 +135,7 @@ export function Escaner({ onLeer, pausado, textoManual = "Escribir el código", 
                 ))}
                 <span className="linea-escaneo absolute inset-x-4 h-0.5 rounded-full bg-blue-300 shadow-[0_0_12px_rgba(94,234,212,.9)]" />
               </div>
-              {pausado && <div className="absolute inset-0 bg-tinta/40" />}
+              {pausado && <div className="absolute inset-0 bg-noche/40" />}
             </>
           )}
         </div>

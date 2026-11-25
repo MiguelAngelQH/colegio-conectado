@@ -44,9 +44,9 @@ export function Contenido({ children, ancho = "max-w-5xl" }: { children: ReactNo
 type Variante = "primario" | "vidrio" | "peligro" | "fantasma";
 const VARIANTES: Record<Variante, string> = {
   primario: "vidrio-laguna hover:brightness-110",
-  vidrio: "vidrio !rounded-full text-tinta hover:bg-white/60",
+  vidrio: "vidrio !rounded-full text-tinta hover:bg-sup/60",
   peligro: "bg-gradient-to-b from-red-500 to-red-600 text-white shadow-[inset_0_1px_0_rgba(255,255,255,.4),0_10px_20px_-10px_rgba(220,38,38,.8)] hover:brightness-110",
-  fantasma: "text-tinta hover:bg-white/40",
+  fantasma: "text-tinta hover:bg-sup/40",
 };
 
 export function Boton({
@@ -120,7 +120,7 @@ export function Dialogo({ abierto, titulo, children, acciones, onCerrar }: {
   if (!abierto) return null;
   // En el body: dentro de una tarjeta de vidrio (contexto de apilamiento propio) quedaría tapado.
   return createPortal(
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-tinta/30 p-3 backdrop-blur-[2px] sm:items-center" onClick={onCerrar}>
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-noche/40 p-3 backdrop-blur-[2px] sm:items-center" onClick={onCerrar}>
       <div role="dialog" aria-modal="true" aria-label={titulo} className="vidrio-solido hoja max-h-[90dvh] w-full max-w-md overflow-y-auto p-6" onClick={(e) => e.stopPropagation()}>
         <h2 className="titulo-display text-xl font-bold text-tinta">{titulo}</h2>
         <div className="mt-2 text-sm leading-relaxed text-tinta-suave">{children}</div>

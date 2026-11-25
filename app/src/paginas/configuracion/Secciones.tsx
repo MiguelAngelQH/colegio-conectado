@@ -33,7 +33,7 @@ export function SeccionesPagina() {
             return (
               <section key={nivel} className="space-y-2">
                 <h2 className="etiqueta px-1">{NIVEL_TEXTO[nivel]}</h2>
-                <Tarjeta className="divide-y divide-white/70">
+                <Tarjeta className="divide-y divide-sup/70">
                   {grados.map((g) => {
                     const secs = e.secciones.filter((s) => s.grado_id === g.id);
                     return (
@@ -42,7 +42,7 @@ export function SeccionesPagina() {
                         <div className="flex flex-1 flex-wrap gap-2">
                           {secs.map((s) => (
                             <button key={s.id} onClick={() => setEdicion({ grado: g, seccion: s })} aria-label={`Editar sección ${s.nombre}: ${s.estudiantes} estudiantes`}
-                              className="flex items-center gap-2 rounded-2xl bg-white/55 py-1.5 pl-1.5 pr-3 text-left ring-1 ring-white transition hover:bg-white/80 active:scale-95">
+                              className="flex items-center gap-2 rounded-2xl bg-sup/55 py-1.5 pl-1.5 pr-3 text-left ring-1 ring-sup transition hover:bg-sup/80 active:scale-95">
                               <span className="gema tono-lila titulo-display h-9 w-9 !rounded-xl text-base font-bold"><span className="relative z-10">{s.letra}</span></span>
                               <span className="text-xs leading-tight">
                                 <span className="block font-semibold">{s.estudiantes} estudiantes</span>
@@ -51,7 +51,7 @@ export function SeccionesPagina() {
                             </button>
                           ))}
                           <button onClick={() => setEdicion({ grado: g })} aria-label={`Agregar sección a ${g.nombre}`}
-                            className="flex h-12 items-center gap-1.5 rounded-2xl border border-dashed border-tinta/25 px-3 text-xs font-semibold text-tinta-suave transition hover:bg-white/40">
+                            className="flex h-12 items-center gap-1.5 rounded-2xl border border-dashed border-tinta/25 px-3 text-xs font-semibold text-tinta-suave transition hover:bg-sup/40">
                             <Plus className="h-4 w-4" aria-hidden /> Sección
                           </button>
                         </div>

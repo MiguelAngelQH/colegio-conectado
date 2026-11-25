@@ -84,12 +84,12 @@ export function TomaAsistencia() {
         <Tarjeta className="aparecer p-4" style={orden(1)}>
           <div className={cx("grid gap-2 text-center", ESTADOS.length === 4 ? "grid-cols-5" : "grid-cols-4")}>
             {ESTADOS.map((e) => (
-              <div key={e} className="rounded-2xl bg-white/45 py-2 ring-1 ring-white/80">
+              <div key={e} className="rounded-2xl bg-sup/45 py-2 ring-1 ring-sup/80">
                 <p className="titulo-display text-2xl font-bold">{cuenta(e)}</p>
                 <p className="text-[0.65rem] font-semibold text-tinta-suave">{NOMBRE_ESTADO[e]}</p>
               </div>
             ))}
-            <div className={cx("rounded-2xl py-2 ring-1", sinMarca.length ? "bg-white/30 ring-white/60" : "bg-emerald-50/70 ring-emerald-200")}>
+            <div className={cx("rounded-2xl py-2 ring-1", sinMarca.length ? "bg-sup/30 ring-sup/60" : "bg-emerald-50/70 ring-emerald-200")}>
               <p className="titulo-display text-2xl font-bold">{sinMarca.length}</p>
               <p className="text-[0.65rem] font-semibold text-tinta-suave">Sin marcar</p>
             </div>
@@ -119,7 +119,7 @@ export function TomaAsistencia() {
                 <Boton variante="vidrio" icono={UserCheck} onClick={todosPresentes}>Marcar presentes a los {sinMarca.length} restantes</Boton>
               </div>
             )}
-            <Tarjeta className="divide-y divide-white/70 overflow-hidden">
+            <Tarjeta className="divide-y divide-sup/70 overflow-hidden">
               {estudiantes.map((e, i) => {
                 const m = marcas.get(e.id);
                 return (
@@ -134,7 +134,7 @@ export function TomaAsistencia() {
                         {ESTADOS.map((st) => (
                           <button key={st} role="radio" aria-checked={m?.estado === st} aria-label={NOMBRE_ESTADO[st]} onClick={() => void marcarUno(e, st)}
                             className={cx("titulo-display h-11 w-11 rounded-xl text-sm font-bold transition active:scale-90",
-                              m?.estado === st ? COLOR_ESTADO[st] : "bg-white/60 text-tinta-suave ring-1 ring-white hover:bg-white")}>
+                              m?.estado === st ? COLOR_ESTADO[st] : "bg-sup/60 text-tinta-suave ring-1 ring-sup hover:bg-sup")}>
                             {st}
                           </button>
                         ))}
@@ -235,7 +235,7 @@ function VistaQr({ sesionId, secreto, recibidas, total, conectado, sincronizar }
       </div>
       <div className="flex items-center gap-4">
         <svg viewBox="0 0 52 52" className="h-12 w-12 -rotate-90" aria-hidden>
-          <circle cx="26" cy="26" r="22" fill="none" stroke="rgba(11,46,51,.12)" strokeWidth="5" />
+          <circle cx="26" cy="26" r="22" fill="none" stroke="currentColor" strokeWidth="5" className="text-tinta/15" />
           <circle cx="26" cy="26" r="22" fill="none" stroke="#2563eb" strokeWidth="5" strokeLinecap="round" className="anillo"
             strokeDasharray={circ} strokeDashoffset={circ * (1 - restante / 15)} />
         </svg>
@@ -259,7 +259,7 @@ function VistaQr({ sesionId, secreto, recibidas, total, conectado, sincronizar }
         </p>
       </Tarjeta>
       {grande && (
-        <div className="fixed inset-0 z-[70] flex flex-col items-center justify-center gap-4 bg-white p-6">
+        <div className="fixed inset-0 z-[70] flex flex-col items-center justify-center gap-4 bg-sup p-6">
           {panel}
           <p className="text-lg font-bold text-tinta">{recibidas} de {total} marcaron</p>
           <Boton variante="vidrio" icono={Minimize} className="absolute right-4 top-4" onClick={() => { setGrande(false); void document.exitFullscreen?.().catch(() => undefined); }}>Salir</Boton>
@@ -294,7 +294,7 @@ function VistaCarnes({ estudiantes, marcas, onMarcar }: { estudiantes: Estudiant
           <h2 className="font-bold">Escanear carnés</h2>
           <p className="text-sm text-tinta-suave">Funciona sin internet. Ideal para primaria y estudiantes sin celular.</p>
         </div>
-        <span className="ml-auto rounded-full bg-white/60 px-3 py-1 text-xs font-bold">{escaneados} escaneados</span>
+        <span className="ml-auto rounded-full bg-sup/60 px-3 py-1 text-xs font-bold">{escaneados} escaneados</span>
       </div>
       <Escaner onLeer={(t) => void leer(t)} textoManual="Escribir el código del carné" />
       {ultimo && (

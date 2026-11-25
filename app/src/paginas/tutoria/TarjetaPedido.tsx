@@ -41,7 +41,7 @@ export function TarjetaPedido({ s, quien, para = "estudiante", acciones }: {
         </div>
         <ChipEstado estado={s.estado} />
       </div>
-      <p className="whitespace-pre-line rounded-2xl bg-white/60 px-3 py-2 text-sm text-tinta ring-1 ring-white">{s.mensaje}</p>
+      <p className="whitespace-pre-line rounded-2xl bg-sup/60 px-3 py-2 text-sm text-tinta ring-1 ring-sup">{s.mensaje}</p>
       {s.cita && s.estado !== "cancelada" && (
         <p className="flex items-center gap-1.5 text-sm font-semibold text-amber-900">
           <CalendarClock className="h-4 w-4" aria-hidden /> Cita: {fechaHoraCita(s.cita)}

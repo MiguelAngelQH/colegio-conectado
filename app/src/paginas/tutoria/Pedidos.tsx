@@ -72,7 +72,7 @@ function DialogoAtender({ s, nombre, quien, onCerrar }: { s: SolicitudTutoria; n
         <Boton icono={CheckCheck} onClick={() => void atender()}>Marcar como atendido</Boton>
       </>}>
       <div className="space-y-3 pt-1 text-tinta">
-        <div className="-mx-4 rounded-2xl bg-white/50 ring-1 ring-white"><TarjetaPedido s={s} quien={quien === nombre ? undefined : `Lo pidió: ${quien}`} /></div>
+        <div className="-mx-4 rounded-2xl bg-sup/50 ring-1 ring-sup"><TarjetaPedido s={s} quien={quien === nombre ? undefined : `Lo pidió: ${quien}`} /></div>
         {esSensible(s.motivo) && (
           <Aviso tipo="alerta" icono={ShieldAlert} titulo="Posible caso de acoso">
             Converse hoy con el estudiante. Si se confirma, registre la incidencia en <Link to="/convivencia" className="font-semibold underline">Convivencia</Link> para
@@ -139,7 +139,7 @@ export function Pedidos() {
             {vista === "abiertos" && "Cuando un estudiante o una familia pida ayuda, aparecerá aquí y en la campana."}
           </Vacio>
         ) : (
-          <Tarjeta className="divide-y divide-white/70 overflow-hidden">
+          <Tarjeta className="divide-y divide-sup/70 overflow-hidden">
             {visibles.map((s) => (
               <div key={s.id} className={s.estado === "enviada" ? "bg-sky-50/50" : undefined}>
                 <TarjetaPedido s={s} quien={quien(s) === nombreEst(s) ? nombreEst(s) : <>{nombreEst(s)} <span className="font-normal text-tinta-suave">· pide {quien(s)}</span></>}

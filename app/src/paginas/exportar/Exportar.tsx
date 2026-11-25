@@ -98,10 +98,10 @@ export function Exportar() {
                       {sinConclusion > 0 && <p>{sinConclusion} notas B o C no tienen conclusión descriptiva.</p>}
                     </Aviso>
                   ) : <Aviso tipo="ok">Todo completo: {hojas.length} hojas listas.</Aviso>}
-                  <div className="max-h-64 overflow-y-auto rounded-2xl bg-white/40 ring-1 ring-white/80">
+                  <div className="max-h-64 overflow-y-auto rounded-2xl bg-sup/40 ring-1 ring-sup/80">
                     <table className="w-full text-left text-sm">
-                      <thead className="sticky top-0 bg-white/85 text-xs text-tinta-suave backdrop-blur"><tr><th className="px-3 py-2">Hoja</th><th className="px-3 py-2 text-right">Estudiantes</th><th className="px-3 py-2 text-right">Faltan</th></tr></thead>
-                      <tbody className="divide-y divide-white/70">
+                      <thead className="sticky top-0 bg-sup/85 text-xs text-tinta-suave backdrop-blur"><tr><th className="px-3 py-2">Hoja</th><th className="px-3 py-2 text-right">Estudiantes</th><th className="px-3 py-2 text-right">Faltan</th></tr></thead>
+                      <tbody className="divide-y divide-sup/70">
                         {hojas.map((h) => (
                           <tr key={h.nombre}>
                             <td className="px-3 py-1.5 font-semibold">{h.nombre}</td>

@@ -21,10 +21,32 @@
   --borde-luz: rgba(255, 255, 255, 0.72);
   --sombra: 0 10px 40px -12px rgba(15, 30, 54, 0.24);
   --radio: 1.5rem;
+  /* Canales para Tailwind (text-tinta, bg-sup...). */
+  --tinta-rgb: 15 30 54;
+  --tinta-suave-rgb: 74 90 114;
+  --sup-rgb: 255 255 255;
+  --fondo: #eef2f7;
   color-scheme: light;
 }
 
-html { -webkit-tap-highlight-color: transparent; background: #eef2f7; }
+/* ------------------------------------------------------------------
+   Modo nocturno: vidrio azul pizarra sobre un fondo marino profundo.
+   ------------------------------------------------------------------ */
+.dark {
+  --tinta: #e6ecf5;
+  --tinta-suave: #a3b1c6;
+  --tinta-rgb: 230 236 245;
+  --tinta-suave-rgb: 163 177 198;
+  --sup-rgb: 52 68 98;
+  --vidrio: rgba(30, 41, 64, 0.5);
+  --vidrio-fuerte: rgba(30, 41, 64, 0.72);
+  --borde-luz: rgba(148, 170, 210, 0.18);
+  --sombra: 0 10px 40px -12px rgba(0, 0, 0, 0.6);
+  --fondo: #0b1424;
+  color-scheme: dark;
+}
+
+html { -webkit-tap-highlight-color: transparent; background: var(--fondo); }
 body {
   @apply antialiased;
   color: var(--tinta);
@@ -54,6 +76,16 @@ body {
   mix-blend-mode: soft-light;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
 }
+.dark .fondo-cielo {
+  background:
+    radial-gradient(55vmax 45vmax at 0% 0%, rgba(37, 99, 235, 0.32), transparent 62%),
+    radial-gradient(50vmax 42vmax at 100% 8%, rgba(59, 90, 160, 0.3), transparent 62%),
+    radial-gradient(40vmax 34vmax at 55% 45%, rgba(30, 41, 70, 0.6), transparent 65%),
+    radial-gradient(50vmax 42vmax at 92% 96%, rgba(30, 58, 138, 0.35), transparent 62%),
+    radial-gradient(45vmax 38vmax at 0% 92%, rgba(51, 65, 95, 0.45), transparent 62%),
+    linear-gradient(160deg, #0d1729 0%, #0b1424 50%, #0f1a2e 100%);
+}
+.dark .fondo-cielo::after { opacity: 0.08; }
 /* En pantallas grandes la luz se mueve muy lentamente. */
 @media (min-width: 1024px) and (prefers-reduced-motion: no-preference) {
   .fondo-cielo { animation: deriva 40s ease-in-out infinite alternate; background-size: 120% 120%; }
@@ -110,6 +142,24 @@ body {
       inset 0 -2px 6px rgba(10, 20, 60, 0.25),
       0 10px 24px -10px rgba(30, 58, 138, 0.7);
   }
+
+  .dark .vidrio {
+    background: linear-gradient(145deg, rgba(44, 58, 88, 0.62), rgba(22, 32, 54, 0.5));
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.08),
+      inset 0 0 22px rgba(255, 255, 255, 0.02),
+      var(--sombra);
+  }
+  .dark .vidrio::before { opacity: 0.06; }
+  .dark .vidrio-fuerte { background: linear-gradient(145deg, rgba(44, 58, 88, 0.85), rgba(26, 37, 60, 0.75)); }
+  .dark .vidrio-solido { background: linear-gradient(145deg, rgba(30, 42, 66, 0.98), rgba(20, 30, 50, 0.96)); }
+  .dark .vidrio-laguna { border-color: rgba(147, 180, 255, 0.3); }
+  .dark .campo {
+    background: rgba(15, 24, 42, 0.55);
+    border-color: rgba(148, 170, 210, 0.2);
+    box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.25);
+  }
+  .dark .campo::placeholder { color: rgba(163, 177, 198, 0.6); }
 
   /* Ficha de ícono: gema de color con reflejo. El color viene de --t1/--t2. */
   .gema {
@@ -168,6 +218,7 @@ body {
 /* Navegadores sin desenfoque (WebView antiguos): vidrio opaco, igual de legible. */
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
   .vidrio, .vidrio-fuerte { background: rgba(255, 255, 255, 0.92); }
+  .dark .vidrio, .dark .vidrio-fuerte { background: rgba(24, 34, 56, 0.96); }
 }
 
 /* Bordes inferiores seguros en celulares con barra de gestos. */

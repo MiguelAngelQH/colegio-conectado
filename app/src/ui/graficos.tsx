@@ -13,23 +13,36 @@ import { ArrowDownRight, ArrowUpRight, Minus, Table2, type LucideIcon } from "lu
 import type { NivelLogro } from "@/db/tipos";
 import { DESCRIPCION_NIVEL, NIVELES } from "@/dominio/notas";
 import { cx } from "./componentes";
+import { useTemaOscuro } from "./tema";
 
 import { NIVEL_HEX, NIVEL_TEXTO } from "./colores-niveles";
 
 export { NIVEL_HEX, NIVEL_TEXTO };
 
-const TINTA = "#0f1e36";
-const SUAVE = "#5b7478";
-const REJILLA = "rgba(15, 30, 54, 0.08)";
-const SUPERFICIE = "#ffffff";
+// Colores neutros según el tema. Cada gráfico llama a usarPaleta() al renderizar para tomar los del tema actual.
+let TINTA = "#0f1e36";
+let SUAVE = "#5b7478";
+let REJILLA = "rgba(15, 30, 54, 0.08)";
+let SUPERFICIE = "#ffffff";
+let CURSOR = "rgba(15, 30, 54, 0.04)";
 /** Serie única (asistencia, avance, conteos). */
-export const MARCA = "#0f8f84";
+export const MARCA = "#2563eb";
 /** Estado: por debajo de la meta (siempre acompañado de texto). */
 const BAJO_META = "#c2410c";
 /** Rampa secuencial de un solo tono para la inasistencia diaria (claro = poca, oscuro = mucha). */
 const RAMPA = ["#fdf1ea", "#fbd3bd", "#f5a982", "#e0703f", "#a63a17"];
 
 const eje = { fontSize: 11, fill: SUAVE };
+
+function usarPaleta() {
+  const oscuro = useTemaOscuro();
+  TINTA = oscuro ? "#e6ecf5" : "#0f1e36";
+  SUAVE = oscuro ? "#a3b1c6" : "#5b7478";
+  REJILLA = oscuro ? "rgba(230, 236, 245, 0.1)" : "rgba(15, 30, 54, 0.08)";
+  SUPERFICIE = oscuro ? "#1c2740" : "#ffffff";
+  CURSOR = oscuro ? "rgba(230, 236, 245, 0.06)" : "rgba(15, 30, 54, 0.04)";
+  eje.fill = SUAVE;
+}
 const idSeguro = (id: string) => id.replace(/[^a-zA-Z0-9_-]/g, "");
 
 // ------------------------------------------------------------------ marco común
@@ -38,7 +51,7 @@ function BotonTabla({ activa, onClick }: { activa: boolean; onClick(): void }) {
   return (
     <button type="button" onClick={onClick} aria-pressed={activa}
       className={cx("inline-flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold ring-1 transition",
-        activa ? "bg-tinta text-white ring-tinta" : "text-tinta-suave ring-slate-200 hover:bg-slate-50")}>
+        activa ? "bg-noche text-white ring-noche" : "text-tinta-suave ring-slate-200 hover:bg-slate-50")}>
       <Table2 className="h-3.5 w-3.5" aria-hidden /> {activa ? "Ver gráfico" : "Ver tabla"}
     </button>
   );
@@ -66,12 +79,12 @@ export function MarcoGrafico({ titulo, subtitulo, children, tabla, leyenda, acci
   );
 }
 
-export const claseTabla = "w-full text-left text-sm [&_td]:px-2 [&_td]:py-1.5 [&_th]:sticky [&_th]:top-0 [&_th]:bg-white [&_th]:px-2 [&_th]:py-1.5 [&_th]:text-xs [&_th]:font-semibold [&_th]:text-tinta-suave [&_tbody_tr]:border-t [&_tbody_tr]:border-slate-100";
+export const claseTabla = "w-full text-left text-sm [&_td]:px-2 [&_td]:py-1.5 [&_th]:sticky [&_th]:top-0 [&_th]:bg-sup [&_th]:px-2 [&_th]:py-1.5 [&_th]:text-xs [&_th]:font-semibold [&_th]:text-tinta-suave [&_tbody_tr]:border-t [&_tbody_tr]:border-slate-100";
 
 /** Caja del tooltip: oscura, con muestra de color por fila; el texto nunca usa el color de la serie. */
 function Caja({ titulo, filas, pie }: { titulo: ReactNode; filas: { color?: string; etiqueta: ReactNode; valor: ReactNode }[]; pie?: ReactNode }) {
   return (
-    <div className="min-w-40 rounded-xl bg-tinta px-3 py-2 text-xs text-white shadow-xl">
+    <div className="min-w-40 rounded-xl bg-noche px-3 py-2 text-xs text-white shadow-xl">
       <p className="mb-1 font-semibold">{titulo}</p>
       <ul className="space-y-0.5">
         {filas.map((f, i) => (
@@ -82,7 +95,7 @@ function Caja({ titulo, filas, pie }: { titulo: ReactNode; filas: { color?: stri
           </li>
         ))}
       </ul>
-      {pie && <p className="mt-1.5 border-t border-white/15 pt-1.5 text-white/70">{pie}</p>}
+      {pie && <p className="mt-1.5 border-t border-sup/15 pt-1.5 text-white/70">{pie}</p>}
     </div>
   );
 }
@@ -107,6 +120,7 @@ export function Leyenda({ items }: { items: { color: string; texto: ReactNode; t
 // ------------------------------------------------------------------ KPI con variación y mini gráfico
 
 export function Sparkline({ valores, color = MARCA, alto = 36 }: { valores: (number | null)[]; color?: string; alto?: number }) {
+  usarPaleta();
   const gid = idSeguro(useId());
   const datos = valores.map((v, i) => ({ i, v }));
   if (valores.filter((v) => v !== null).length < 2) return <div style={{ height: alto }} aria-hidden />;
@@ -157,6 +171,7 @@ export function TarjetaKpi({ icono: Icono, titulo, valor, unidad, variacion, est
   icono: LucideIcon; titulo: string; valor: string | number; unidad?: string; variacion?: Variacion | null;
   estado?: { texto: string; tipo: "alerta" | "ok" } | null; serie?: (number | null)[]; colorSerie?: string; enlace?: string; pie?: ReactNode; className?: string;
 }) {
+  usarPaleta();
   const contenido = (
     <>
       <p className="flex min-h-[2rem] min-w-0 items-start gap-2 text-xs font-semibold leading-tight text-tinta-suave">
@@ -189,6 +204,7 @@ export interface PuntoAsistencia { etiqueta: string; detalle: string; porcentaje
 export function AreaAsistencia({ titulo, subtitulo, puntos, meta, acciones , className }: { className?: string; 
   titulo: string; subtitulo?: string; puntos: PuntoAsistencia[]; meta: number; acciones?: ReactNode;
 }) {
+  usarPaleta();
   const gid = idSeguro(useId());
   const valores = puntos.map((p) => p.porcentaje).filter((v): v is number => v !== null);
   // Área (no barras): el eje puede no empezar en cero para que se vean las variaciones.
@@ -273,6 +289,7 @@ function TablaNiveles({ filas, primera }: { filas: FilaNiveles[]; primera: strin
 }
 
 export function BarrasDivergentesNiveles({ titulo, subtitulo, filas , className }: { className?: string;  titulo: string; subtitulo?: string; filas: FilaNiveles[] }) {
+  usarPaleta();
   // Logrado (A, AD) hacia la derecha; en proceso o inicio (B, C) hacia la izquierda.
   const datos = filas.map((f) => ({ etiqueta: f.etiqueta, A: pct(f, "A"), AD: pct(f, "AD"), B: -pct(f, "B"), C: -pct(f, "C"), fila: f }));
   const alto = Math.max(140, datos.length * 40 + 40);
@@ -305,7 +322,7 @@ export function BarrasDivergentesNiveles({ titulo, subtitulo, filas , className 
               <CartesianGrid horizontal={false} stroke={REJILLA} />
               <XAxis type="number" domain={[-100, 100]} ticks={[-100, -50, 0, 50, 100]} tick={eje} tickLine={false} axisLine={false} tickFormatter={(v: number) => `${Math.abs(v)}%`} />
               <YAxis type="category" dataKey="etiqueta" width={anchoEtiquetas} tick={{ ...eje, fill: TINTA, fontWeight: 600 }} tickLine={false} axisLine={false} />
-              <Tooltip content={<Tip />} cursor={{ fill: "rgba(11,46,51,0.04)" }} />
+              <Tooltip content={<Tip />} cursor={{ fill: CURSOR }} />
               <ReferenceLine x={0} stroke={TINTA} strokeOpacity={0.35} />
               {(["A", "AD", "B", "C"] as const).map((n) => (
                 <Bar key={n} dataKey={n} stackId="n" fill={NIVEL_HEX[n]} stroke={SUPERFICIE} strokeWidth={1}
@@ -324,6 +341,7 @@ export function BarrasDivergentesNiveles({ titulo, subtitulo, filas , className 
 // ------------------------------------------------------------------ distribución total (dona)
 
 export function DonaNiveles({ titulo, subtitulo, conteo , className }: { className?: string;  titulo: string; subtitulo?: string; conteo: Record<NivelLogro, number> }) {
+  usarPaleta();
   const total = NIVELES.reduce((s, n) => s + conteo[n], 0);
   const datos = NIVELES.map((n) => ({ nivel: n, valor: conteo[n] })).filter((d) => d.valor > 0);
   const p = (n: NivelLogro) => (total ? Math.round((conteo[n] / total) * 100) : 0);
@@ -376,6 +394,7 @@ export interface ItemRanking { etiqueta: string; valor: number | null; detalle?:
 export function BarrasRanking({ titulo, subtitulo, items, meta, sufijo = "", maximo, nombreValor , className }: { className?: string; 
   titulo: string; subtitulo?: string; items: ItemRanking[]; meta?: { valor: number; etiqueta: string }; sufijo?: string; maximo?: number; nombreValor: string;
 }) {
+  usarPaleta();
   const conValor = items.filter((i): i is ItemRanking & { valor: number } => i.valor !== null);
   const max = maximo ?? Math.max(1, ...conValor.map((i) => i.valor));
   const bajo = (v: number) => !!meta && v < meta.valor;
@@ -406,7 +425,7 @@ export function BarrasRanking({ titulo, subtitulo, items, meta, sufijo = "", max
               <CartesianGrid horizontal={false} stroke={REJILLA} />
               <XAxis type="number" domain={[0, max]} tick={eje} tickLine={false} axisLine={false} tickFormatter={(v: number) => `${v}${sufijo}`} tickCount={5} />
               <YAxis type="category" dataKey="etiqueta" width={128} tick={{ ...eje, fill: TINTA, fontWeight: 600 }} tickLine={false} axisLine={false} />
-              <Tooltip content={<Tip />} cursor={{ fill: "rgba(11,46,51,0.04)" }} />
+              <Tooltip content={<Tip />} cursor={{ fill: CURSOR }} />
               {meta && <ReferenceLine x={meta.valor} stroke={SUAVE} strokeDasharray="4 4" />}
               <Bar dataKey="valor" radius={[0, 4, 4, 0]} maxBarSize={18} animationDuration={500}>
                 {conValor.map((i) => <Cell key={i.etiqueta} fill={bajo(i.valor) ? BAJO_META : MARCA} />)}
@@ -425,6 +444,7 @@ export function BarrasRanking({ titulo, subtitulo, items, meta, sufijo = "", max
 export interface PuntoColumna { etiqueta: string; detalle: string; valor: number; desglose: Record<string, number> }
 
 export function ColumnasConteo({ titulo, subtitulo, puntos, nombreValor , className }: { className?: string;  titulo: string; subtitulo?: string; puntos: PuntoColumna[]; nombreValor: string }) {
+  usarPaleta();
   const Tip = ({ active, payload }: TooltipProps<number, string>) => {
     if (!active || !payload?.length) return null;
     const p = payload[0].payload as PuntoColumna;
@@ -448,7 +468,7 @@ export function ColumnasConteo({ titulo, subtitulo, puntos, nombreValor , classN
             <CartesianGrid vertical={false} stroke={REJILLA} />
             <XAxis dataKey="etiqueta" tick={eje} tickLine={false} axisLine={{ stroke: REJILLA }} tickMargin={8} />
             <YAxis allowDecimals={false} tick={eje} tickLine={false} axisLine={false} width={40} />
-            <Tooltip content={<Tip />} cursor={{ fill: "rgba(11,46,51,0.04)" }} />
+            <Tooltip content={<Tip />} cursor={{ fill: CURSOR }} />
             <Bar dataKey="valor" fill={MARCA} radius={[4, 4, 0, 0]} maxBarSize={36} animationDuration={500}>
               <LabelList dataKey="valor" position="top" style={{ fontSize: 11, fontWeight: 700, fill: TINTA }} formatter={(v: number) => (v ? v : "")} />
             </Bar>
@@ -481,6 +501,7 @@ const DIAS = ["Lun", "Mar", "Mié", "Jue", "Vie"];
 const fechaLarga = (f: string) => new Date(`${f}T12:00:00`).toLocaleDateString("es-PE", { weekday: "long", day: "numeric", month: "long" });
 
 export function MapaCalor({ titulo, subtitulo, dias, desde, hasta , className }: { className?: string;  titulo: string; subtitulo?: string; dias: PuntoDiaCalor[]; desde: string; hasta: string }) {
+  usarPaleta();
   const [ref, ancho] = useAncho<HTMLDivElement>();
   const [foco, setFoco] = useState<{ d: PuntoDiaCalor | string; x: number; y: number } | null>(null);
   const porFecha = new Map(dias.map((d) => [d.fecha, d]));
@@ -536,7 +557,7 @@ export function MapaCalor({ titulo, subtitulo, dias, desde, hasta , className }:
                     return (
                       <rect key={f} x={x} y={y} width={celda} height={celda} rx={4}
                         fill={conValor ? tono(100 - d.porcentaje!) : "transparent"}
-                        stroke={conValor ? (foco && typeof foco.d !== "string" && foco.d.fecha === f ? TINTA : "rgba(0,0,0,0.05)") : "#cbd5e1"}
+                        stroke={conValor ? (foco && typeof foco.d !== "string" && foco.d.fecha === f ? TINTA : REJILLA) : SUAVE}
                         strokeDasharray={conValor ? undefined : "2 2"} strokeWidth={conValor && foco && typeof foco.d !== "string" && foco.d.fecha === f ? 2 : 1}
                         onMouseEnter={() => setFoco({ d: d ?? f, x: x + celda / 2, y })} onClick={() => setFoco({ d: d ?? f, x: x + celda / 2, y })} />
                     );

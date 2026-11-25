@@ -142,7 +142,7 @@ export function ImportarPagina() {
       <Encabezado etiqueta="Estudiantes" titulo="Importar desde Excel" subtitulo="Sirve la plantilla o la nómina que ya tiene (por ejemplo, exportada del SIAGIE)." />
       <Contenido ancho="max-w-4xl">
         <Tarjeta className="aparecer p-5" style={orden(1)}>
-          <label className={cx("flex cursor-pointer flex-col items-center gap-3 rounded-[1.25rem] border-2 border-dashed border-blue-600/30 bg-white/30 px-4 py-8 text-center transition hover:bg-white/50", leyendo && "opacity-60")}>
+          <label className={cx("flex cursor-pointer flex-col items-center gap-3 rounded-[1.25rem] border-2 border-dashed border-blue-600/30 bg-sup/30 px-4 py-8 text-center transition hover:bg-sup/50", leyendo && "opacity-60")}>
             <Gema icono={FileUp} tono="tono-laguna" tam="lg" />
             <span className="font-bold">{nombreArchivo || "Elegir archivo"}</span>
             <span className="text-xs text-tinta-suave">{libro ? "Toque para elegir otro" : ".xlsx, .xls o .csv · se lee en este equipo, sin internet"}</span>
@@ -223,12 +223,12 @@ export function ImportarPagina() {
                 {conAvisos > 0 && <span className="rounded-full bg-amber-100/80 px-3 py-1 text-xs font-bold text-amber-800">{conAvisos} con avisos</span>}
                 {conErrores > 0 && <span className="rounded-full bg-red-100/80 px-3 py-1 text-xs font-bold text-red-800">{conErrores} con errores</span>}
               </div>
-              <div className="max-h-[50dvh] overflow-auto rounded-2xl bg-white/40 ring-1 ring-white/80">
+              <div className="max-h-[50dvh] overflow-auto rounded-2xl bg-sup/40 ring-1 ring-sup/80">
                 <table className="w-full min-w-[40rem] text-left text-sm">
-                  <thead className="sticky top-0 bg-white/85 text-xs uppercase tracking-wider text-tinta-suave backdrop-blur">
+                  <thead className="sticky top-0 bg-sup/85 text-xs uppercase tracking-wider text-tinta-suave backdrop-blur">
                     <tr><th className="px-3 py-2">Fila</th><th className="px-3 py-2">Apellidos</th><th className="px-3 py-2">Nombres</th><th className="px-3 py-2">DNI</th><th className="px-3 py-2">Sexo</th><th className="px-3 py-2">Nacimiento</th><th className="px-3 py-2">Estado</th></tr>
                   </thead>
-                  <tbody className="divide-y divide-white/70">
+                  <tbody className="divide-y divide-sup/70">
                     {filas.slice(0, 300).map((f) => (
                       <tr key={f.fila} className={cx(f.errores.length ? "bg-red-50/60" : f.avisos.length ? "bg-amber-50/40" : "")}>
                         <td className="px-3 py-2 text-tinta-suave">{f.fila}</td>

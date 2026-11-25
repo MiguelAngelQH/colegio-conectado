@@ -44,11 +44,11 @@ export function Avisos() {
   const activar = async () => setPermiso(await Notification.requestPermission());
 
   const lista = (avisos: typeof datos.avisos, base: number) => (
-    <Tarjeta className="divide-y divide-white/70 overflow-hidden">
+    <Tarjeta className="divide-y divide-sup/70 overflow-hidden">
       {avisos.map((a, i) => {
         const { icono, tono } = ICONO[a.tipo];
         return (
-          <Link key={a.id} to={a.enlace} style={orden(Math.min(base + i, 8))} className="aparecer flex gap-3 px-4 py-3 transition hover:bg-white/40">
+          <Link key={a.id} to={a.enlace} style={orden(Math.min(base + i, 8))} className="aparecer flex gap-3 px-4 py-3 transition hover:bg-sup/40">
             <Gema icono={icono} tono={tono} tam="sm" />
             <span className="min-w-0 flex-1 text-sm">
               <span className={cx("block font-semibold", a.importante && "text-tinta")}>{a.titulo}</span>

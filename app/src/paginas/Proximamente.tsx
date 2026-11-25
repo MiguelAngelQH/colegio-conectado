@@ -11,7 +11,7 @@ export function Proximamente({ modulo }: { modulo: Modulo }) {
         <Tarjeta className="aparecer flex flex-col items-center gap-4 px-6 py-10 text-center" style={orden(1)}>
           <Gema icono={modulo.icono} tono={modulo.tono} tam="lg" />
           <h2 className="titulo-display max-w-md text-2xl font-bold">{modulo.descripcion}</h2>
-          <p className="flex items-center gap-2 rounded-full bg-white/50 px-4 py-2 text-sm text-tinta-suave ring-1 ring-white">
+          <p className="flex items-center gap-2 rounded-full bg-sup/50 px-4 py-2 text-sm text-tinta-suave ring-1 ring-sup">
             <Construction className="h-4 w-4" aria-hidden /> Se construye en la Fase {modulo.fase} del plan
           </p>
         </Tarjeta>

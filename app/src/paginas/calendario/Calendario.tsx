@@ -57,7 +57,7 @@ export function Calendario() {
   const puedeEditar = (e: Evento) => gestion || e.autor_id === usuario?.id;
 
   const ListaEventos = ({ lista }: { lista: Evento[] }) => (
-    <div className="divide-y divide-white/70">
+    <div className="divide-y divide-sup/70">
       {lista.map((e) => (
         <div key={e.id} className="flex items-start gap-3 px-4 py-3">
           <span className={cx("mt-1.5 h-2.5 w-2.5 shrink-0 rounded-full", COLOR[e.tipo])} aria-hidden />
@@ -83,9 +83,9 @@ export function Calendario() {
       <Contenido ancho="max-w-4xl">
         <Tarjeta className="aparecer p-3 sm:p-5">
           <div className="mb-3 flex items-center gap-2">
-            <button onClick={() => mover(-1)} className="rounded-full p-2 hover:bg-white/60" aria-label="Mes anterior"><ChevronLeft className="h-5 w-5" aria-hidden /></button>
+            <button onClick={() => mover(-1)} className="rounded-full p-2 hover:bg-sup/60" aria-label="Mes anterior"><ChevronLeft className="h-5 w-5" aria-hidden /></button>
             <h2 className="titulo-display flex-1 text-center text-xl font-bold">{MESES[mes.mes]} {mes.anio}</h2>
-            <button onClick={() => mover(1)} className="rounded-full p-2 hover:bg-white/60" aria-label="Mes siguiente"><ChevronRight className="h-5 w-5" aria-hidden /></button>
+            <button onClick={() => mover(1)} className="rounded-full p-2 hover:bg-sup/60" aria-label="Mes siguiente"><ChevronRight className="h-5 w-5" aria-hidden /></button>
           </div>
           <div className="grid grid-cols-7 gap-1 text-center text-[0.65rem] font-bold uppercase tracking-wider text-tinta-suave">
             {["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"].map((d) => <span key={d} className="py-1">{d}</span>)}
@@ -98,12 +98,12 @@ export function Calendario() {
               return (
                 <button key={d} onClick={() => setDia(d)} aria-label={`${Number(d.slice(8))}${feriado ? `, ${feriado}` : ""}${evs.length ? `, ${evs.length} eventos` : ""}`}
                   className={cx("flex min-h-14 flex-col items-center gap-1 rounded-xl p-1 text-sm transition sm:min-h-16",
-                    d === dia ? "bg-blue-600 text-white" : d === hoy ? "bg-white/80 ring-2 ring-blue-500" : "bg-white/40 hover:bg-white/70",
+                    d === dia ? "bg-blue-600 text-white" : d === hoy ? "bg-sup/80 ring-2 ring-blue-500" : "bg-sup/40 hover:bg-sup/70",
                     feriado && d !== dia && "text-red-700")}>
                   <span className="font-bold">{Number(d.slice(8))}</span>
                   <span className="flex flex-wrap justify-center gap-0.5">
-                    {feriado && <span className={cx("h-1.5 w-1.5 rounded-full", d === dia ? "bg-white" : COLOR.feriado)} />}
-                    {evs.slice(0, 3).map((e) => <span key={e.id} className={cx("h-1.5 w-1.5 rounded-full", d === dia ? "bg-white" : COLOR[e.tipo])} />)}
+                    {feriado && <span className={cx("h-1.5 w-1.5 rounded-full", d === dia ? "bg-sup" : COLOR.feriado)} />}
+                    {evs.slice(0, 3).map((e) => <span key={e.id} className={cx("h-1.5 w-1.5 rounded-full", d === dia ? "bg-sup" : COLOR[e.tipo])} />)}
                   </span>
                 </button>
               );

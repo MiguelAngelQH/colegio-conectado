@@ -96,10 +96,10 @@ export function Horario() {
                     <td className="whitespace-nowrap text-xs font-semibold text-tinta-suave">{f.inicio}<br />{f.fin}</td>
                     {DIAS.map((_, i) => {
                       const b = mostrar.find((x) => x.dia === i + 1 && x.inicio === f.inicio && x.fin === f.fin);
-                      if (!b) return <td key={i} className="rounded-xl bg-white/25" />;
+                      if (!b) return <td key={i} className="rounded-xl bg-sup/25" />;
                       const recreo = !b.area_id;
                       return (
-                        <td key={i} className={cx("rounded-xl px-2 py-2 align-top ring-1", recreo ? "bg-amber-50/70 ring-amber-100" : "bg-white/70 ring-white")}>
+                        <td key={i} className={cx("rounded-xl px-2 py-2 align-top ring-1", recreo ? "bg-amber-50/70 ring-amber-100" : "bg-sup/70 ring-sup")}>
                           <p className="font-semibold leading-tight">{recreo ? b.detalle ?? "Recreo" : datos.areas.get(b.area_id!) ?? "Clase"}</p>
                           {!recreo && (
                             <p className="text-[0.7rem] text-tinta-suave">
@@ -190,13 +190,13 @@ function EditorHorario({ seccionId, bloques, areas, onCerrar }: {
       <div className="space-y-3 pt-2 text-tinta">
         {areas.length === 0 && <p className="text-sm text-amber-800">Esta sección aún no tiene docentes asignados por área. Asígnelos en Configuración, Personal.</p>}
         {filas.map((f, i) => (
-          <div key={i} className="space-y-2 rounded-2xl bg-white/50 p-3 ring-1 ring-white">
+          <div key={i} className="space-y-2 rounded-2xl bg-sup/50 p-3 ring-1 ring-sup">
             <div className="flex items-end gap-2">
               <Campo etiqueta="Inicio"><Entrada type="time" value={f.inicio} onChange={(e) => cambiar(i, { inicio: e.target.value })} /></Campo>
               <Campo etiqueta="Fin"><Entrada type="time" value={f.fin} onChange={(e) => cambiar(i, { fin: e.target.value })} /></Campo>
               <span className="flex-1" />
               {filas.length > 1 && (
-                <button type="button" onClick={() => setFilas(filas.filter((_, k) => k !== i))} className="mb-1 rounded-full p-2 text-red-700 hover:bg-white/70" aria-label={`Quitar bloque ${f.inicio}`}>
+                <button type="button" onClick={() => setFilas(filas.filter((_, k) => k !== i))} className="mb-1 rounded-full p-2 text-red-700 hover:bg-sup/70" aria-label={`Quitar bloque ${f.inicio}`}>
                   <Trash2 className="h-4 w-4" aria-hidden />
                 </button>
               )}

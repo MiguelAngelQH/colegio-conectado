@@ -27,7 +27,7 @@ export function ProveedorAvisos({ children }: { children: ReactNode }) {
               a.tipo === "error" ? "text-red-800" : "text-tinta")}>
               <Icono className={cx("h-[18px] w-[18px] shrink-0", a.tipo === "error" ? "text-red-600" : "text-blue-600")} aria-hidden />
               <span>{a.texto}</span>
-              <button onClick={() => setAvisos((x) => x.filter((y) => y.id !== a.id))} className="rounded-full p-1 hover:bg-white/60" aria-label="Cerrar aviso">
+              <button onClick={() => setAvisos((x) => x.filter((y) => y.id !== a.id))} className="rounded-full p-1 hover:bg-sup/60" aria-label="Cerrar aviso">
                 <X className="h-4 w-4" aria-hidden />
               </button>
             </div>

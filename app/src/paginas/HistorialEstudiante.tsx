@@ -164,7 +164,7 @@ export function HistorialEstudiante() {
           {ultimo && (
             <dl className="grid gap-3 sm:grid-cols-2">
               {CAMPOS_INFORME.filter((c) => ultimo.i[c.clave]?.trim()).map((c) => (
-                <div key={c.clave} className={cx("rounded-2xl bg-white/55 p-3 ring-1 ring-white", c.clave === "recomendaciones" && "sm:col-span-2")}>
+                <div key={c.clave} className={cx("rounded-2xl bg-sup/55 p-3 ring-1 ring-sup", c.clave === "recomendaciones" && "sm:col-span-2")}>
                   <dt className="etiqueta">{c.titulo}</dt>
                   <dd className="mt-0.5 whitespace-pre-line text-sm text-tinta">{(ultimo.i as InformeTutor)[c.clave]}</dd>
                 </div>
@@ -185,11 +185,11 @@ export function HistorialEstudiante() {
                   <p className="text-xs text-tinta-suave">Tutor(a): {x.tutor ?? "-"}</p>
                 </div>
                 {x.matricula.situacion_final ? (
-                  <span className="rounded-full bg-white/70 px-2.5 py-0.5 text-xs font-bold ring-1 ring-white">{NOMBRE_SITUACION[x.matricula.situacion_final]}
+                  <span className="rounded-full bg-sup/70 px-2.5 py-0.5 text-xs font-bold ring-1 ring-sup">{NOMBRE_SITUACION[x.matricula.situacion_final]}
                     {x.matricula.resultado_recuperacion && ` · recuperación: ${x.matricula.resultado_recuperacion === "PRO" ? "aprobó" : "no aprobó"}`}</span>
                 ) : x.anio.id === datos.actual?.id ? <span className="rounded-full bg-sky-50 px-2.5 py-0.5 text-xs font-bold text-sky-900 ring-1 ring-sky-200">En curso</span> : null}
                 {x.asistencia && (
-                  <span className="inline-flex items-center gap-1 rounded-full bg-white/70 px-2.5 py-0.5 text-xs font-semibold ring-1 ring-white">
+                  <span className="inline-flex items-center gap-1 rounded-full bg-sup/70 px-2.5 py-0.5 text-xs font-semibold ring-1 ring-sup">
                     <CalendarCheck className="h-3.5 w-3.5" aria-hidden /> {x.asistencia.porcentaje === null ? "Sin registros de asistencia" : `${x.asistencia.porcentaje}% · ${x.asistencia.F} faltas`}
                   </span>
                 )}
@@ -226,7 +226,7 @@ export function HistorialEstudiante() {
                     <Fragment key={a.area.id}>
                       <tr><td colSpan={datos.columnas.length + 1} className="px-2 pb-1 pt-3 text-xs font-bold uppercase tracking-wide text-tinta-suave">{a.area.nombre}</td></tr>
                       {a.filas.map((f) => (
-                        <tr key={f.competencia.id} className="border-t border-white/70">
+                        <tr key={f.competencia.id} className="border-t border-sup/70">
                           <td className="max-w-[18rem] truncate px-2 py-1" title={f.competencia.nombre}>{f.competencia.nombre}</td>
                           {f.niveles.map((n, k) => <td key={k} className="px-1 py-1 text-center"><Chip n={n} /></td>)}
                         </tr>
@@ -256,7 +256,7 @@ export function HistorialEstudiante() {
         <section className="space-y-2">
           <h2 className="etiqueta px-1">Observaciones, entrevistas e incidencias</h2>
           {datos.eventos.length === 0 ? <Vacio icono={StickyNote} titulo="Sin registros" /> : (
-            <Tarjeta className="divide-y divide-white/70">
+            <Tarjeta className="divide-y divide-sup/70">
               {datos.eventos.map((e) => (
                 <div key={e.id} className="flex gap-3 px-4 py-3">
                   <Gema icono={e.icono} tono={e.tono} tam="sm" />

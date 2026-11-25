@@ -85,7 +85,7 @@ export function MisNotas() {
           </div>
           <div className="grid grid-cols-4 gap-2 text-center">
             {NIVELES.map((n, i) => (
-              <div key={n} className="rounded-2xl bg-white/45 py-2 ring-1 ring-white/80">
+              <div key={n} className="rounded-2xl bg-sup/45 py-2 ring-1 ring-sup/80">
                 <p className="titulo-display text-2xl font-bold">{conteo[i]}</p>
                 <p className="text-[0.65rem] font-semibold text-tinta-suave">{n} · {DESCRIPCION_NIVEL[n].nombre}</p>
               </div>
@@ -97,8 +97,8 @@ export function MisNotas() {
           <Vacio icono={BookOpenCheck} tono="tono-cielo" titulo="Aún no hay notas en este periodo">Aparecerán cuando los docentes las registren y se sincronicen.</Vacio>
         ) : delPeriodo.map((f, i) => (
           <Tarjeta key={f.area.id} className="aparecer overflow-hidden" style={orden(Math.min(i + 2, 8))}>
-            <h2 className="border-b border-white/70 px-5 py-3 font-bold">{f.area.nombre}</h2>
-            <ul className="divide-y divide-white/70">
+            <h2 className="border-b border-sup/70 px-5 py-3 font-bold">{f.area.nombre}</h2>
+            <ul className="divide-y divide-sup/70">
               {f.competencias.map((c) => {
                 const n = c.niveles[indice]!;
                 const texto = conclusion(c.competencia.id);

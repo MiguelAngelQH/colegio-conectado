@@ -77,13 +77,13 @@ function Centro() {
           </div>
           <div className="mt-3 grid grid-cols-4 gap-1.5">
             {pasos.map((p) => (
-              <div key={p.a} className={cx("h-2.5 rounded-full", p.listo ? "bg-gradient-to-r from-blue-400 to-sky-500 shadow-[0_0_10px_rgba(45,212,191,.6)]" : "bg-white/60")} />
+              <div key={p.a} className={cx("h-2.5 rounded-full", p.listo ? "bg-gradient-to-r from-blue-400 to-sky-500 shadow-[0_0_10px_rgba(45,212,191,.6)]" : "bg-sup/60")} />
             ))}
           </div>
         </Tarjeta>
 
-        <Link to="colegio" className="vidrio aparecer group flex items-center gap-4 p-4 transition hover:bg-white/55" style={orden(2)}>
-          <span className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-white/80 ring-1 ring-white">
+        <Link to="colegio" className="vidrio aparecer group flex items-center gap-4 p-4 transition hover:bg-sup/55" style={orden(2)}>
+          <span className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-sup/80 ring-1 ring-sup">
             {colegio?.insignia ? <img src={colegio.insignia} alt="" className="h-full w-full object-contain p-0.5" /> : <School className="h-6 w-6 text-tinta-suave" aria-hidden />}
           </span>
           <span className="min-w-0 flex-1">
@@ -96,7 +96,7 @@ function Centro() {
         <div className="space-y-3">
           {pasos.map((p, i) => (
             <Link key={p.a} to={p.a} style={orden(i + 2)}
-              className="vidrio aparecer group flex items-center gap-4 p-4 transition hover:bg-white/55 active:scale-[0.99]">
+              className="vidrio aparecer group flex items-center gap-4 p-4 transition hover:bg-sup/55 active:scale-[0.99]">
               <span className="titulo-display w-5 text-center text-lg font-bold text-tinta-suave">{i + 1}</span>
               <Gema icono={p.icono} tono={p.tono} />
               <span className="min-w-0 flex-1">
@@ -108,7 +108,7 @@ function Centro() {
           ))}
         </div>
 
-        <Link to="areas" className="vidrio aparecer group flex items-center gap-4 p-4 transition hover:bg-white/55">
+        <Link to="areas" className="vidrio aparecer group flex items-center gap-4 p-4 transition hover:bg-sup/55">
           <Gema icono={BookMarked} tono="tono-lila" />
           <span className="min-w-0 flex-1">
             <span className="block font-bold">Áreas y talleres</span>
@@ -118,7 +118,7 @@ function Centro() {
         </Link>
 
         {e?.anio && (
-          <Link to="cierre" className="vidrio aparecer group flex items-center gap-4 p-4 transition hover:bg-white/55">
+          <Link to="cierre" className="vidrio aparecer group flex items-center gap-4 p-4 transition hover:bg-sup/55">
             <Gema icono={ClipboardCheck} tono="tono-coral" />
             <span className="min-w-0 flex-1">
               <span className="block font-bold">Cierre del año {e.anio.anio}</span>

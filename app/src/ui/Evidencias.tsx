@@ -81,7 +81,7 @@ function Miniatura({ ev, blob, pendiente, onAbrir }: { ev: Evidencia; blob: Blob
   const url = useUrl(ev.tipo.startsWith("image/") ? blob : null);
   return (
     <button type="button" onClick={onAbrir} aria-label={`Ver ${ev.nombre}`}
-      className="group relative aspect-square overflow-hidden rounded-2xl bg-white/60 ring-1 ring-white transition hover:ring-blue-400">
+      className="group relative aspect-square overflow-hidden rounded-2xl bg-sup/60 ring-1 ring-sup transition hover:ring-blue-400">
       {url ? <img src={url} alt="" className="h-full w-full object-cover" />
         : <span className="flex h-full flex-col items-center justify-center gap-1 p-2 text-center text-[0.65rem] text-tinta-suave">
             <FileText className="h-6 w-6" aria-hidden /> <span className="line-clamp-2 break-all">{ev.nombre}</span>
@@ -115,7 +115,7 @@ function Visor({ ev, puedeBorrar, onCerrar, onBorrar }: { ev: Evidencia; puedeBo
         <Boton onClick={onCerrar}>Cerrar</Boton>
       </>}>
       <p className="mb-2 text-xs">{tamano(ev.bytes)}</p>
-      {estado === "cargando" && <div className="aspect-video animate-pulse rounded-2xl bg-white/60" />}
+      {estado === "cargando" && <div className="aspect-video animate-pulse rounded-2xl bg-sup/60" />}
       {estado === "listo" && url && ev.tipo.startsWith("image/") && <img src={url} alt={ev.nombre} className="max-h-[60dvh] w-full rounded-2xl object-contain" />}
       {estado === "listo" && !ev.tipo.startsWith("image/") && <p className="flex items-center gap-2"><FileText className="h-5 w-5" aria-hidden /> Archivo listo para abrir.</p>}
       {(estado === "sin-conexion" || estado === "no-subido") && (

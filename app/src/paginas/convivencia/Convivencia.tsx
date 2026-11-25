@@ -90,11 +90,11 @@ function ListaIncidencias() {
         {lista.length === 0 ? (
           <Vacio icono={ShieldCheck} tono="tono-musgo" titulo={filtro === "activas" ? "No hay incidencias activas" : "Sin incidencias"} />
         ) : (
-          <Tarjeta className="aparecer divide-y divide-white/70 overflow-hidden" style={orden(1)}>
+          <Tarjeta className="aparecer divide-y divide-sup/70 overflow-hidden" style={orden(1)}>
             {lista.map((i) => {
               const e = i.estudiante_id ? datos.ests.get(i.estudiante_id) : undefined;
               return (
-                <button key={i.id} onClick={() => navegar(i.id)} className="flex w-full items-center gap-3 px-4 py-3 text-left transition hover:bg-white/40">
+                <button key={i.id} onClick={() => navegar(i.id)} className="flex w-full items-center gap-3 px-4 py-3 text-left transition hover:bg-sup/40">
                   <Gema icono={ShieldAlert} tono={i.requiere_siseve ? "tono-coral" : "tono-ambar"} tam="sm" />
                   <span className="min-w-0 flex-1">
                     <span className="block truncate font-semibold">{i.tipo}</span>
@@ -144,7 +144,7 @@ function DialogoIncidencia({ estudianteInicial, onCerrar, onCreada }: { estudian
         <div>
           <span className="mb-1.5 block text-sm font-semibold">Estudiante involucrado</span>
           {elegido ? (
-            <div className="flex items-center justify-between rounded-2xl bg-white/60 px-4 py-2.5 ring-1 ring-white">
+            <div className="flex items-center justify-between rounded-2xl bg-sup/60 px-4 py-2.5 ring-1 ring-sup">
               <span className="font-semibold">{nombreCompleto(elegido)}</span>
               <Boton variante="fantasma" className="!min-h-8 !px-3 text-xs" onClick={() => setEstudianteId("")}>Cambiar</Boton>
             </div>
@@ -152,9 +152,9 @@ function DialogoIncidencia({ estudianteInicial, onCerrar, onCreada }: { estudian
             <>
               <Buscador valor={busca} onCambio={setBusca} placeholder="Buscar por apellido" />
               {busca && (
-                <div className="mt-1 max-h-40 overflow-y-auto rounded-2xl bg-white/70 ring-1 ring-white">
+                <div className="mt-1 max-h-40 overflow-y-auto rounded-2xl bg-sup/70 ring-1 ring-sup">
                   {filtrados.map((e) => (
-                    <button key={e.id} type="button" onClick={() => setEstudianteId(e.id)} className="block w-full px-4 py-2 text-left text-sm hover:bg-white">{nombreCompleto(e)}</button>
+                    <button key={e.id} type="button" onClick={() => setEstudianteId(e.id)} className="block w-full px-4 py-2 text-left text-sm hover:bg-sup">{nombreCompleto(e)}</button>
                   ))}
                 </div>
               )}
@@ -255,7 +255,7 @@ function DetalleIncidencia() {
         <section className="space-y-2">
           <h2 className="etiqueta px-1">Seguimiento</h2>
           {datos.acciones.length > 0 && (
-            <Tarjeta className="divide-y divide-white/70">
+            <Tarjeta className="divide-y divide-sup/70">
               {datos.acciones.map((a) => {
                 const u = datos.usuarios.get(a.autor_id);
                 return (

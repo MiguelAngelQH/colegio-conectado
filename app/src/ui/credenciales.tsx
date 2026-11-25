@@ -18,7 +18,7 @@ export function DialogoCredencial({ titulo, nombre, dni, email, clave, onCerrar 
   return (
     <Dialogo abierto titulo={titulo} onCerrar={onCerrar} acciones={<Boton onClick={onCerrar}>Entendido</Boton>}>
       <p>Entregue estos datos a <strong className="text-tinta">{nombre}</strong>. Al ingresar deberá elegir una contraseña propia.</p>
-      <dl className="mt-3 space-y-2 rounded-2xl bg-white/70 p-4 text-tinta ring-1 ring-white">
+      <dl className="mt-3 space-y-2 rounded-2xl bg-sup/70 p-4 text-tinta ring-1 ring-sup">
         <div>
           <dt className="etiqueta">Usuario</dt>
           <dd className="font-semibold">DNI {dni}{email && <span className="font-normal text-tinta-suave"> · o {email}</span>}</dd>
@@ -28,7 +28,7 @@ export function DialogoCredencial({ titulo, nombre, dni, email, clave, onCerrar 
           <dd className="flex items-center gap-2">
             <KeyRound className="h-4 w-4 shrink-0" aria-hidden />
             <strong className="font-mono text-lg tracking-wider">{clave}</strong>
-            <button type="button" onClick={copiar} className="ml-auto rounded-full p-2 hover:bg-white" aria-label="Copiar contraseña">
+            <button type="button" onClick={copiar} className="ml-auto rounded-full p-2 hover:bg-sup" aria-label="Copiar contraseña">
               {copiado ? <Check className="h-4 w-4 text-emerald-700" aria-hidden /> : <Copy className="h-4 w-4" aria-hidden />}
             </button>
           </dd>

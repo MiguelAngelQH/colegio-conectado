@@ -30,7 +30,7 @@ function leerMotivo(): string | null {
 /** Solo en el modo demostración: cuentas de prueba para presentar la app a cada rol. */
 function CuentasPrueba({ onElegir, deshabilitado }: { onElegir(dni: string): void; deshabilitado: boolean }) {
   return (
-    <div className="mt-6 border-t border-white/70 pt-5">
+    <div className="mt-6 border-t border-sup/70 pt-5">
       <p className="etiqueta">Modo demostración</p>
       <p className="mt-1 flex items-start gap-1.5 text-xs text-tinta-suave">
         <Info className="mt-px h-3.5 w-3.5 shrink-0" aria-hidden />
@@ -40,7 +40,7 @@ function CuentasPrueba({ onElegir, deshabilitado }: { onElegir(dni: string): voi
         {USUARIOS_DEMO.map((u, i) => (
           <li key={u.id} className="aparecer" style={orden(i + 2)}>
             <button type="button" onClick={() => onElegir(u.dni)} disabled={deshabilitado}
-              className="group flex w-full items-center gap-3 rounded-2xl bg-white/45 p-2 text-left ring-1 ring-white/80 transition hover:bg-white/75 active:scale-[0.98] disabled:opacity-60">
+              className="group flex w-full items-center gap-3 rounded-2xl bg-sup/45 p-2 text-left ring-1 ring-sup/80 transition hover:bg-sup/75 active:scale-[0.98] disabled:opacity-60">
               <Gema icono={ICONO_ROL[u.roles[0]]} tono={TONO_ROL[u.roles[0]]} tam="sm" />
               <span className="min-w-0 flex-1">
                 <span className="block text-sm font-semibold">{NOMBRE_ROL[u.roles[0]]} <span className="font-normal text-tinta-suave">· DNI {u.dni}</span></span>
@@ -84,7 +84,7 @@ export function Login() {
       <div className="fondo-cielo" aria-hidden />
       {/* Orbes de luz decorativos detrás del vidrio. */}
       <div aria-hidden className="pointer-events-none absolute -left-16 top-24 h-56 w-56 rounded-full bg-gradient-to-br from-sky-300/70 to-blue-500/60 blur-2xl" />
-      <div aria-hidden className="pointer-events-none absolute -right-10 top-[55%] h-64 w-64 rounded-full bg-gradient-to-br from-amber-200/80 to-orange-400/50 blur-2xl" />
+      <div aria-hidden className="pointer-events-none absolute -right-10 top-[55%] h-64 w-64 rounded-full bg-gradient-to-br from-slate-200/80 to-blue-800/40 blur-2xl" />
 
       <div className="relative mx-auto grid max-w-5xl grid-cols-[minmax(0,1fr)] items-center gap-8 lg:grid-cols-[1.1fr_1fr]">
         <section className="aparecer text-center lg:text-left">

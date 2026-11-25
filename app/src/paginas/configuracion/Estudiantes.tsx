@@ -82,7 +82,7 @@ export function EstudiantesPagina() {
                 Agréguelos uno por uno o importe la nómina desde Excel.
               </Vacio>
             ) : (
-              <Tarjeta className="aparecer divide-y divide-white/70 overflow-hidden" style={orden(2)}>
+              <Tarjeta className="aparecer divide-y divide-sup/70 overflow-hidden" style={orden(2)}>
                 {filtrados.map(({ m, est, apoderados }, i) => (
                   <FilaLista key={m.id} onClick={() => navegar(est.id)}>
                     <span className="w-5 text-right text-xs text-tinta-suave">{i + 1}</span>
@@ -235,7 +235,7 @@ export function FichaEstudiante() {
           </div>
         </Tarjeta>
 
-        <Tarjeta className="aparecer divide-y divide-white/70" style={orden(2)}>
+        <Tarjeta className="aparecer divide-y divide-sup/70" style={orden(2)}>
           <Dato etiqueta="Documento de identidad">{est.dni ? `DNI ${est.dni}` : "No registrado"}</Dato>
           <Dato etiqueta="Fecha de nacimiento">{est.fecha_nacimiento ? new Date(`${est.fecha_nacimiento}T12:00:00`).toLocaleDateString("es-PE", { dateStyle: "long" }) : "No registrada"}</Dato>
           <Dato etiqueta="Sexo">{est.sexo === "M" ? "Hombre" : est.sexo === "F" ? "Mujer" : "No registrado"}</Dato>
@@ -269,7 +269,7 @@ export function FichaEstudiante() {
           {datos.vinculos.length === 0 ? (
             <Vacio icono={HeartHandshake} tono="tono-coral" titulo="Sin apoderados">Registre al menos un apoderado para que reciba avisos y la libreta.</Vacio>
           ) : (
-            <Tarjeta className="divide-y divide-white/70">
+            <Tarjeta className="divide-y divide-sup/70">
               {datos.vinculos.map(({ v, a }) => (
                 <div key={v.id} className="flex items-center gap-3 px-4 py-3">
                   <Gema icono={HeartHandshake} tono="tono-coral" tam="sm" />
@@ -279,7 +279,7 @@ export function FichaEstudiante() {
                       {a?.dni && `DNI ${a.dni}`}{a?.telefono && <><Phone className="ml-1 h-3 w-3" aria-hidden /> {a.telefono}</>}
                     </p>
                   </div>
-                  <button onClick={() => quitarApoderado(v.id)} className="rounded-full p-2 text-tinta-suave hover:bg-white/60" aria-label="Desvincular apoderado">
+                  <button onClick={() => quitarApoderado(v.id)} className="rounded-full p-2 text-tinta-suave hover:bg-sup/60" aria-label="Desvincular apoderado">
                     <Trash2 className="h-4 w-4" aria-hidden />
                   </button>
                 </div>

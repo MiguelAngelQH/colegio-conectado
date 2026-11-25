@@ -14,7 +14,7 @@ import { Campo, Segmentado, Selector, Vacio } from "@/ui/formulario";
 function Barra({ porcentaje }: { porcentaje: number }) {
   const color = porcentaje >= 100 ? "from-emerald-400 to-blue-500" : porcentaje >= 60 ? "from-amber-300 to-amber-500" : "from-red-400 to-red-500";
   return (
-    <div className="h-2 overflow-hidden rounded-full bg-white/60">
+    <div className="h-2 overflow-hidden rounded-full bg-sup/60">
       <div className={cx("h-full rounded-full bg-gradient-to-r transition-all", color)} style={{ width: `${Math.min(100, porcentaje)}%` }} />
     </div>
   );
@@ -113,15 +113,15 @@ export function PanelNotas() {
           </span>
         </div>
         <div className="grid grid-cols-3 gap-3 text-center">
-          <div className="rounded-2xl bg-white/45 p-3 ring-1 ring-white/80">
+          <div className="rounded-2xl bg-sup/45 p-3 ring-1 ring-sup/80">
             <p className="titulo-display text-3xl font-bold">{total}%</p>
             <p className="text-xs text-tinta-suave">avance</p>
           </div>
-          <div className="rounded-2xl bg-white/45 p-3 ring-1 ring-white/80">
+          <div className="rounded-2xl bg-sup/45 p-3 ring-1 ring-sup/80">
             <p className="titulo-display text-3xl font-bold">{registradas}</p>
             <p className="text-xs text-tinta-suave">de {esperadas} notas</p>
           </div>
-          <div className={cx("rounded-2xl p-3 ring-1", sinConclusion ? "bg-amber-50/70 ring-amber-200" : "bg-white/45 ring-white/80")}>
+          <div className={cx("rounded-2xl p-3 ring-1", sinConclusion ? "bg-amber-50/70 ring-amber-200" : "bg-sup/45 ring-sup/80")}>
             <p className={cx("titulo-display text-3xl font-bold", sinConclusion > 0 && "text-amber-700")}>{sinConclusion}</p>
             <p className="text-xs text-tinta-suave">conclusiones pendientes</p>
           </div>
@@ -142,7 +142,7 @@ export function PanelNotas() {
         {porDocente.length === 0 ? (
           <Vacio icono={TriangleAlert} titulo="No hay asignaciones">Asigne áreas a los docentes en Configuración.</Vacio>
         ) : (
-          <Tarjeta className="divide-y divide-white/70">
+          <Tarjeta className="divide-y divide-sup/70">
             {porDocente.map(({ docente, lista, porcentaje, pendientes }) => (
               <details key={docente?.id ?? lista[0].asignacion.id} className="group px-4 py-3">
                 <summary className="flex cursor-pointer list-none items-center gap-3">

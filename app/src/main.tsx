@@ -8,7 +8,10 @@ import { SinConfigurar } from "./paginas/SinConfigurar";
 import { ActualizacionPWA } from "./ui/ActualizacionPWA";
 import { ProveedorAvisos } from "./ui/avisos";
 import { BarreraErrores } from "./ui/BarreraErrores";
+import { iniciarTema } from "./ui/tema";
 import "./index.css";
+
+iniciarTema();
 
 // Dentro del APK la app ya está empaquetada: no se registra el service worker de la PWA.
 const esApp = !!(window as unknown as { Capacitor?: { isNativePlatform?: () => boolean } }).Capacitor?.isNativePlatform?.();

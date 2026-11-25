@@ -59,7 +59,7 @@ function Revision({ d }: { d: DatosCierre }) {
       <Tarjeta className="p-4">
         <h3 className="font-bold">Notas por registrar</h3>
         {datos.docentes.length === 0 ? <p className="text-sm text-tinta-suave">Todos los docentes completaron sus notas.</p> : (
-          <ul className="mt-2 divide-y divide-white/70 text-sm">
+          <ul className="mt-2 divide-y divide-sup/70 text-sm">
             {datos.docentes.map((x) => <li key={x.nombre} className="flex justify-between py-1.5"><span>{x.nombre}</span><span className="font-semibold tabular-nums text-amber-800">{x.n} notas</span></li>)}
           </ul>
         )}
@@ -71,7 +71,7 @@ function Revision({ d }: { d: DatosCierre }) {
       <Tarjeta className="p-4">
         <h3 className="font-bold">Informes de tutoría para el próximo año</h3>
         {datos.informes.length === 0 ? <p className="text-sm text-tinta-suave">Todos los tutores completaron sus informes.</p> : (
-          <ul className="mt-2 divide-y divide-white/70 text-sm">
+          <ul className="mt-2 divide-y divide-sup/70 text-sm">
             {datos.informes.map(({ s, faltan, total }) => (
               <li key={s.id} className="flex justify-between py-1.5">
                 <span>{s.nombreLargo} <span className="text-tinta-suave">· {s.tutor ? nombreCompleto(s.tutor) : "sin tutor"}</span></span>
@@ -162,7 +162,7 @@ function Situacion({ d }: { d: DatosCierre }) {
       </Tarjeta>
       <p className="px-1 text-xs text-tinta-suave">{confirmadas} de {total} estudiantes con situación confirmada. Promovidos en esta sección: {conteo("PRO")}.</p>
       {visibles.length === 0 ? <Vacio icono={ClipboardCheck} titulo="Sin estudiantes en este filtro" /> : (
-        <Tarjeta className="divide-y divide-white/70 overflow-hidden">
+        <Tarjeta className="divide-y divide-sup/70 overflow-hidden">
           {visibles.map((f) => (
             <FilaSituacion key={`${f.matricula.id}-${f.matricula.situacion_final ?? ""}`} f={f} cerrado={cerrado}
               onCambio={(sit, motivo) => setCambios((c) => ({ ...c, [f.matricula.id]: { sit, motivo } }))} />
@@ -200,7 +200,7 @@ function Documentos({ d }: { d: DatosCierre }) {
         <span className="text-sm">Actas de todas las secciones en un solo archivo.</span>
         <Boton icono={FileDown} cargando={generando === "todas"} onClick={() => void generar("todas", () => descargarActas(d, d.secciones.map((s) => s.id), `actas_${d.anio.anio}.pdf`))}>Todas las actas</Boton>
       </Tarjeta>
-      <Tarjeta className="divide-y divide-white/70">
+      <Tarjeta className="divide-y divide-sup/70">
         {d.secciones.map((s) => {
           const filas = d.porSeccion.get(s.id) ?? [];
           return (

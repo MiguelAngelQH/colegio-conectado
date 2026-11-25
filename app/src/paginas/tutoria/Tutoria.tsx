@@ -91,7 +91,7 @@ function InicioTutoria() {
       <Contenido ancho="max-w-4xl">
         {pedidos && (pedidos.total > 0 || secciones.length > 0) && (
           <button onClick={() => navegar("pedidos")}
-            className={cx("vidrio aparecer flex w-full items-center gap-4 p-4 text-left transition hover:bg-white/55", pedidos.nuevos > 0 && "ring-2 ring-sky-300")}>
+            className={cx("vidrio aparecer flex w-full items-center gap-4 p-4 text-left transition hover:bg-sup/55", pedidos.nuevos > 0 && "ring-2 ring-sky-300")}>
             <Gema icono={LifeBuoy} tono="tono-rosa" tam="sm" />
             <span className="min-w-0 flex-1">
               <span className="block font-bold">Pedidos de ayuda</span>
@@ -125,13 +125,13 @@ function InicioTutoria() {
                     <TriangleAlert className="h-4 w-4" aria-hidden /> {enRiesgo} {enRiesgo === 1 ? "estudiante necesita" : "estudiantes necesitan"} atención
                   </p>
                 )}
-                <Tarjeta className="divide-y divide-white/70 overflow-hidden">
+                <Tarjeta className="divide-y divide-sup/70 overflow-hidden">
                   {[...datos.estudiantes]
                     .sort((a, b) => datos.ind.get(b.id)!.alertas.length - datos.ind.get(a.id)!.alertas.length)
                     .map((e) => {
                       const i = datos.ind.get(e.id)!;
                       return (
-                        <button key={e.id} onClick={() => navegar(`estudiante/${e.id}`)} className="flex w-full items-center gap-3 px-4 py-3 text-left transition hover:bg-white/40">
+                        <button key={e.id} onClick={() => navegar(`estudiante/${e.id}`)} className="flex w-full items-center gap-3 px-4 py-3 text-left transition hover:bg-sup/40">
                           <span className={cx("gema titulo-display h-11 w-11 shrink-0 text-sm font-bold", i.alertas.length ? "tono-ambar" : "tono-musgo")}>
                             <span className="relative z-10">{iniciales(e.nombres, e.apellidos)}</span>
                           </span>

@@ -66,7 +66,7 @@ function EditorPeriodos({ periodos, onCambio, cerrados = [] }: { periodos: Perio
   return (
     <div className="space-y-2">
       {periodos.map((p, i) => (
-        <div key={p.numero} className="grid grid-cols-[minmax(0,1fr)] items-end gap-2 rounded-2xl bg-white/35 p-3 ring-1 ring-white/70 sm:grid-cols-[9rem_1fr_1fr]">
+        <div key={p.numero} className="grid grid-cols-[minmax(0,1fr)] items-end gap-2 rounded-2xl bg-sup/35 p-3 ring-1 ring-sup/70 sm:grid-cols-[9rem_1fr_1fr]">
           <p className="flex items-center gap-1.5 self-center font-bold">
             {p.nombre}
             {cerrados.includes(p.numero) && <Lock className="h-3.5 w-3.5 text-tinta-suave" aria-label="Cerrado" />}
@@ -166,7 +166,7 @@ function NuevoAnio({ anioSugerido, grados, hayAnterior, onCancelar, onCreado }: 
         </Aviso>
       )}
       {hayAnterior && (
-        <div className="space-y-2 rounded-2xl bg-white/40 p-4 ring-1 ring-white/80">
+        <div className="space-y-2 rounded-2xl bg-sup/40 p-4 ring-1 ring-sup/80">
           <Casilla marcada={promover} onCambio={setPromover}>Matricular a los estudiantes en su nuevo grado según la situación final</Casilla>
           {promover && vistaPrevia && (
             <ul className="space-y-0.5 pl-1 text-sm text-tinta-suave">

@@ -55,7 +55,7 @@ function DialogoPedirAyuda({ estudianteId, para, tutor, onCerrar }: {
             {(Object.keys(MOTIVOS) as MotivoSolicitud[]).map((m) => (
               <button key={m} type="button" role="radio" aria-checked={motivo === m} onClick={() => setMotivo(m)}
                 className={cx("rounded-2xl px-3 py-2.5 text-left text-sm font-semibold ring-1 transition",
-                  motivo === m ? "bg-blue-50 text-blue-900 ring-2 ring-blue-500" : "bg-white/60 ring-white hover:bg-white")}>
+                  motivo === m ? "bg-blue-50 text-blue-900 ring-2 ring-blue-500" : "bg-sup/60 ring-sup hover:bg-sup")}>
                 {MOTIVOS[m][para]}
               </button>
             ))}
@@ -149,7 +149,7 @@ export function MiTutoria() {
         {datos.pedidos.length > 0 && (
           <section className="aparecer space-y-2" style={orden(2)}>
             <h2 className="etiqueta px-1">{esEstudiante ? "Mis pedidos" : "Sus pedidos"}</h2>
-            <Tarjeta className="divide-y divide-white/70">
+            <Tarjeta className="divide-y divide-sup/70">
               {datos.pedidos.map((s) => (
                 <TarjetaPedido key={s.id} s={s} para={para}
                   acciones={ABIERTAS.includes(s.estado) && <Boton variante="fantasma" icono={X} onClick={() => void cancelar(s)}>Cancelar pedido</Boton>} />

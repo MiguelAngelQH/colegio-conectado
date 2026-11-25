@@ -49,7 +49,7 @@ export function PersonalPagina() {
           <Vacio icono={Users} tono="tono-ambar" titulo={busca ? "Sin resultados" : "Aún no hay personal"}
             accion={!busca && <Boton icono={UserPlus} onClick={() => setCreando(true)}>Agregar personal</Boton>} />
         ) : (
-          <Tarjeta className="aparecer divide-y divide-white/70 overflow-hidden" style={orden(1)}>
+          <Tarjeta className="aparecer divide-y divide-sup/70 overflow-hidden" style={orden(1)}>
             {filtrados.map((u) => {
               const n = asignaciones.filter((a) => a.docente_id === u.id).length;
               return (
@@ -200,7 +200,7 @@ export function FichaPersonal() {
           <Avatar u={persona} tam="h-16 w-16 text-xl" />
           <div className="min-w-0 flex-1">
             <div className="flex flex-wrap gap-1.5">
-              {persona.roles.map((r) => <span key={r} className="rounded-full bg-white/60 px-3 py-1 text-xs font-semibold ring-1 ring-white">{NOMBRE_ROL[r]}</span>)}
+              {persona.roles.map((r) => <span key={r} className="rounded-full bg-sup/60 px-3 py-1 text-xs font-semibold ring-1 ring-sup">{NOMBRE_ROL[r]}</span>)}
               {!persona.activo && <span className="rounded-full bg-slate-200/80 px-3 py-1 text-xs font-bold">Inactivo</span>}
             </div>
             <p className="mt-1.5 text-sm text-tinta-suave">{persona.dni ? `DNI ${persona.dni}` : "Sin DNI"}{persona.email && ` · ${persona.email}`}</p>
@@ -220,7 +220,7 @@ export function FichaPersonal() {
                 {e.secciones.length ? "Asigne las áreas y secciones donde enseña para que pueda registrar notas." : "Primero cree las secciones (paso 2)."}
               </Vacio>
             ) : (
-              <Tarjeta className="divide-y divide-white/70">
+              <Tarjeta className="divide-y divide-sup/70">
                 {porSeccion.map(({ s, asig }) => (
                   <div key={s.id} className="px-4 py-3">
                     <p className="font-bold">{s.nombreLargo}</p>
@@ -228,7 +228,7 @@ export function FichaPersonal() {
                       {asig.map((a) => (
                         <span key={a.id} className="inline-flex items-center gap-1 rounded-full bg-sky-100/80 py-1 pl-3 pr-1 text-xs font-semibold text-sky-900">
                           {areaPorId.get(a.area_id)?.nombre ?? "Área"}
-                          <button onClick={() => quitar(a.id)} className="rounded-full p-1 hover:bg-white/70" aria-label={`Quitar ${areaPorId.get(a.area_id)?.nombre}`}>
+                          <button onClick={() => quitar(a.id)} className="rounded-full p-1 hover:bg-sup/70" aria-label={`Quitar ${areaPorId.get(a.area_id)?.nombre}`}>
                             <Trash2 className="h-3.5 w-3.5" aria-hidden />
                           </button>
                         </span>
@@ -242,7 +242,7 @@ export function FichaPersonal() {
         )}
 
         {persona.id !== yo?.id && !persona.roles.includes("ugel") && (
-          <Tarjeta className="divide-y divide-white/70">
+          <Tarjeta className="divide-y divide-sup/70">
             <div className="flex flex-wrap items-center justify-between gap-3 p-4">
               <p className="min-w-0 flex-1 text-sm text-tinta-suave">
                 Ingresa con su DNI{persona.dni ? ` ${persona.dni}` : ""}{persona.email ? ` o con ${persona.email}` : ""}. Si olvidó su contraseña, genere una temporal.

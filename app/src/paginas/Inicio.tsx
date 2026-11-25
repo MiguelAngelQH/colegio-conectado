@@ -103,7 +103,7 @@ export function Inicio() {
                 {p.estado === "abierto" ? "Abierto" : "Cerrado"}
               </span>
             </div>
-            <div className="mt-4 h-2.5 overflow-hidden rounded-full bg-white/60 shadow-[inset_0_1px_3px_rgba(11,46,51,.15)]">
+            <div className="mt-4 h-2.5 overflow-hidden rounded-full bg-sup/60 shadow-[inset_0_1px_3px_rgba(11,46,51,.15)]">
               <div className="h-full rounded-full bg-gradient-to-r from-blue-400 to-sky-500 shadow-[0_0_12px_rgba(56,189,248,.6)]" style={{ width: `${aunNoEmpieza ? 0 : avance}%` }} />
             </div>
             <p className="mt-2 text-xs text-tinta-suave">
@@ -123,7 +123,7 @@ export function Inicio() {
               </div>
               <div className="mt-3 grid grid-cols-3 gap-2 text-center">
                 {[[h.ind.asistencia === null ? "-" : `${h.ind.asistencia}%`, "asistencia"], [h.ind.faltas, "faltas"], [h.ind.notasC, "notas en C"]].map(([v, t]) => (
-                  <div key={t as string} className="rounded-2xl bg-white/45 py-2 ring-1 ring-white/80">
+                  <div key={t as string} className="rounded-2xl bg-sup/45 py-2 ring-1 ring-sup/80">
                     <p className="titulo-display text-xl font-bold">{v}</p>
                     <p className="text-[0.65rem] text-tinta-suave">{t}</p>
                   </div>
@@ -141,7 +141,7 @@ export function Inicio() {
       <section aria-label="Módulos" className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
         {modulos.map((m, i) => (
           <Link key={m.id} to={m.ruta} style={orden(i + 2)}
-            className="vidrio aparecer group flex min-h-[8.5rem] flex-col justify-between p-4 transition hover:-translate-y-0.5 hover:bg-white/55 active:scale-[0.97]">
+            className="vidrio aparecer group flex min-h-[8.5rem] flex-col justify-between p-4 transition hover:-translate-y-0.5 hover:bg-sup/55 active:scale-[0.97]">
             <div className="flex items-start justify-between">
               <Gema icono={m.icono} tono={m.tono} />
               <ArrowUpRight className="h-4 w-4 text-tinta-suave opacity-0 transition group-hover:opacity-100" aria-hidden />

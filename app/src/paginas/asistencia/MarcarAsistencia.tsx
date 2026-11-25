@@ -144,7 +144,7 @@ export function MarcarAsistencia() {
         {datos.marcas.length > 0 && (
           <section className="space-y-2">
             <h2 className="etiqueta px-1">Mis últimas marcas</h2>
-            <Tarjeta className="divide-y divide-white/70">
+            <Tarjeta className="divide-y divide-sup/70">
               {datos.marcas.map(({ m, d, pendiente, rechazo }) => (
                 <div key={m.id} className="flex items-center gap-3 px-4 py-3 text-sm">
                   <span className="min-w-0 flex-1">
