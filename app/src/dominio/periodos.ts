@@ -56,3 +56,14 @@ export function validarPeriodos(anio: number, periodos: PeriodoBorrador[]): stri
   });
   return errores;
 }
+
+/** Periodo en curso; si hoy cae entre periodos, el próximo; si ya terminaron todos, el último. */
+export function periodoVigente<P extends Pick<Periodo, "numero" | "inicio" | "fin">>(periodos: P[], hoy = new Date().toISOString().slice(0, 10)): P | undefined {
+  const ordenados = [...periodos].sort((a, b) => a.numero - b.numero);
+  return ordenados.find((p) => p.inicio <= hoy && hoy <= p.fin) ?? ordenados.find((p) => p.inicio > hoy) ?? ordenados.at(-1);
+}
+
+/** Porcentaje transcurrido del periodo (0 a 100). */
+export function avancePeriodo(p: Pick<Periodo, "inicio" | "fin">, hoy = new Date().toISOString().slice(0, 10)): number {
+  return Math.min(100, Math.max(0, ((Date.parse(hoy) - Date.parse(p.inicio)) / (Date.parse(p.fin) - Date.parse(p.inicio))) * 100));
+}

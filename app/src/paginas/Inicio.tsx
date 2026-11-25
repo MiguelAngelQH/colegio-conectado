@@ -7,15 +7,11 @@ import { vivas } from "@/db/repositorio";
 import { asistenciaDelAnio } from "@/datos/consultas";
 import { hijosDe } from "@/datos/familia";
 import { indicadores, type Indicadores } from "@/dominio/seguimiento";
-import type { Periodo } from "@/db/tipos";
+import { avancePeriodo, periodoVigente } from "@/dominio/periodos";
 import { Contenido, Gema, Tarjeta, orden } from "@/ui/componentes";
 
 const hoyISO = () => new Date().toISOString().slice(0, 10);
 
-function periodoVigente(periodos: Periodo[], hoy = hoyISO()): Periodo | undefined {
-  const ordenados = [...periodos].sort((a, b) => a.numero - b.numero);
-  return ordenados.find((p) => p.inicio <= hoy && hoy <= p.fin) ?? ordenados.find((p) => p.inicio > hoy) ?? ordenados.at(-1);
-}
 
 function saludo() {
   const h = new Date().getHours();
@@ -75,7 +71,7 @@ export function Inicio() {
   const modulos = modulosPara(usuario.roles).filter((m) => m.id !== "inicio" && m.id !== "perfil");
   const p = datos?.periodo;
   const hoy = hoyISO();
-  const avance = p ? Math.min(100, Math.max(0, ((Date.parse(hoy) - Date.parse(p.inicio)) / (Date.parse(p.fin) - Date.parse(p.inicio))) * 100)) : 0;
+  const avance = p ? avancePeriodo(p, hoy) : 0;
   const aunNoEmpieza = p ? hoy < p.inicio : false;
 
   return (
