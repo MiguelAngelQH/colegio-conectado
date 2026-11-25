@@ -9,6 +9,7 @@ import { hijosDe } from "@/datos/familia";
 import { indicadores, type Indicadores } from "@/dominio/seguimiento";
 import { avancePeriodo, periodoVigente } from "@/dominio/periodos";
 import { Contenido, Gema, Tarjeta, orden } from "@/ui/componentes";
+import { TuDia } from "@/ui/TuDia";
 
 const hoyISO = () => new Date().toISOString().slice(0, 10);
 
@@ -108,6 +109,8 @@ export function Inicio() {
           </Tarjeta>
         )}
       </section>
+
+      {usuario.roles.some((r) => r !== "ugel") && <TuDia usuario={usuario} className="aparecer" style={orden(2)} />}
 
       {datos && datos.familia.length > 0 && (
         <section className="grid gap-3 sm:grid-cols-2">
