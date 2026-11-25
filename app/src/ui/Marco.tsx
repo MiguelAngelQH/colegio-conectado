@@ -21,15 +21,15 @@ export function Marco() {
   const colegio = useLiveQuery(() => (usuario?.colegio_id ? db.tabla("colegio").get(usuario.colegio_id) : undefined), [usuario?.colegio_id]);
 
   const [contraido, setContraido] = useState(() => localStorage.getItem("menu-contraido") === "1");
-  const [abiertos, setAbiertos] = useState<Set<string>>(new Set());
+  const [abierto, setAbierto] = useState<string | null>(null);
   const menu = useMemo(() => menuPara(usuario?.roles ?? []), [usuario?.roles]);
   const activo = itemActivo(menu.grupos, ubicacion.pathname);
   const grupoActivo = menu.grupos.find((g) => activo && g.items.includes(activo))?.id;
 
   useEffect(() => setHojaAbierta(false), [ubicacion.pathname]);
-  // El grupo de la página actual se despliega solo.
+  // El grupo de la página actual se despliega solo (y se pliegan los demás).
   useEffect(() => {
-    if (grupoActivo) setAbiertos((a) => (a.has(grupoActivo) ? a : new Set(a).add(grupoActivo)));
+    if (grupoActivo) setAbierto(grupoActivo);
   }, [grupoActivo]);
   if (!usuario) return null;
 
@@ -89,10 +89,10 @@ export function Marco() {
               {!contraido && <span className="truncate">Inicio</span>}
             </NavLink>
             {menu.grupos.map((g) => (
-              <GrupoLateral key={g.id} g={g} contraido={contraido} abierto={abiertos.has(g.id)} activo={activo}
+              <GrupoLateral key={g.id} g={g} contraido={contraido} abierto={abierto === g.id} activo={activo}
                 onAlternar={() => {
-                  if (contraido) { alternarMenu(); setAbiertos((a) => new Set(a).add(g.id)); }
-                  else setAbiertos((a) => { const n = new Set(a); if (n.has(g.id)) n.delete(g.id); else n.add(g.id); return n; });
+                  if (contraido) { alternarMenu(); setAbierto(g.id); }
+                  else setAbierto((a) => (a === g.id ? null : g.id));
                 }} />
             ))}
           </nav>
@@ -131,7 +131,7 @@ export function Marco() {
 
       <main className={cx("lg:pr-2", margen)}>
         {/* Los módulos se cargan bajo demanda: mientras tanto se mantiene el marco y se muestra un indicador. */}
-        <Suspense fallback={<div className="flex justify-center p-12" role="status"><LoaderCircle className="h-7 w-7 animate-spin text-teal-600" aria-label="Cargando" /></div>}>
+        <Suspense fallback={<div className="flex justify-center p-12" role="status"><LoaderCircle className="h-7 w-7 animate-spin text-blue-600" aria-label="Cargando" /></div>}>
           <Outlet />
         </Suspense>
       </main>
@@ -183,8 +183,8 @@ export function Marco() {
             </div>
             <div className="space-y-1">
               {menu.grupos.map((g) => (
-                <GrupoLateral key={g.id} g={g} contraido={false} abierto={abiertos.has(g.id)} activo={activo}
-                  onAlternar={() => setAbiertos((a) => { const n = new Set(a); if (n.has(g.id)) n.delete(g.id); else n.add(g.id); return n; })} />
+                <GrupoLateral key={g.id} g={g} contraido={false} abierto={abierto === g.id} activo={activo}
+                  onAlternar={() => setAbierto((a) => (a === g.id ? null : g.id))} />
               ))}
             </div>
             <button onClick={pedirSalida} className="mt-5 flex w-full items-center justify-center gap-2 rounded-full bg-red-50/70 py-3 text-sm font-semibold text-red-700 ring-1 ring-red-200/70">
