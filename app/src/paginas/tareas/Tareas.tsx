@@ -24,6 +24,7 @@ export function Tareas() {
   const docente = !!usuario?.roles.some((r) => r === "docente" || r === "tutor");
   const gestion = !!usuario?.roles.some((r) => r === "director" || r === "subdirector");
   const familia = !docente && !gestion;
+  const esApoderado = !!usuario?.roles.includes("apoderado");
   const [cursoId, setCursoId] = useState("");
   const [editando, setEditando] = useState<Tarea | "nueva" | null>(null);
   const claveHechas = `cc.tareasHechas.${usuario?.id}`;
@@ -88,7 +89,7 @@ export function Tareas() {
 
   return (
     <>
-      <Encabezado etiqueta="Clases" titulo="Tareas" subtitulo={familia ? "Lo que dejaron tus docentes y cuándo hay que entregarlo." : "Deje tareas a sus secciones: la familia recibe el aviso."}
+      <Encabezado etiqueta="Clases" titulo="Tareas" subtitulo={!familia ? "Deje tareas a sus secciones: la familia recibe el aviso." : esApoderado ? `Lo que dejaron los docentes de ${hijo?.nombres.split(" ")[0] ?? "su hijo(a)"} y cuándo entregarlo.` : "Lo que dejaron tus docentes y cuándo hay que entregarlo."}
         accion={!familia && curso ? <Boton icono={Plus} onClick={() => setEditando("nueva")}>Nueva tarea</Boton> : undefined} />
       <Contenido ancho="max-w-3xl">
         {!familia && (
