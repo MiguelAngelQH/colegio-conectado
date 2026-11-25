@@ -20,7 +20,9 @@ export function Horario() {
   const { usuario } = useApp();
   const { hijo } = useHijos(usuario);
   const gestion = !!usuario?.roles.some((r) => r === "director" || r === "subdirector");
-  const personal = !!usuario?.roles.some((r) => ["docente", "tutor", "auxiliar"].includes(r));
+  // "Mi horario" es para quien dicta clases; la dirección y el auxiliar ven todas las secciones.
+  const personal = !!usuario?.roles.some((r) => r === "docente" || r === "tutor");
+  const veTodo = gestion || !!usuario?.roles.includes("auxiliar");
   const [vista, setVista] = useState("");
   const [editando, setEditando] = useState(false);
 
@@ -30,10 +32,10 @@ export function Horario() {
     const todas = anio ? await seccionesDetalle(anio.id) : [];
     const asig = vivas(await db.tabla("docente_asignacion").toArray());
     let secciones: SeccionDetalle[] = todas;
-    if (!gestion && personal) {
+    if (!veTodo && personal) {
       const mias = new Set([...asig.filter((a) => a.docente_id === usuario.id).map((a) => a.seccion_id), ...todas.filter((s) => s.tutor_id === usuario.id).map((s) => s.id)]);
       secciones = todas.filter((s) => mias.has(s.id));
-    } else if (!gestion) {
+    } else if (!veTodo) {
       const m = hijo ? await matriculaActual(hijo.id) : undefined;
       secciones = todas.filter((s) => s.id === m?.seccion_id);
     }
@@ -41,11 +43,11 @@ export function Horario() {
     const areas = new Map((await db.tabla("area").toArray()).map((a) => [a.id, a.nombre]));
     const docentes = new Map((await db.tabla("usuario").toArray()).map((u) => [u.id, `${u.nombres.split(" ")[0]} ${u.apellidos.split(" ")[0]}`]));
     return { secciones, todas, asig, bloques, areas, docentes };
-  }, [usuario?.id, hijo?.id, gestion, personal]);
+  }, [usuario?.id, hijo?.id, veTodo, personal]);
 
   useEffect(() => {
-    if (datos && !vista) setVista(personal && !gestion ? "yo" : datos.secciones[0]?.id ?? "");
-  }, [datos, vista, personal, gestion]);
+    if (datos && !vista) setVista(personal && !veTodo ? "yo" : datos.secciones[0]?.id ?? "");
+  }, [datos, vista, personal, veTodo]);
 
   const mostrar = useMemo(() => {
     if (!datos) return [];
