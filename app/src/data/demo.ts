@@ -89,7 +89,7 @@ const hoyLocal = () => {
 };
 
 /** Cambia este número cuando cambien los datos de demo: los equipos vuelven a sembrar. */
-export const VERSION_DEMO = 18;
+export const VERSION_DEMO = 19;
 
 export async function datosDemo(hoyReal = hoyLocal()): Promise<Partial<Record<NombreTabla, Fila[]>>> {
   const r = rng(42);
@@ -399,6 +399,8 @@ export async function datosDemo(hoyReal = hoyLocal()): Promise<Partial<Record<No
   // Horario de las secciones de secundaria (lunes a viernes, 6 bloques y recreo) y algunas tareas.
   const BLOQUES = [["08:00", "08:45"], ["08:45", "09:30"], ["09:30", "10:15"], ["10:15", "10:35"], ["10:35", "11:20"], ["11:20", "12:05"], ["12:05", "12:50"]];
   const horario: Fila[] = [];
+  // Un docente no puede estar en dos secciones a la vez: se elige el primero libre en ese bloque.
+  const ocupado = new Set<string>();
   for (const s of [secSec, sec5, sec1]) {
     const delaSeccion = asignaciones.filter((a) => a.seccion_id === s.id);
     if (!delaSeccion.length) continue;
@@ -406,7 +408,16 @@ export async function datosDemo(hoyReal = hoyLocal()): Promise<Partial<Record<No
     for (let dia = 1; dia <= 5; dia++) {
       BLOQUES.forEach(([inicio, fin], b) => {
         const recreo = b === 3;
-        const a = recreo ? null : delaSeccion[(k++ + dia) % delaSeccion.length];
+        let a: (typeof delaSeccion)[number] | null = null;
+        if (!recreo) {
+          const base = k++ + dia;
+          for (let n = 0; n < delaSeccion.length && !a; n++) {
+            const c = delaSeccion[(base + n) % delaSeccion.length];
+            if (!ocupado.has(`${c.docente_id}|${dia}|${b}`)) a = c;
+          }
+          if (!a) return; // bloque libre: ningún docente de la sección está disponible
+          ocupado.add(`${a.docente_id}|${dia}|${b}`);
+        }
         horario.push({
           id: id("fe200000", horario.length + 1), colegio_id: CID, seccion_id: s.id, dia, inicio, fin,
           area_id: a?.area_id ?? null, docente_id: a?.docente_id ?? null, detalle: recreo ? "Recreo" : null,

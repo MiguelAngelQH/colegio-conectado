@@ -2,7 +2,8 @@
 // clases; el estudiante y la familia ven el de su sección. Funciona sin conexión.
 import { useEffect, useMemo, useState } from "react";
 import { useLiveQuery } from "dexie-react-hooks";
-import { CalendarClock, Pencil, Plus, Save, Trash2 } from "lucide-react";
+import { CalendarClock, Info, Pencil, Plus, Save, Trash2, TriangleAlert } from "lucide-react";
+import { DIAS, HORA_PEDAGOGICA, RECREO, minutos, validarHorario, type AreaHorario, type ClaseOtraSeccion, type FilaHorario } from "@/dominio/horario";
 import { db, useApp } from "@/app/contexto";
 import { anioActivo, matriculaActual, seccionesDetalle, type SeccionDetalle } from "@/datos/consultas";
 import { useHijos } from "@/datos/familia";
@@ -13,8 +14,6 @@ import { textoGuardado, useAvisar } from "@/ui/avisos";
 import { Boton, Contenido, Dialogo, Encabezado, Tarjeta, cx } from "@/ui/componentes";
 import { Campo, Entrada, Selector, Vacio } from "@/ui/formulario";
 
-const DIAS = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes"];
-const RECREO = "__recreo";
 
 export function Horario() {
   const { usuario } = useApp();
@@ -118,21 +117,20 @@ export function Horario() {
       </Contenido>
       {editando && vista && vista !== "yo" && (
         <EditorHorario seccionId={vista} bloques={datos.bloques.filter((b) => b.seccion_id === vista)}
-          areas={datos.asig.filter((a) => a.seccion_id === vista).map((a) => ({ id: a.area_id, nombre: datos.areas.get(a.area_id) ?? "Área", docenteId: a.docente_id }))}
+          areas={datos.asig.filter((a) => a.seccion_id === vista).map((a) => ({ id: a.area_id, nombre: datos.areas.get(a.area_id) ?? "Área", docenteId: a.docente_id, docente: datos.docentes.get(a.docente_id) ?? "El docente" }))}
+          otras={datos.bloques.filter((b) => b.seccion_id !== vista && b.docente_id).map((b) => ({ docenteId: b.docente_id!, dia: b.dia, inicio: b.inicio, fin: b.fin, seccion: nombreSeccion(b.seccion_id) }))}
           onCerrar={() => setEditando(false)} />
       )}
     </>
   );
 }
 
-interface FilaEditor { inicio: string; fin: string; dias: string[] }
-
-function EditorHorario({ seccionId, bloques, areas, onCerrar }: {
-  seccionId: string; bloques: HorarioClase[]; areas: { id: string; nombre: string; docenteId: string }[]; onCerrar(): void;
+function EditorHorario({ seccionId, bloques, areas, otras, onCerrar }: {
+  seccionId: string; bloques: HorarioClase[]; areas: AreaHorario[]; otras: ClaseOtraSeccion[]; onCerrar(): void;
 }) {
   const { colegioId } = useApp();
   const avisar = useAvisar();
-  const inicial = (): FilaEditor[] => {
+  const inicial = (): FilaHorario[] => {
     const franjas = [...new Map(bloques.map((b) => [`${b.inicio}-${b.fin}`, { inicio: b.inicio, fin: b.fin }])).values()].sort((a, b) => a.inicio.localeCompare(b.inicio));
     if (!franjas.length) return [{ inicio: "08:00", fin: "08:45", dias: ["", "", "", "", ""] }];
     return franjas.map((f) => ({
@@ -143,19 +141,23 @@ function EditorHorario({ seccionId, bloques, areas, onCerrar }: {
       }),
     }));
   };
-  const [filas, setFilas] = useState<FilaEditor[]>(inicial);
+  const [filas, setFilas] = useState<FilaHorario[]>(inicial);
   const [guardando, setGuardando] = useState(false);
-  const horaValida = (h: string) => /^\d{2}:\d{2}$/.test(h);
-  const valido = filas.every((f) => horaValida(f.inicio) && horaValida(f.fin) && f.inicio < f.fin);
-  const cambiar = (i: number, c: Partial<FilaEditor>) => setFilas(filas.map((f, k) => (k === i ? { ...f, ...c } : f)));
-  const siguiente = () => {
+  const revision = useMemo(() => validarHorario(filas, areas, otras), [filas, areas, otras]);
+  const cantidadErrores = revision.errores.reduce((t, e) => t + e.length, 0) + revision.choques.flat().filter(Boolean).length;
+
+  const cambiar = (i: number, c: Partial<FilaHorario>) => setFilas(filas.map((f, k) => (k === i ? { ...f, ...c } : f)));
+  const siguiente = (): FilaHorario => {
     const ult = filas[filas.length - 1];
-    const [h, m] = (ult?.fin ?? "08:00").split(":").map(Number);
-    const fin = new Date(0, 0, 0, h, m + 45);
-    return { inicio: ult?.fin ?? "08:00", fin: `${String(fin.getHours()).padStart(2, "0")}:${String(fin.getMinutes()).padStart(2, "0")}`, dias: ["", "", "", "", ""] };
+    const inicio = ult?.fin && /^\d{2}:\d{2}$/.test(ult.fin) ? ult.fin : "08:00";
+    const fin = minutos(inicio) + HORA_PEDAGOGICA;
+    return { inicio, fin: `${String(Math.floor(fin / 60) % 24).padStart(2, "0")}:${String(fin % 60).padStart(2, "0")}`, dias: ["", "", "", "", ""] };
   };
+  // Al terminar de escribir una hora, los bloques se ordenan solos.
+  const ordenar = () => setFilas((fs) => [...fs].sort((a, b) => a.inicio.localeCompare(b.inicio)));
 
   const guardarTodo = async () => {
+    if (!revision.valido) return;
     setGuardando(true);
     try {
       const escrituras: Escritura[] = [];
@@ -184,36 +186,126 @@ function EditorHorario({ seccionId, bloques, areas, onCerrar }: {
     }
   };
 
+  const celda = (f: FilaHorario, i: number, d: number, conDia: boolean) => {
+    const choque = revision.choques[i]?.[d];
+    const v = f.dias[d];
+    return (
+      <div key={d} className="min-w-0">
+        <Selector value={v} aria-label={`${DIAS[d]} ${f.inicio}`} aria-invalid={!!choque} title={choque ?? undefined}
+          onChange={(e) => cambiar(i, { dias: f.dias.map((x, j) => (j === d ? e.target.value : x)) })}
+          claseCampo={cx("!py-2.5 !pl-3 !pr-8 !text-sm", choque && "!border-red-400 !ring-2 !ring-red-300/60", v === RECREO && "!bg-amber-50/80", !v && "text-tinta-suave")}>
+          <option value="">{conDia ? `${DIAS[d]}: libre` : "Libre"}</option>
+          {areas.map((a) => <option key={a.id} value={a.id}>{conDia ? `${DIAS[d]}: ${a.nombre}` : a.nombre}</option>)}
+          <option value={RECREO}>{conDia ? `${DIAS[d]}: Recreo` : "Recreo"}</option>
+        </Selector>
+        {choque && <p className="mt-1 flex items-start gap-1 text-[0.7rem] leading-snug text-red-700"><TriangleAlert className="mt-px h-3 w-3 shrink-0" aria-hidden />{choque}</p>}
+      </div>
+    );
+  };
+
   return (
-    <Dialogo abierto titulo="Editar horario" onCerrar={onCerrar}
-      acciones={<><Boton variante="fantasma" onClick={onCerrar}>Cancelar</Boton><Boton icono={Save} cargando={guardando} disabled={!valido} onClick={guardarTodo}>Guardar</Boton></>}>
-      <div className="space-y-3 pt-2 text-tinta">
-        {areas.length === 0 && <p className="text-sm text-amber-800">Esta sección aún no tiene docentes asignados por área. Asígnelos en Configuración, Personal.</p>}
-        {filas.map((f, i) => (
-          <div key={i} className="space-y-2 rounded-2xl bg-sup/50 p-3 ring-1 ring-sup">
-            <div className="flex items-end gap-2">
-              <Campo etiqueta="Inicio"><Entrada type="time" value={f.inicio} onChange={(e) => cambiar(i, { inicio: e.target.value })} /></Campo>
-              <Campo etiqueta="Fin"><Entrada type="time" value={f.fin} onChange={(e) => cambiar(i, { fin: e.target.value })} /></Campo>
-              <span className="flex-1" />
-              {filas.length > 1 && (
-                <button type="button" onClick={() => setFilas(filas.filter((_, k) => k !== i))} className="mb-1 rounded-full p-2 text-red-700 hover:bg-sup/70" aria-label={`Quitar bloque ${f.inicio}`}>
-                  <Trash2 className="h-4 w-4" aria-hidden />
-                </button>
-              )}
-            </div>
-            <div className="grid grid-cols-2 gap-2 sm:grid-cols-5">
-              {DIAS.map((d, k) => (
-                <Selector key={d} value={f.dias[k]} aria-label={`${d} ${f.inicio}`} onChange={(e) => cambiar(i, { dias: f.dias.map((x, j) => (j === k ? e.target.value : x)) })}>
-                  <option value="">{d}: libre</option>
-                  {areas.map((a) => <option key={a.id} value={a.id}>{a.nombre}</option>)}
-                  <option value={RECREO}>Recreo</option>
-                </Selector>
+    <Dialogo abierto titulo="Editar horario" onCerrar={onCerrar} ancho="max-w-6xl"
+      acciones={
+        <>
+          {!revision.valido && (
+            <p className="mr-auto flex items-center gap-1.5 text-sm font-semibold text-red-700">
+              <TriangleAlert className="h-4 w-4" aria-hidden /> Corrija {cantidadErrores} {cantidadErrores === 1 ? "problema" : "problemas"} para guardar
+            </p>
+          )}
+          <Boton variante="fantasma" onClick={onCerrar}>Cancelar</Boton>
+          <Boton icono={Save} cargando={guardando} disabled={!revision.valido} onClick={guardarTodo}>Guardar</Boton>
+        </>
+      }>
+      <div className="space-y-4 pt-2 text-tinta">
+        {areas.length === 0 && (
+          <p className="rounded-2xl bg-amber-50/80 p-3 text-sm text-amber-800 ring-1 ring-amber-200/70">
+            Esta sección aún no tiene docentes asignados por área. Asígnelos en Configuración, Personal.
+          </p>
+        )}
+
+        {/* Horas por semana de cada área: se actualizan mientras se arma el horario. */}
+        {areas.length > 0 && (
+          <div>
+            <p className="etiqueta mb-1.5">Horas pedagógicas por semana ({HORA_PEDAGOGICA} min)</p>
+            <div className="flex flex-wrap gap-1.5">
+              {revision.horas.map((h) => (
+                <span key={h.area.id} title={`Prof. ${h.area.docente}`}
+                  className={cx("rounded-full px-2.5 py-1 text-xs font-semibold ring-1", h.horas ? "bg-blue-50 text-blue-800 ring-blue-200" : "bg-tinta/[.04] text-tinta-suave ring-tinta/10")}>
+                  {h.area.nombre}: {h.horas}
+                </span>
               ))}
             </div>
           </div>
-        ))}
+        )}
+
+        {revision.avisos.length > 0 && (
+          <ul className="space-y-1 rounded-2xl bg-amber-50/80 p-3 text-xs text-amber-900 ring-1 ring-amber-200/70">
+            {revision.avisos.map((a) => <li key={a} className="flex items-start gap-1.5"><Info className="mt-px h-3.5 w-3.5 shrink-0" aria-hidden />{a}</li>)}
+          </ul>
+        )}
+
+        {/* PC: tabla con los días como columnas. */}
+        <div className="hidden lg:block">
+          <div className="grid grid-cols-[13rem_repeat(5,minmax(0,1fr))_2.5rem] gap-2 px-2 pb-1">
+            <p className="etiqueta">Hora</p>
+            {DIAS.map((d) => <p key={d} className="etiqueta">{d}</p>)}
+            <span />
+          </div>
+          <div className="space-y-2">
+            {filas.map((f, i) => (
+              <div key={i} className={cx("rounded-2xl p-2 ring-1", revision.errores[i].length ? "bg-red-50/60 ring-red-200" : "bg-sup/50 ring-sup")}>
+                <div className="grid grid-cols-[13rem_repeat(5,minmax(0,1fr))_2.5rem] items-start gap-2">
+                  <div className="flex items-center gap-1">
+                    <Entrada type="time" value={f.inicio} onChange={(e) => cambiar(i, { inicio: e.target.value })} onBlur={ordenar} aria-label="Inicio" className="!px-2 !py-2.5 !text-sm" />
+                    <Entrada type="time" value={f.fin} onChange={(e) => cambiar(i, { fin: e.target.value })} aria-label="Fin" className="!px-2 !py-2.5 !text-sm" />
+                  </div>
+                  {DIAS.map((_, d) => celda(f, i, d, false))}
+                  <QuitarBloque visible={filas.length > 1} inicio={f.inicio} onQuitar={() => setFilas(filas.filter((_, k) => k !== i))} />
+                </div>
+                <ErroresBloque errores={revision.errores[i]} />
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Celular y tableta: un bloque por tarjeta, cada día con su nombre. */}
+        <div className="space-y-3 lg:hidden">
+          {filas.map((f, i) => (
+            <div key={i} className={cx("space-y-2 rounded-2xl p-3 ring-1", revision.errores[i].length ? "bg-red-50/60 ring-red-200" : "bg-sup/50 ring-sup")}>
+              <div className="flex items-end gap-2">
+                <Campo etiqueta="Inicio"><Entrada type="time" value={f.inicio} onChange={(e) => cambiar(i, { inicio: e.target.value })} onBlur={ordenar} /></Campo>
+                <Campo etiqueta="Fin"><Entrada type="time" value={f.fin} onChange={(e) => cambiar(i, { fin: e.target.value })} /></Campo>
+                <span className="flex-1" />
+                <QuitarBloque visible={filas.length > 1} inicio={f.inicio} onQuitar={() => setFilas(filas.filter((_, k) => k !== i))} />
+              </div>
+              <ErroresBloque errores={revision.errores[i]} />
+              <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">{DIAS.map((_, d) => celda(f, i, d, true))}</div>
+            </div>
+          ))}
+        </div>
+
         <Boton variante="vidrio" icono={Plus} onClick={() => setFilas([...filas, siguiente()])}>Agregar bloque</Boton>
       </div>
     </Dialogo>
+  );
+}
+
+function QuitarBloque({ visible, inicio, onQuitar }: { visible: boolean; inicio: string; onQuitar(): void }) {
+  if (!visible) return <span />;
+  return (
+    <button type="button" onClick={onQuitar} className="mb-1 grid h-10 w-10 place-items-center rounded-full text-red-700 hover:bg-red-50" aria-label={`Quitar bloque ${inicio}`} title="Quitar bloque">
+      <Trash2 className="h-4 w-4" aria-hidden />
+    </button>
+  );
+}
+
+function ErroresBloque({ errores }: { errores: string[] }) {
+  if (!errores.length) return null;
+  return (
+    <ul className="mt-1.5 space-y-0.5 px-1">
+      {errores.map((e) => (
+        <li key={e} className="flex items-start gap-1.5 text-xs font-medium text-red-700"><TriangleAlert className="mt-px h-3.5 w-3.5 shrink-0" aria-hidden />{e}</li>
+      ))}
+    </ul>
   );
 }

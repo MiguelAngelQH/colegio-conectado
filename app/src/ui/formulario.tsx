@@ -19,10 +19,10 @@ export function Entrada(props: InputHTMLAttributes<HTMLInputElement>) {
   return <input {...props} className={cx("campo", props.className)} />;
 }
 
-export function Selector({ children, className, ...props }: SelectHTMLAttributes<HTMLSelectElement>) {
+export function Selector({ children, className, claseCampo, ...props }: SelectHTMLAttributes<HTMLSelectElement> & { claseCampo?: string }) {
   return (
     <span className={cx("relative block", className)}>
-      <select {...props} className="campo appearance-none pr-10">{children}</select>
+      <select {...props} className={cx("campo appearance-none pr-10", claseCampo)}>{children}</select>
       <ChevronDown className="pointer-events-none absolute right-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-tinta-suave" aria-hidden />
     </span>
   );
