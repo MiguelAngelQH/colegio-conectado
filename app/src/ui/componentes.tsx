@@ -1,7 +1,7 @@
 import { createPortal } from "react-dom";
-import type { ButtonHTMLAttributes, CSSProperties, ReactNode } from "react";
+import { useEffect, type ButtonHTMLAttributes, type CSSProperties, type ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, LoaderCircle, type LucideIcon } from "lucide-react";
+import { ArrowLeft, LoaderCircle, X, type LucideIcon } from "lucide-react";
 
 export function cx(...c: (string | false | null | undefined)[]) {
   return c.filter(Boolean).join(" ");
@@ -104,7 +104,7 @@ export function Aviso({ tipo = "info", titulo, children, icono: Icono }: {
   }[tipo];
   const tono = { info: "tono-cielo", alerta: "tono-ambar", error: "tono-coral", ok: "tono-musgo" }[tipo];
   return (
-    <div className={cx("flex items-start gap-3 rounded-2xl px-4 py-3 text-sm ring-1 backdrop-blur-md", estilos)} role={tipo === "error" ? "alert" : undefined}>
+    <div className={cx("flex items-start gap-3 rounded-2xl px-4 py-3 text-sm ring-1", estilos)} role={tipo === "error" ? "alert" : undefined}>
       {Icono && <Gema icono={Icono} tono={tono} tam="sm" />}
       <div className="pt-0.5">
         {titulo && <p className="font-semibold">{titulo}</p>}
@@ -114,19 +114,41 @@ export function Aviso({ tipo = "info", titulo, children, icono: Icono }: {
   );
 }
 
-export function Dialogo({ abierto, titulo, children, acciones, onCerrar, ancho = "max-w-md" }: {
+const ANCHO_DIALOGO = {
+  chico: "sm:max-w-lg",     // confirmaciones y avisos cortos
+  mediano: "sm:max-w-2xl",  // formularios
+  grande: "sm:max-w-4xl",   // listas, fichas y formularios con varias secciones
+  completo: "sm:max-w-6xl", // tablas (p. ej. el horario)
+} as const;
+
+/**
+ * Ventana sobre la pantalla: cabecera fija con botón de cerrar, contenido con desplazamiento propio
+ * y botones siempre visibles abajo. En el celular sube desde abajo y usa todo el ancho.
+ */
+export function Dialogo({ abierto, titulo, children, acciones, onCerrar, tam = "mediano" }: {
   abierto: boolean; titulo: string; children: ReactNode; acciones: ReactNode; onCerrar(): void;
-  /** Ancho máximo (clase de Tailwind); por defecto, angosto. */
-  ancho?: string;
+  tam?: keyof typeof ANCHO_DIALOGO;
 }) {
+  useEffect(() => {
+    if (!abierto) return;
+    const esc = (e: KeyboardEvent) => e.key === "Escape" && onCerrar();
+    window.addEventListener("keydown", esc);
+    return () => window.removeEventListener("keydown", esc);
+  }, [abierto, onCerrar]);
   if (!abierto) return null;
   // En el body: dentro de una tarjeta de vidrio (contexto de apilamiento propio) quedaría tapado.
   return createPortal(
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-noche/40 p-3 backdrop-blur-[2px] sm:items-center" onClick={onCerrar}>
-      <div role="dialog" aria-modal="true" aria-label={titulo} className={cx("vidrio-solido hoja max-h-[90dvh] w-full overflow-y-auto p-6", ancho)} onClick={(e) => e.stopPropagation()}>
-        <h2 className="titulo-display text-xl font-bold text-tinta">{titulo}</h2>
-        <div className="mt-2 text-sm leading-relaxed text-tinta-suave">{children}</div>
-        <div className="mt-6 flex flex-wrap justify-end gap-2">{acciones}</div>
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-noche/45 p-2 sm:items-center sm:p-6" onClick={onCerrar}>
+      <div role="dialog" aria-modal="true" aria-label={titulo} onClick={(e) => e.stopPropagation()}
+        className={cx("vidrio-solido hoja flex max-h-[92dvh] w-full flex-col overflow-hidden", ANCHO_DIALOGO[tam])}>
+        <header className="flex items-start gap-3 border-b border-tinta/10 px-5 py-4 sm:px-7">
+          <h2 className="titulo-display min-w-0 flex-1 text-xl font-bold leading-snug text-tinta">{titulo}</h2>
+          <button type="button" onClick={onCerrar} aria-label="Cerrar" className="-mr-2 rounded-full p-2 text-tinta-suave transition hover:bg-tinta/5 hover:text-tinta">
+            <X className="h-5 w-5" aria-hidden />
+          </button>
+        </header>
+        <div className="min-h-0 flex-1 overflow-y-auto px-5 py-5 text-sm leading-relaxed text-tinta-suave sm:px-7">{children}</div>
+        {acciones && <footer className="flex flex-wrap items-center justify-end gap-2 border-t border-tinta/10 bg-tinta/[.025] px-5 py-3.5 sm:px-7">{acciones}</footer>}
       </div>
     </div>,
     document.body,

@@ -242,7 +242,7 @@ export function Marco() {
       <SugerenciaTema />
       <Buscador abierto={buscando} onCerrar={() => setBuscando(false)} />
 
-      <Dialogo
+      <Dialogo tam="chico"
         abierto={confirmarSalida}
         titulo="Hay cambios sin enviar"
         onCerrar={() => setConfirmarSalida(false)}
@@ -265,7 +265,7 @@ function BotonRiel({ icono: Icono, texto, titulo, activo, abierto, to, onClick }
   icono: GrupoMenu["icono"]; texto: string; titulo?: string; activo: boolean; abierto?: boolean; to?: string; onClick?: () => void;
 }) {
   const clase = cx(
-    "group relative flex w-[4.15rem] flex-col items-center gap-1 rounded-2xl py-2 text-[0.6rem] font-semibold transition",
+    "group relative flex w-[4.3rem] flex-col items-center gap-1 rounded-2xl py-2 text-[0.58rem] font-semibold tracking-tight transition",
     activo ? "bg-white/[.14] text-white" : abierto ? "bg-white/[.07] text-white" : "text-white/60 hover:bg-white/[.07] hover:text-white",
   );
   const contenido = (

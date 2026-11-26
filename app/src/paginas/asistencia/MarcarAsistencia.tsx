@@ -201,7 +201,7 @@ function Felicitacion({ yo, sesionId, sinSenal, onCerrar }: { yo: Estudiante; se
   }, [sesionId, yo.id]);
 
   return (
-    <Dialogo abierto titulo="Asistencia registrada" onCerrar={onCerrar} acciones={<Boton onClick={onCerrar} className="w-full">Continuar</Boton>}>
+    <Dialogo tam="chico" abierto titulo="Asistencia registrada" onCerrar={onCerrar} acciones={<Boton onClick={onCerrar} className="w-full">Continuar</Boton>}>
       <div className="relative overflow-hidden pb-1 pt-2 text-center text-tinta">
         <div aria-hidden className="pointer-events-none absolute inset-0 motion-reduce:hidden">
           {Array.from({ length: 18 }, (_, i) => (

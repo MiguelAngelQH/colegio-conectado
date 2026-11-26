@@ -84,7 +84,7 @@ function DialogoFicha({ est, onCerrar }: { est: Estudiante; onCerrar(): void }) 
   };
 
   return (
-    <Dialogo abierto titulo="Salud y contacto de emergencia" onCerrar={onCerrar}
+    <Dialogo tam="grande" abierto titulo="Salud y contacto de emergencia" onCerrar={onCerrar}
       acciones={<><Boton variante="fantasma" onClick={onCerrar}>Cancelar</Boton><Boton icono={Save} cargando={guardando} disabled={!telValido} onClick={guardarTodo}>Guardar</Boton></>}>
       <div className="grid gap-3 pt-2 text-tinta sm:grid-cols-2">
         <Campo etiqueta="Contacto de emergencia"><Entrada {...campo("contacto_emergencia")} placeholder="Rosa Quispe (madre)" /></Campo>

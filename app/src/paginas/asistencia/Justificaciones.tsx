@@ -89,7 +89,7 @@ export function Justificaciones() {
         })}
         <div className="flex justify-center pt-2"><BotonRegresar a="/asistencia" /></div>
       </Contenido>
-      <Dialogo abierto={!!rechazando} titulo="Rechazar justificación" onCerrar={() => setRechazando(null)}
+      <Dialogo tam="chico" abierto={!!rechazando} titulo="Rechazar justificación" onCerrar={() => setRechazando(null)}
         acciones={<><Boton variante="fantasma" onClick={() => setRechazando(null)}>Cancelar</Boton><Boton variante="peligro" onClick={() => void resolver(rechazando!, "rechazada", respuesta.trim())} disabled={respuesta.trim().length < 5}>Rechazar</Boton></>}>
         <p className="mb-2">Explique el motivo a la familia (lo verán en la app).</p>
         <textarea value={respuesta} onChange={(e) => setRespuesta(e.target.value)} rows={3} className="campo" aria-label="Motivo del rechazo" autoFocus />

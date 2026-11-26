@@ -343,7 +343,7 @@ function DialogoAsignar({ docenteId, secciones, areas, todas, personal, onCerrar
   };
 
   return (
-    <Dialogo abierto titulo="Asignar áreas" onCerrar={onCerrar}
+    <Dialogo tam="grande" abierto titulo="Asignar áreas" onCerrar={onCerrar}
       acciones={<>
         <Boton variante="fantasma" onClick={onCerrar}>Cancelar</Boton>
         <Boton icono={Plus} onClick={asignar} disabled={!elegidas.length}>Asignar {elegidas.length || ""}</Boton>

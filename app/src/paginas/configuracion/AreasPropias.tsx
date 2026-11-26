@@ -122,7 +122,7 @@ function EditorTaller({ area, niveles, competencias, ordenSiguiente, onCerrar }:
 
   if (borrar) {
     return (
-      <Dialogo abierto titulo="Eliminar taller" onCerrar={() => setBorrar(false)}
+      <Dialogo tam="chico" abierto titulo="Eliminar taller" onCerrar={() => setBorrar(false)}
         acciones={<><Boton variante="fantasma" onClick={() => setBorrar(false)}>Cancelar</Boton><Boton icono={Trash2} onClick={eliminar}>Eliminar</Boton></>}>
         <p className="pt-1 text-sm text-tinta">"{base?.nombre}" dejará de aparecer para asignar y calificar. Las notas ya registradas se conservan en el historial.</p>
       </Dialogo>

@@ -30,7 +30,7 @@ function DialogoInforme({ informe, onGuardar, onCerrar }: { informe: Partial<Cam
   });
   const [guardando, setGuardando] = useState(false);
   return (
-    <Dialogo abierto titulo="Informe para el próximo año" onCerrar={onCerrar}
+    <Dialogo tam="grande" abierto titulo="Informe para el próximo año" onCerrar={onCerrar}
       acciones={<>
         <Boton variante="fantasma" onClick={onCerrar}>Cancelar</Boton>
         <Boton icono={Save} cargando={guardando} onClick={async () => { setGuardando(true); await onGuardar(f); }}>Guardar</Boton>

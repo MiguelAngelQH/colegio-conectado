@@ -148,7 +148,7 @@ export function DialogoCuentasSeccion({ seccionId, seccionNombre, colegio, onCer
 
   if (resultado) {
     return (
-      <Dialogo abierto titulo="Cuentas creadas" onCerrar={onCerrar}
+      <Dialogo tam="grande" abierto titulo="Cuentas creadas" onCerrar={onCerrar}
         acciones={<>
           <Boton variante="fantasma" onClick={onCerrar}>Cerrar</Boton>
           {resultado.credenciales.length > 0 && <>
@@ -175,7 +175,7 @@ export function DialogoCuentasSeccion({ seccionId, seccionNombre, colegio, onCer
   }
 
   return (
-    <Dialogo abierto titulo="Crear cuentas" onCerrar={avance ? () => undefined : onCerrar}
+    <Dialogo tam="grande" abierto titulo="Crear cuentas" onCerrar={avance ? () => undefined : onCerrar}
       acciones={<>
         <Boton variante="fantasma" onClick={onCerrar} disabled={!!avance}>Cancelar</Boton>
         <Boton icono={UserPlus} onClick={crear} cargando={!!avance} disabled={!pendientes.length}>

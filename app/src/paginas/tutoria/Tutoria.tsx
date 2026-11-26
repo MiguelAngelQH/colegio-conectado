@@ -247,7 +247,7 @@ export function DialogoEntrevista({ estudiantes, estudianteFijo, onCerrar }: { e
     onCerrar();
   };
   return (
-    <Dialogo abierto titulo="Entrevista con la familia" onCerrar={onCerrar}
+    <Dialogo tam="grande" abierto titulo="Entrevista con la familia" onCerrar={onCerrar}
       acciones={<><Boton variante="fantasma" onClick={onCerrar}>Cancelar</Boton><Boton icono={Save} onClick={registrar} disabled={!f.motivo.trim() || !estudianteId}>Registrar</Boton></>}>
       <div className="space-y-3 pt-2 text-tinta">
         {!estudianteFijo && (

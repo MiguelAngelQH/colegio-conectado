@@ -175,7 +175,7 @@ export function TomaAsistencia() {
         )}
       </Contenido>
 
-      <Dialogo abierto={confirmando} titulo="Confirmar la asistencia" onCerrar={() => setConfirmando(false)}
+      <Dialogo tam="chico" abierto={confirmando} titulo="Confirmar la asistencia" onCerrar={() => setConfirmando(false)}
         acciones={<>
           <Boton variante="fantasma" onClick={() => setConfirmando(false)}>Seguir revisando</Boton>
           <Boton icono={ClipboardCheck} onClick={confirmar}>Confirmar</Boton>

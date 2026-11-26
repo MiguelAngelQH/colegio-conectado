@@ -266,7 +266,7 @@ function DialogoEntregas({ tarea, entregas, onCerrar }: { tarea: Tarea; entregas
   if (viendo) {
     const est = estudiantes.find((e) => e.id === viendo.estudiante_id);
     return (
-      <Dialogo abierto titulo={est ? nombreCompleto(est) : "Entrega"} onCerrar={() => setViendo(null)}
+      <Dialogo tam="grande" abierto titulo={est ? nombreCompleto(est) : "Entrega"} onCerrar={() => setViendo(null)}
         acciones={<>
           <Boton variante="fantasma" onClick={() => setViendo(null)}>Volver</Boton>
           <Boton variante="vidrio" icono={RotateCcw} onClick={() => void revisar("devuelta")}>Devolver para corregir</Boton>
@@ -285,7 +285,7 @@ function DialogoEntregas({ tarea, entregas, onCerrar }: { tarea: Tarea; entregas
   }
 
   return (
-    <Dialogo abierto titulo={`Entregas: ${tarea.titulo}`} onCerrar={onCerrar} acciones={<Boton onClick={onCerrar}>Cerrar</Boton>}>
+    <Dialogo tam="grande" abierto titulo={`Entregas: ${tarea.titulo}`} onCerrar={onCerrar} acciones={<Boton onClick={onCerrar}>Cerrar</Boton>}>
       <div className="pt-2 text-tinta">
         <p className="mb-2 text-sm text-tinta-suave">{entregas.length} de {estudiantes.length} entregaron.</p>
         <div className="max-h-96 divide-y divide-sup/70 overflow-y-auto rounded-2xl bg-sup/40">

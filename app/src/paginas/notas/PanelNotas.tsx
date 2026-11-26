@@ -191,7 +191,7 @@ export function PanelNotas() {
         </div>
       </Tarjeta>
 
-      <Dialogo abierto={cerrando} titulo={`¿Cerrar el ${periodo.nombre}?`} onCerrar={() => setCerrando(false)}
+      <Dialogo tam="chico" abierto={cerrando} titulo={`¿Cerrar el ${periodo.nombre}?`} onCerrar={() => setCerrando(false)}
         acciones={<>
           <Boton variante="fantasma" onClick={() => setCerrando(false)}>Cancelar</Boton>
           <Boton icono={Lock} onClick={() => void cambiarEstado("cerrado")} disabled={sinConclusion > 0}>Cerrar periodo</Boton>
@@ -207,7 +207,7 @@ export function PanelNotas() {
         </div>
       </Dialogo>
 
-      <Dialogo abierto={reabriendo} titulo={`Reabrir el ${periodo.nombre}`} onCerrar={() => setReabriendo(false)}
+      <Dialogo tam="chico" abierto={reabriendo} titulo={`Reabrir el ${periodo.nombre}`} onCerrar={() => setReabriendo(false)}
         acciones={<>
           <Boton variante="fantasma" onClick={() => setReabriendo(false)}>Cancelar</Boton>
           <Boton icono={LockOpen} onClick={() => void cambiarEstado("abierto")} disabled={motivo.trim().length < 5}>Reabrir</Boton>

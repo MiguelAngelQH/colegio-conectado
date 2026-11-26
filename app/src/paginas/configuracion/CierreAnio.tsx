@@ -274,7 +274,7 @@ function Cerrar({ d }: { d: DatosCierre }) {
         </ul>
         <div className="pt-2"><Boton icono={Lock} onClick={() => setConfirmando(true)}>Cerrar el año {d.anio.anio}</Boton></div>
       </Tarjeta>
-      <Dialogo abierto={confirmando} titulo={`¿Cerrar el año ${d.anio.anio}?`} onCerrar={() => setConfirmando(false)}
+      <Dialogo tam="chico" abierto={confirmando} titulo={`¿Cerrar el año ${d.anio.anio}?`} onCerrar={() => setConfirmando(false)}
         acciones={<>
           <Boton variante="fantasma" onClick={() => setConfirmando(false)}>Cancelar</Boton>
           <Boton icono={Lock} cargando={cerrando} onClick={() => void cerrar()}>Cerrar el año</Boton>

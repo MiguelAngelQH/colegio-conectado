@@ -111,7 +111,7 @@ export function Sincronizacion() {
         <div className="flex justify-center pt-2"><BotonRegresar a="/" /></div>
       </Contenido>
 
-      <Dialogo
+      <Dialogo tam="chico"
         abierto={aDescartar !== null}
         titulo="¿Descartar este cambio?"
         onCerrar={() => setADescartar(null)}

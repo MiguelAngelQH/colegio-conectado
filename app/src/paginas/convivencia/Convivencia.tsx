@@ -138,7 +138,7 @@ function DialogoIncidencia({ estudianteInicial, onCerrar, onCreada }: { estudian
   };
 
   return (
-    <Dialogo abierto titulo="Registrar incidencia" onCerrar={onCerrar}
+    <Dialogo tam="grande" abierto titulo="Registrar incidencia" onCerrar={onCerrar}
       acciones={<><Boton variante="fantasma" onClick={onCerrar}>Cancelar</Boton><Boton icono={Save} onClick={registrar} disabled={!f.descripcion.trim()}>Registrar</Boton></>}>
       <div className="space-y-3 pt-2 text-tinta">
         <div>

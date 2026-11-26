@@ -91,7 +91,7 @@ export function Comunicados() {
       </Contenido>
       {creando && <DialogoComunicado esGestion={esGestion} secciones={datos.secciones.filter((s) => esGestion || s.tutor_id === usuario.id)} onCerrar={() => setCreando(false)} />}
       {lectoresDe && (
-        <Dialogo abierto titulo="Quiénes lo leyeron" onCerrar={() => setLectoresDe(null)} acciones={<Boton onClick={() => setLectoresDe(null)}>Cerrar</Boton>}>
+        <Dialogo tam="grande" abierto titulo="Quiénes lo leyeron" onCerrar={() => setLectoresDe(null)} acciones={<Boton onClick={() => setLectoresDe(null)}>Cerrar</Boton>}>
           <ul className="max-h-[50dvh] space-y-1 overflow-y-auto text-tinta">
             {datos.lecturas.filter((l) => l.comunicado_id === lectoresDe.id).sort((a, b) => a.leido_en.localeCompare(b.leido_en)).map((l) => {
               const u = datos.usuarios.get(l.usuario_id);
@@ -119,7 +119,7 @@ function DialogoComunicado({ esGestion, secciones, onCerrar }: { esGestion: bool
     onCerrar();
   };
   return (
-    <Dialogo abierto titulo="Nuevo comunicado" onCerrar={onCerrar}
+    <Dialogo tam="grande" abierto titulo="Nuevo comunicado" onCerrar={onCerrar}
       acciones={<><Boton variante="fantasma" onClick={onCerrar}>Cancelar</Boton><Boton icono={Send} onClick={publicar} disabled={!f.titulo.trim() || !f.cuerpo.trim() || (destino === "seccion" && !seccionId)}>Publicar</Boton></>}>
       <div className="space-y-3 pt-2 text-tinta">
         {esGestion && <Segmentado etiqueta="Destino" valor={destino} onCambio={setDestino} opciones={[{ valor: "todos", texto: "Todo el colegio" }, { valor: "seccion", texto: "Una sección" }]} />}

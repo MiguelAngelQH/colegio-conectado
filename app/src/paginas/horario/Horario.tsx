@@ -204,7 +204,7 @@ function EditorHorario({ seccionId, bloques, areas, otras, onCerrar }: {
   };
 
   return (
-    <Dialogo abierto titulo="Editar horario" onCerrar={onCerrar} ancho="max-w-6xl"
+    <Dialogo abierto titulo="Editar horario" onCerrar={onCerrar} tam="completo"
       acciones={
         <>
           {!revision.valido && (

@@ -82,7 +82,7 @@ export function ListasCotejo(p: Props) {
       )}
       {editando && <EditorLista {...p} lista={editando} onCerrar={(id) => { setEditando(null); if (id) setAbiertaId(id); }} />}
       {confirmar && (
-        <Dialogo abierto titulo="Pasar al registro de notas" onCerrar={() => setConfirmar(false)}
+        <Dialogo tam="chico" abierto titulo="Pasar al registro de notas" onCerrar={() => setConfirmar(false)}
           acciones={<><Boton variante="fantasma" onClick={() => setConfirmar(false)}>Cancelar</Boton><Boton icono={Upload} cargando={pasando} onClick={pasar}>Pasar al registro</Boton></>}>
           <p className="pt-1 text-sm text-tinta">
             Cada capacidad evaluada en estas {listas.length} sesiones recibirá el promedio de sus criterios (AD=3, A=2, B=1, C=0, redondeado), y el logro de la competencia se recalculará.

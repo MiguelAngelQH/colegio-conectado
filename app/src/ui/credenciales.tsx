@@ -16,7 +16,7 @@ export function DialogoCredencial({ titulo, nombre, dni, email, clave, onCerrar 
     }
   };
   return (
-    <Dialogo abierto titulo={titulo} onCerrar={onCerrar} acciones={<Boton onClick={onCerrar}>Entendido</Boton>}>
+    <Dialogo tam="chico" abierto titulo={titulo} onCerrar={onCerrar} acciones={<Boton onClick={onCerrar}>Entendido</Boton>}>
       <p>Entregue estos datos a <strong className="text-tinta">{nombre}</strong>. Al ingresar deberá elegir una contraseña propia.</p>
       <dl className="mt-3 space-y-2 rounded-2xl bg-sup/70 p-4 text-tinta ring-1 ring-sup">
         <div>

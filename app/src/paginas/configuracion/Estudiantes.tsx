@@ -317,7 +317,7 @@ function DialogoEditarEstudiante({ est, onCerrar }: { est: Estudiante; onCerrar(
   };
 
   return (
-    <Dialogo abierto titulo="Editar estudiante" onCerrar={onCerrar}
+    <Dialogo tam="grande" abierto titulo="Editar estudiante" onCerrar={onCerrar}
       acciones={<><Boton variante="fantasma" onClick={onCerrar}>Cancelar</Boton><Boton icono={Save} onClick={guardarCambios} disabled={!listo}>Guardar</Boton></>}>
       <div className="grid gap-3 pt-2 text-tinta sm:grid-cols-2">
         <Campo etiqueta="Apellidos"><Entrada value={f.apellidos} onChange={(e) => setF({ ...f, apellidos: e.target.value })} /></Campo>

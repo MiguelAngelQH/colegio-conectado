@@ -108,7 +108,7 @@ function Visor({ ev, puedeBorrar, onCerrar, onBorrar }: { ev: Evidencia; puedeBo
   const url = useUrl(blob);
 
   return (
-    <Dialogo abierto titulo={ev.nombre} onCerrar={onCerrar}
+    <Dialogo tam="grande" abierto titulo={ev.nombre} onCerrar={onCerrar}
       acciones={<>
         {puedeBorrar && <Boton variante="fantasma" icono={Trash2} className="mr-auto text-red-700" onClick={onBorrar}>Quitar</Boton>}
         {url && !ev.tipo.startsWith("image/") && <a href={url} target="_blank" rel="noreferrer"><Boton variante="vidrio">Abrir</Boton></a>}
