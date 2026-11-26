@@ -47,8 +47,8 @@ export default {
         laguna: { DEFAULT: "#2563eb", honda: "#1e3a8a" },
       },
       fontFamily: {
-        sans: ["Onest Variable", "system-ui", "sans-serif"],
-        display: ["Bricolage Grotesque Variable", "Onest Variable", "sans-serif"],
+        sans: ["Inter Variable", "system-ui", "sans-serif"],
+        display: ["Plus Jakarta Sans Variable", "Inter Variable", "sans-serif"],
       },
     },
   },

@@ -1,5 +1,5 @@
-@import "@fontsource-variable/bricolage-grotesque";
-@import "@fontsource-variable/onest";
+@import "@fontsource-variable/plus-jakarta-sans";
+@import "@fontsource-variable/inter";
 
 @tailwind base;
 @tailwind components;
@@ -50,7 +50,8 @@ html { -webkit-tap-highlight-color: transparent; background: var(--fondo); }
 body {
   @apply antialiased;
   color: var(--tinta);
-  font-family: "Onest Variable", system-ui, sans-serif;
+  font-family: "Inter Variable", system-ui, sans-serif;
+  font-feature-settings: "cv11", "ss01"; /* a y 1 más legibles */
   /* Sin fondo propio: si no, taparía al .fondo-cielo (z-index -1). El color base va en html. */
   background: transparent;
 }
@@ -60,6 +61,9 @@ body {
   position: fixed;
   inset: 0;
   z-index: -1;
+  /* Capa propia: se pinta una sola vez y no se vuelve a calcular al desplazarse. */
+  transform: translateZ(0);
+  contain: strict;
   background:
     radial-gradient(55vmax 45vmax at 0% 0%, rgba(96, 140, 220, 0.55), transparent 62%),
     radial-gradient(50vmax 42vmax at 100% 8%, rgba(148, 178, 230, 0.6), transparent 62%),
@@ -72,8 +76,7 @@ body {
   content: "";
   position: absolute;
   inset: 0;
-  opacity: 0.14;
-  mix-blend-mode: soft-light;
+  opacity: 0.05;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
 }
 .dark .fondo-cielo {
@@ -85,24 +88,14 @@ body {
     radial-gradient(45vmax 38vmax at 0% 92%, rgba(51, 65, 95, 0.45), transparent 62%),
     linear-gradient(160deg, #0d1729 0%, #0b1424 50%, #0f1a2e 100%);
 }
-.dark .fondo-cielo::after { opacity: 0.08; }
-/* En pantallas grandes la luz se mueve muy lentamente. */
-@media (min-width: 1024px) and (prefers-reduced-motion: no-preference) {
-  .fondo-cielo { animation: deriva 40s ease-in-out infinite alternate; background-size: 120% 120%; }
-}
-@keyframes deriva {
-  from { background-position: 0% 0%, 100% 0%, 100% 100%, 0% 100%, 0 0; }
-  to   { background-position: 6% 8%, 92% 6%, 94% 90%, 8% 94%, 0 0; }
-}
+.dark .fondo-cielo::after { opacity: 0.04; }
 
 @layer components {
   /* Panel de vidrio: translúcido, desenfoca el fondo, borde de luz y brillo especular. */
   .vidrio {
     position: relative;
     isolation: isolate;
-    background: linear-gradient(145deg, rgba(255, 255, 255, 0.62), rgba(255, 255, 255, 0.28));
-    -webkit-backdrop-filter: blur(22px) saturate(170%);
-    backdrop-filter: blur(22px) saturate(170%);
+    background: linear-gradient(145deg, rgba(255, 255, 255, 0.7), rgba(255, 255, 255, 0.42));
     border: 1px solid var(--borde-luz);
     border-radius: var(--radio);
     box-shadow:
@@ -123,6 +116,8 @@ body {
   }
   .vidrio-fuerte {
     @apply vidrio;
+    -webkit-backdrop-filter: blur(14px) saturate(150%);
+    backdrop-filter: blur(14px) saturate(150%);
     background: linear-gradient(145deg, rgba(255, 255, 255, 0.78), rgba(255, 255, 255, 0.5));
   }
   /* Vidrio casi opaco para diálogos y hojas: se lee bien sobre cualquier contenido. */
@@ -144,7 +139,7 @@ body {
   }
 
   .dark .vidrio {
-    background: linear-gradient(145deg, rgba(44, 58, 88, 0.62), rgba(22, 32, 54, 0.5));
+    background: linear-gradient(145deg, rgba(44, 58, 88, 0.72), rgba(22, 32, 54, 0.62));
     box-shadow:
       inset 0 1px 0 rgba(255, 255, 255, 0.08),
       inset 0 0 22px rgba(255, 255, 255, 0.02),
@@ -181,8 +176,7 @@ body {
     z-index: -1;
     border-radius: inherit;
     pointer-events: none;
-    opacity: 0.18;
-    mix-blend-mode: overlay;
+    opacity: 0.06;
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
   }
 
@@ -209,7 +203,7 @@ body {
     pointer-events: none;
   }
 
-  .titulo-display { font-family: "Bricolage Grotesque Variable", "Onest Variable", sans-serif; letter-spacing: -0.02em; }
+  .titulo-display { font-family: "Plus Jakarta Sans Variable", "Inter Variable", sans-serif; letter-spacing: -0.025em; }
   .etiqueta { @apply text-[0.7rem] font-semibold uppercase tracking-[0.14em]; color: var(--tinta-suave); }
 
   .campo {
