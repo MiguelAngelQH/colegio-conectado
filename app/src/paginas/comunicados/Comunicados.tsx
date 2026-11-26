@@ -55,9 +55,9 @@ export function Comunicados() {
     <>
       <Encabezado etiqueta="Comunicación" titulo="Comunicados"
         accion={puedePublicar ? <Boton icono={Plus} onClick={() => setCreando(true)}>Nuevo</Boton> : undefined} />
-      <Contenido ancho="max-w-3xl">
+      <Contenido>
         {datos.lista.length === 0 ? <Vacio icono={Megaphone} tono="tono-ambar" titulo="No hay comunicados" /> : (
-          <div className="space-y-3">
+          <div className="grid items-start gap-3 xl:grid-cols-2">
             {datos.lista.map((c, i) => {
               const autor = datos.usuarios.get(c.autor_id);
               const lectores = datos.lecturas.filter((l) => l.comunicado_id === c.id).length;

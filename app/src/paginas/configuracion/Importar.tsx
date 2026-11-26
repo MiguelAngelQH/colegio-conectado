@@ -111,7 +111,7 @@ export function ImportarPagina() {
     return (
       <>
         <Encabezado etiqueta="Estudiantes" titulo="Importación terminada" />
-        <Contenido ancho="max-w-3xl">
+        <Contenido>
           <Tarjeta fuerte className="aparecer space-y-4 p-6">
             <div className="flex items-center gap-4">
               <Gema icono={CircleCheck} tono="tono-musgo" tam="lg" />
@@ -140,7 +140,7 @@ export function ImportarPagina() {
   return (
     <>
       <Encabezado etiqueta="Estudiantes" titulo="Importar desde Excel" subtitulo="Sirve la plantilla o la nómina que ya tiene (por ejemplo, exportada del SIAGIE)." />
-      <Contenido ancho="max-w-4xl">
+      <Contenido>
         <Tarjeta className="aparecer p-5" style={orden(1)}>
           <label className={cx("flex cursor-pointer flex-col items-center gap-3 rounded-[1.25rem] border-2 border-dashed border-blue-600/30 bg-sup/30 px-4 py-8 text-center transition hover:bg-sup/50", leyendo && "opacity-60")}>
             <Gema icono={FileUp} tono="tono-laguna" tam="lg" />

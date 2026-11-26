@@ -26,7 +26,7 @@ export function Encabezado({ titulo, subtitulo, etiqueta, accion }: {
   titulo: string; subtitulo?: string; etiqueta?: string; accion?: ReactNode;
 }) {
   return (
-    <div className="mx-auto flex w-full max-w-5xl items-end justify-between gap-3 px-4 pb-2 pt-5 aparecer">
+    <div className={cx("mx-auto flex w-full items-end justify-between gap-3 px-4 pb-2 pt-5 aparecer lg:px-6", ANCHO_PAGINA)}>
       <div className="min-w-0">
         {etiqueta && <p className="etiqueta mb-1">{etiqueta}</p>}
         <h1 className="titulo-display text-[1.75rem] font-bold leading-tight text-tinta sm:text-4xl">{titulo}</h1>
@@ -37,8 +37,12 @@ export function Encabezado({ titulo, subtitulo, etiqueta, accion }: {
   );
 }
 
-export function Contenido({ children, ancho = "max-w-5xl" }: { children: ReactNode; ancho?: string }) {
-  return <div className={cx("mx-auto w-full space-y-4 px-4 pb-32 pt-3 lg:pb-10", ancho)}>{children}</div>;
+/** Ancho de todas las páginas: ocupa la pantalla (con un tope para monitores muy anchos). */
+export const ANCHO_PAGINA = "max-w-[100rem]";
+
+/** Cuerpo de la página. "angosto" solo para mensajes sueltos (p. ej. una página vacía). */
+export function Contenido({ children, angosto }: { children: ReactNode; angosto?: boolean }) {
+  return <div className={cx("mx-auto w-full space-y-4 px-4 pb-32 pt-3 lg:px-6 lg:pb-10", angosto ? "max-w-md" : ANCHO_PAGINA)}>{children}</div>;
 }
 
 type Variante = "primario" | "vidrio" | "peligro" | "fantasma";

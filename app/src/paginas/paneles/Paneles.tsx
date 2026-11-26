@@ -142,7 +142,7 @@ export function Paneles() {
     <>
       <Encabezado etiqueta={esUgel ? "Supervisión UGEL" : "Dirección"} titulo="Indicadores" subtitulo={`${base.colegio?.nombre ?? ""} · Año ${base.anio.anio} · ${panel.matriculados} estudiantes matriculados`}
         accion={<Boton variante="vidrio" icono={FileDown} onClick={reporte} cargando={generando} className="hidden sm:inline-flex">Reporte PDF</Boton>} />
-      <Contenido ancho="max-w-6xl">
+      <Contenido>
         {/* Filtros: una sola fila sobre los gráficos */}
         <Tarjeta className="aparecer flex flex-col gap-3 p-4 lg:flex-row lg:items-end" style={orden(1)}>
           {ambos && (

@@ -52,7 +52,7 @@ export function Justificaciones() {
   return (
     <>
       <Encabezado etiqueta="Asistencia" titulo="Justificaciones" subtitulo="Solicitudes de las familias para justificar faltas y tardanzas." />
-      <Contenido ancho="max-w-3xl">
+      <Contenido>
         <Segmentado etiqueta="Filtro" valor={filtro} onCambio={setFiltro} opciones={[{ valor: "pendiente", texto: "Por revisar" }, { valor: "revisadas", texto: "Revisadas" }]} />
         {lista.length === 0 ? (
           <Vacio icono={FileCheck} tono="tono-musgo" titulo={filtro === "pendiente" ? "No hay justificaciones por revisar" : "Aún no hay justificaciones revisadas"} />

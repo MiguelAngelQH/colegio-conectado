@@ -301,7 +301,7 @@ export function CierreAnio() {
     <>
       <Encabezado etiqueta="Configuración" titulo={`Cierre del año ${d.anio.anio}`}
         subtitulo="La app propone la situación final según la RVM 094-2020; la dirección la confirma. El SIAGIE sigue siendo la fuente oficial." />
-      <Contenido ancho="max-w-4xl">
+      <Contenido>
         <div className="overflow-x-auto pb-1"><Segmentado etiqueta="Paso" valor={paso} onCambio={setPaso} opciones={pasos} /></div>
         {paso === "revision" && <Revision d={d} />}
         {paso === "situacion" && <Situacion d={d} />}

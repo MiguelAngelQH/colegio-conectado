@@ -55,7 +55,7 @@ export function MiAsistencia() {
     return (
       <>
         <Encabezado etiqueta="Familia" titulo="Asistencia" />
-        <Contenido ancho="max-w-md"><Vacio icono={CalendarCheck} titulo="No hay estudiantes vinculados a su cuenta" /></Contenido>
+        <Contenido angosto><Vacio icono={CalendarCheck} titulo="No hay estudiantes vinculados a su cuenta" /></Contenido>
       </>
     );
   }
@@ -65,7 +65,7 @@ export function MiAsistencia() {
   return (
     <>
       <Encabezado etiqueta={esApoderado ? `Asistencia de ${hijo.nombres.split(" ")[0]}` : "Mi asistencia"} titulo="Asistencia" />
-      <Contenido ancho="max-w-3xl">
+      <Contenido>
         <SelectorHijo hijos={hijos ?? []} hijo={hijo} />
         <Tarjeta className="aparecer grid grid-cols-4 gap-2 p-4 text-center" style={orden(1)}>
           {[
@@ -96,7 +96,7 @@ export function MiAsistencia() {
 
         {vista === "calendario" ? (
           datos.registros.length === 0 ? <Vacio icono={CalendarCheck} titulo="Todavía no hay asistencias registradas este año" /> : (
-            <>
+            <div className="grid items-start gap-4 xl:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)]">
               <Tarjeta className="aparecer p-4 sm:p-5" style={orden(2)}>
                 <CalendarioAsistencia marcas={datos.registros.map((r) => ({ id: r.a.id, fecha: r.fecha, estado: r.a.estado }))} elegido={dia} onElegir={setDia} />
               </Tarjeta>
@@ -108,9 +108,9 @@ export function MiAsistencia() {
                   ))}
                 </Tarjeta>
               ) : (
-                <p className="px-1 text-center text-xs text-tinta-suave">Toque un día para ver el detalle de cada clase{esApoderado ? " y justificar una falta" : ""}.</p>
+                <p className="px-1 text-center text-xs text-tinta-suave xl:pt-10">Toque un día para ver el detalle de cada clase{esApoderado ? " y justificar una falta" : ""}.</p>
               )}
-            </>
+            </div>
           )
         ) : (() => {
           const lista = filtro === "todas" ? datos.registros : datos.registros.filter((r) => r.a.estado !== "P");

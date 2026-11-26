@@ -42,7 +42,7 @@ export function Sincronizacion() {
   return (
     <>
       <Encabezado etiqueta="Datos de este equipo" titulo="Sincronización" />
-      <Contenido ancho="max-w-3xl">
+      <Contenido>
         <Tarjeta fuerte className="aparecer p-6" style={orden(1)}>
           <div className="flex items-start gap-4">
             <Gema icono={estado.icono} tono={estado.tono} tam="lg" />

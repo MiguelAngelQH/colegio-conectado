@@ -65,7 +65,7 @@ export function Avisos() {
   return (
     <>
       <Encabezado etiqueta="Bandeja" titulo="Avisos" subtitulo="Se actualizan cada vez que el equipo sincroniza." />
-      <Contenido ancho="max-w-2xl">
+      <Contenido>
         {permiso === "default" && (
           <Tarjeta className="aparecer flex flex-wrap items-center gap-3 p-4">
             <Gema icono={BellRing} tono="tono-ambar" tam="sm" />
@@ -74,6 +74,7 @@ export function Avisos() {
           </Tarjeta>
         )}
         {datos.avisos.length === 0 && <Vacio icono={Bell} tono="tono-ambar" titulo="No hay avisos" />}
+        <div className="grid items-start gap-4 xl:grid-cols-2">
         {nuevos.length > 0 && (
           <section className="space-y-2">
             <h2 className="etiqueta px-1">Nuevos ({nuevos.length})</h2>
@@ -86,6 +87,7 @@ export function Avisos() {
             {lista(anteriores, nuevos.length + 1)}
           </section>
         )}
+        </div>
       </Contenido>
     </>
   );

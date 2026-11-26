@@ -103,7 +103,7 @@ export function PanelNotas() {
   };
 
   return (
-    <Contenido ancho="max-w-5xl">
+    <Contenido>
       <Tarjeta className="aparecer space-y-4 p-5" style={orden(1)}>
         <div className="flex flex-wrap items-center gap-3">
           <Segmentado etiqueta="Periodo" valor={periodoId} onCambio={setPeriodoId} opciones={datos.periodos.map((p) => ({ valor: p.id, texto: p.nombre.split(" ")[0] }))} />

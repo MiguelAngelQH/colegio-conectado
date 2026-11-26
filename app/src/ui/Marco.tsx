@@ -141,8 +141,8 @@ export function Marco() {
       </aside>
 
       {/* ---------- Barra superior ---------- */}
-      <header className={cx("sticky top-0 z-20 px-3 pt-3 lg:pr-6", margen)}>
-        <div className="vidrio-fuerte mx-auto flex max-w-5xl items-center gap-3 !rounded-full p-1.5 lg:!bg-none lg:!border-transparent lg:!shadow-none lg:![backdrop-filter:none] lg:before:hidden">
+      <header className={cx("sticky top-0 z-20 px-3 pt-3 lg:px-6", margen)}>
+        <div className="vidrio-fuerte mx-auto flex max-w-[100rem] items-center gap-3 !rounded-full p-1.5 lg:!bg-none lg:!border-transparent lg:!shadow-none lg:![backdrop-filter:none] lg:before:hidden">
           <Link to="/perfil" className="flex min-w-0 items-center gap-2.5 lg:hidden" aria-label="Mi perfil">
             {avatar("h-10 w-10 text-sm")}
             <span className="min-w-0">

@@ -55,7 +55,7 @@ export function EstudiantesPagina() {
   return (
     <>
       <Encabezado etiqueta="Configuración · Paso 4" titulo="Estudiantes" subtitulo="Matricule por sección, uno por uno o importando la nómina desde Excel." />
-      <Contenido ancho="max-w-3xl">
+      <Contenido>
         {!e.secciones.length ? (
           <Vacio icono={LayoutGrid} tono="tono-lila" titulo="Primero cree las secciones"
             accion={<Link to="/configuracion/secciones"><Boton>Ir al paso 2</Boton></Link>} />
@@ -221,7 +221,7 @@ export function FichaEstudiante() {
   return (
     <>
       <Encabezado etiqueta="Estudiante" titulo={`${est.nombres} ${est.apellidos}`} />
-      <Contenido ancho="max-w-3xl">
+      <Contenido>
         <Tarjeta className="aparecer flex flex-wrap items-center gap-4 p-5" style={orden(1)}>
           <AvatarEst e={est} tam="h-16 w-16 text-xl" />
           <div className="min-w-0 flex-1">

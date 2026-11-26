@@ -126,7 +126,7 @@ function InicioAsistencia() {
     <>
       <Encabezado etiqueta="Asistencia" titulo="Tomar asistencia" subtitulo="Con QR en la pizarra, escaneando carnés o con la lista. Funciona sin internet."
         accion={verTodo ? <Boton variante="vidrio" icono={IdCard} onClick={() => navegar("carnes")} className="hidden sm:inline-flex">Carnés</Boton> : undefined} />
-      <Contenido ancho="max-w-3xl">
+      <Contenido>
         {datos.secciones.length === 0 ? (
           <Vacio icono={ClipboardCheck} tono="tono-laguna" titulo="No tiene secciones asignadas">La dirección debe asignarle secciones en Configuración.</Vacio>
         ) : (

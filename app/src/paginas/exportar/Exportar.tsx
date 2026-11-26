@@ -44,7 +44,7 @@ export function Exportar() {
   return (
     <>
       <Encabezado etiqueta="Dirección" titulo="Exportar" subtitulo="Archivos para la carga al SIAGIE y respaldo del colegio. Se generan en este equipo, sin internet." />
-      <Contenido ancho="max-w-3xl">
+      <Contenido>
         <Tarjeta className="aparecer space-y-4 p-5" style={orden(1)}>
           <div className="flex items-start gap-3">
             <Gema icono={FileSpreadsheet} tono="tono-musgo" />

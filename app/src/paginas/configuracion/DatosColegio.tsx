@@ -80,7 +80,7 @@ export function DatosColegio() {
   return (
     <>
       <Encabezado etiqueta="Configuración" titulo="Datos del colegio" subtitulo="Aparecen en la app, la libreta, las actas, los carnés y los reportes." />
-      <Contenido ancho="max-w-3xl">
+      <Contenido>
         <Tarjeta className="aparecer flex flex-col items-center gap-4 p-5 sm:flex-row">
           <div className="flex h-28 w-28 shrink-0 items-center justify-center overflow-hidden rounded-3xl bg-sup/80 ring-1 ring-sup">
             {insignia ? <img src={insignia} alt="Insignia del colegio" className="h-full w-full object-contain p-1" /> : <Gema icono={School} tono="tono-laguna" tam="lg" />}

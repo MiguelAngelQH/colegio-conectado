@@ -7,7 +7,7 @@ export function Proximamente({ modulo }: { modulo: Modulo }) {
   return (
     <>
       <Encabezado etiqueta={`Fase ${modulo.fase}`} titulo={modulo.titulo} />
-      <Contenido ancho="max-w-3xl">
+      <Contenido>
         <Tarjeta className="aparecer flex flex-col items-center gap-4 px-6 py-10 text-center" style={orden(1)}>
           <Gema icono={modulo.icono} tono={modulo.tono} tam="lg" />
           <h2 className="titulo-display max-w-md text-2xl font-bold">{modulo.descripcion}</h2>

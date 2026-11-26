@@ -96,7 +96,7 @@ export function CalendarioAsistencia({ marcas, elegido, onElegir }: {
             <button key={f} type="button" disabled={!estados.length} onClick={() => onElegir(seleccionado ? null : f)}
               aria-label={etiqueta} aria-pressed={seleccionado} title={feriado ?? undefined}
               className={cx(
-                "relative flex aspect-square flex-col items-center justify-center rounded-xl text-sm font-semibold ring-1 transition sm:aspect-[1.15]",
+                "relative flex h-12 flex-col items-center justify-center rounded-xl text-sm font-semibold ring-1 transition sm:h-14 xl:h-16",
                 resumenDia ? cx(ESTILO[resumenDia].celda, "hover:brightness-95") : feriado ? "bg-violet-50/70 text-violet-700 ring-violet-200/70" : finde ? "text-tinta-suave/50 ring-transparent" : "text-tinta-suave ring-tinta/5",
                 f === hoy && "outline outline-2 outline-offset-1 outline-blue-500",
                 seleccionado && "scale-105 shadow-lg ring-2 ring-blue-600",

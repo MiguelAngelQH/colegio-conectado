@@ -35,7 +35,7 @@ export function AnioEscolarPagina() {
   return (
     <>
       <Encabezado etiqueta="Configuración · Paso 1" titulo="Año escolar y periodos" />
-      <Contenido ancho="max-w-3xl">
+      <Contenido>
         {!e.anio || creando ? (
           <NuevoAnio anioSugerido={e.anio ? e.anio.anio + 1 : new Date().getFullYear()} grados={e.grados} hayAnterior={!!e.anio} onCancelar={e.anio ? () => setCreando(false) : undefined} onCreado={() => setCreando(false)} />
         ) : (

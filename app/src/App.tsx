@@ -74,7 +74,7 @@ export function App() {
             <LoaderCircle className="h-5 w-5 animate-spin" aria-hidden /> Descargando datos del colegio...
           </p>
         ) : (
-          <Contenido ancho="max-w-md">
+          <Contenido angosto>
             <Aviso tipo="alerta" titulo="No se encontró su perfil en este equipo">
               {sync.ultimoError ? `Detalle: ${sync.ultimoError}. ` : ""}
               Conéctese a internet para descargarlo. Si el problema continúa, la dirección debe registrar su usuario.

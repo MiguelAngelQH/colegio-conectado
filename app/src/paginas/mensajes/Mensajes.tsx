@@ -78,7 +78,7 @@ export function Mensajes() {
     <>
       <Encabezado etiqueta="Comunicación" titulo="Mensajes" subtitulo={esFamilia ? "Escriba directamente al tutor o a los docentes de su hijo(a)." : "Converse con las familias de sus estudiantes."}
         accion={!esFamilia ? <Boton icono={Plus} onClick={() => setNueva(true)}>Nuevo mensaje</Boton> : undefined} />
-      <Contenido ancho="max-w-3xl">
+      <Contenido>
         {conversaciones.length > 0 && (
           <Tarjeta className="aparecer divide-y divide-sup/70 overflow-hidden">
             {conversaciones.map((c) => (
@@ -161,7 +161,7 @@ function Hilo({ conv, datos, onVolver }: {
     <>
       <Encabezado etiqueta={est ? `Sobre ${nombreCompleto(est)}` : "Mensajes"} titulo={otro}
         accion={<Boton variante="vidrio" icono={ArrowLeft} onClick={onVolver}>Mensajes</Boton>} />
-      <Contenido ancho="max-w-3xl">
+      <Contenido>
         <Tarjeta className="aparecer space-y-2 p-4">
           {mensajes.length === 0 && <p className="py-6 text-center text-sm text-tinta-suave">Escriba el primer mensaje. Solo lo verán usted y {usuario?.id === conv.personalId ? "la familia del estudiante" : "esta persona"}.</p>}
           {mensajes.map((m) => {

@@ -82,7 +82,7 @@ export function FichaSeguimiento() {
   return (
     <>
       <Encabezado etiqueta={`Seguimiento · ${datos.seccion}`} titulo={`${est.nombres} ${est.apellidos}`} />
-      <Contenido ancho="max-w-3xl">
+      <Contenido>
         <Tarjeta className="aparecer p-5" style={orden(1)}>
           <div className="flex items-center gap-4">
             <span className={cx("gema titulo-display h-14 w-14 text-lg font-bold", ind.alertas.length ? "tono-ambar" : "tono-musgo")}><span className="relative z-10">{iniciales(est.nombres, est.apellidos)}</span></span>

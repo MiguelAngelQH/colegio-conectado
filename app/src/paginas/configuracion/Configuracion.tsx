@@ -69,7 +69,7 @@ function Centro() {
   return (
     <>
       <Encabezado etiqueta="Dirección" titulo="Configuración del colegio" subtitulo="Prepare el año escolar en cuatro pasos. Todo funciona sin conexión." />
-      <Contenido ancho="max-w-3xl">
+      <Contenido>
         <Tarjeta className="aparecer p-5" style={orden(1)}>
           <div className="flex items-center justify-between text-sm font-semibold">
             <span>Avance de la configuración</span>

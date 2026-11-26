@@ -32,7 +32,7 @@ export function Monitoreo() {
       <Encabezado etiqueta={esUgel ? "Supervisión UGEL" : "Dirección"} titulo="Monitoreo"
         subtitulo={esUgel ? "Registre observaciones para la dirección del colegio." : "Observaciones de la UGEL y sus respuestas."}
         accion={esUgel ? <Boton icono={Plus} onClick={() => setCreando(true)}>Nueva</Boton> : undefined} />
-      <Contenido ancho="max-w-3xl">
+      <Contenido>
         <Segmentado etiqueta="Filtro" valor={filtro} onCambio={setFiltro} opciones={[
           { valor: "pendiente", texto: `Pendientes (${pendientes})` }, { valor: "atendida", texto: "Atendidas" }, { valor: "todas", texto: "Todas" },
         ]} />

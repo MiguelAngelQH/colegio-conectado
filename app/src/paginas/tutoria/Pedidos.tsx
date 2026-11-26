@@ -130,7 +130,7 @@ export function Pedidos() {
   return (
     <>
       <Encabezado etiqueta="Tutoría" titulo="Pedidos de ayuda" subtitulo="Lo que estudiantes y familias piden a su tutor(a). Los casos de acoso también llegan a la dirección." />
-      <Contenido ancho="max-w-3xl">
+      <Contenido>
         <Segmentado etiqueta="Pedidos" valor={vista} onCambio={setVista} opciones={[
           { valor: "abiertos", texto: `Por atender (${datos.lista.filter((s) => ABIERTAS.includes(s.estado)).length})` }, { valor: "cerrados", texto: "Cerrados" },
         ]} />

@@ -75,7 +75,7 @@ function ListaIncidencias() {
     <>
       <Encabezado etiqueta="Convivencia escolar" titulo="Incidencias" subtitulo="Registro y seguimiento de situaciones de convivencia."
         accion={<Boton icono={Plus} onClick={() => setCreando("")} className="hidden sm:inline-flex">Registrar</Boton>} />
-      <Contenido ancho="max-w-3xl">
+      <Contenido>
         <div className="flex flex-wrap items-center gap-2">
           <Segmentado etiqueta="Filtro" valor={filtro} onCambio={setFiltro} opciones={[
             { valor: "activas", texto: "Activas" }, { valor: "cerrada", texto: "Cerradas" }, { valor: "todas", texto: "Todas" },
@@ -212,7 +212,7 @@ function DetalleIncidencia() {
   return (
     <>
       <Encabezado etiqueta={`Incidencia · ${fecha(inc.fecha)}`} titulo={inc.tipo} />
-      <Contenido ancho="max-w-3xl">
+      <Contenido>
         <Tarjeta className="aparecer space-y-3 p-5" style={orden(1)}>
           <div className="flex flex-wrap items-center gap-2">
             <span className={cx("rounded-full px-3 py-1 text-xs font-bold", ESTADO[inc.estado].clase)}>{ESTADO[inc.estado].texto}</span>

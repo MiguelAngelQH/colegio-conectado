@@ -28,7 +28,7 @@ export function Carnes() {
   return (
     <>
       <Encabezado etiqueta="Asistencia" titulo="Carnés con QR" subtitulo="Para escanear la asistencia de estudiantes sin celular. 10 carnés por hoja A4." />
-      <Contenido ancho="max-w-3xl">
+      <Contenido>
         {e.secciones.length === 0 ? (
           <Vacio icono={IdCard} titulo="No hay secciones" />
         ) : (

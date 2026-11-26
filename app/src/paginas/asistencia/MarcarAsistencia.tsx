@@ -43,7 +43,7 @@ export function MarcarAsistencia() {
     return (
       <>
         <Encabezado etiqueta="Asistencia" titulo="Marcar asistencia" />
-        <Contenido ancho="max-w-md"><Vacio icono={QrCode} titulo="Su cuenta no está vinculada a un estudiante">Avise a la dirección del colegio.</Vacio></Contenido>
+        <Contenido angosto><Vacio icono={QrCode} titulo="Su cuenta no está vinculada a un estudiante">Avise a la dirección del colegio.</Vacio></Contenido>
       </>
     );
   }
@@ -102,7 +102,7 @@ export function MarcarAsistencia() {
   return (
     <>
       <Encabezado etiqueta="Asistencia" titulo="Marcar asistencia" subtitulo="Escanea el QR de tu docente, escribe su código de 6 dígitos o muéstrale tu QR." />
-      <Contenido ancho="max-w-md">
+      <Contenido angosto>
         <div className="flex justify-center">
           <Segmentado etiqueta="Cómo marcar" valor={modo} onCambio={(v) => { setModo(v); setResultado(null); }}
             opciones={[{ valor: "escanear", texto: "Escanear" }, { valor: "mi-qr", texto: "Mi QR" }]} />

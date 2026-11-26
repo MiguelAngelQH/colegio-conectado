@@ -146,7 +146,7 @@ export function HistorialEstudiante() {
     <>
       <Encabezado etiqueta="Historial del estudiante" titulo={`${est.nombres} ${est.apellidos}`}
         subtitulo={[enCurso?.seccion, est.dni && `DNI ${est.dni}`, datos.porAnio.length > 1 && `${datos.porAnio.length} años en el colegio`].filter(Boolean).join(" · ")} />
-      <Contenido ancho="max-w-4xl">
+      <Contenido>
         {/* Lo primero que necesita un docente nuevo */}
         <Tarjeta className="aparecer space-y-3 p-5" style={orden(1)}>
           <div className="flex items-center gap-3">

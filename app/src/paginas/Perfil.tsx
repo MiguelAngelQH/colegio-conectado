@@ -24,7 +24,7 @@ export function Perfil() {
   return (
     <>
       <Encabezado etiqueta="Cuenta" titulo="Mi perfil" />
-      <Contenido ancho="max-w-3xl">
+      <Contenido>
         <Tarjeta className="aparecer flex flex-col items-center p-6 text-center sm:flex-row sm:text-left" style={orden(1)}>
           <span className={cx("gema titulo-display h-24 w-24 !rounded-[1.8rem] text-3xl font-bold", TONO_ROL[usuario.roles[0]])}>
             <span className="relative z-10">{iniciales(usuario.nombres, usuario.apellidos)}</span>

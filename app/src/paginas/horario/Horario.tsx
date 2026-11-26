@@ -63,7 +63,7 @@ export function Horario() {
     <>
       <Encabezado etiqueta="Clases" titulo="Horario" subtitulo={vista === "yo" ? "Todas sus clases de la semana." : "Horario semanal de la sección."}
         accion={gestion && vista && vista !== "yo" ? <Boton variante="vidrio" icono={Pencil} onClick={() => setEditando(true)}>Editar horario</Boton> : undefined} />
-      <Contenido ancho="max-w-5xl">
+      <Contenido>
         {(datos.secciones.length > 1 || personal) && (
           <Tarjeta className="aparecer p-4">
             <Campo etiqueta="Ver">

@@ -99,7 +99,7 @@ export function RegistroNotas() {
   if (!base) return null;
   if (!base.cursos.length) {
     return (
-      <Contenido ancho="max-w-3xl">
+      <Contenido>
         <Vacio icono={ClipboardList} tono="tono-cielo" titulo="Aún no tiene áreas asignadas">
           La dirección debe asignarle sus áreas y secciones en Configuración, paso 3.
         </Vacio>
@@ -115,7 +115,7 @@ export function RegistroNotas() {
   const pendientesConclusion = datos?.califs.filter(faltaConclusion).length ?? 0;
 
   return (
-    <Contenido ancho="max-w-5xl">
+    <Contenido>
       <Tarjeta className="aparecer grid grid-cols-[minmax(0,1fr)] gap-3 p-4 sm:grid-cols-[1.4fr_1fr]" style={orden(1)}>
         <Campo etiqueta="Curso">
           <Selector value={cursoId} onChange={(ev) => setCursoId(ev.target.value)}>

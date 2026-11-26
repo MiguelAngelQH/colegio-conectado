@@ -32,7 +32,7 @@ export function AreasPropias() {
     <>
       <Encabezado etiqueta="Configuración" titulo="Áreas y talleres" subtitulo="Las del currículo nacional ya están cargadas. Aquí agrega los talleres o áreas propias del colegio."
         accion={<BotonRegresar a="/configuracion" />} />
-      <Contenido ancho="max-w-3xl">
+      <Contenido>
         <Tarjeta className="aparecer space-y-3 p-5">
           <div className="flex flex-wrap items-center gap-2">
             <h2 className="flex-1 font-bold">Talleres y áreas propias</h2>

@@ -118,8 +118,10 @@ export function MiTutoria() {
   return (
     <>
       <Encabezado etiqueta="Tutoría" titulo={esEstudiante ? "Mi tutoría" : "Tutoría"} />
-      <Contenido ancho="max-w-2xl">
+      <Contenido>
         {!esEstudiante && <SelectorHijo hijos={hijos ?? []} hijo={hijo} />}
+        <div className="grid items-start gap-4 xl:grid-cols-2">
+        <div className="space-y-4">
         <Tarjeta className="aparecer p-5" style={orden(1)}>
           <div className="flex items-center gap-4">
             <Gema icono={HandHeart} tono="tono-rosa" tam="lg" />
@@ -158,6 +160,8 @@ export function MiTutoria() {
           </section>
         )}
 
+        </div>
+        <section className="space-y-3">
         <h2 className="etiqueta px-1">{esEstudiante ? "Observaciones sobre ti" : `Observaciones sobre ${hijo.nombres}`}</h2>
         {datos.obs.length === 0 ? <Vacio icono={StickyNote} titulo="Aún no hay observaciones" /> : (
           <div className="space-y-3">
@@ -172,6 +176,8 @@ export function MiTutoria() {
             ))}
           </div>
         )}
+        </section>
+        </div>
       </Contenido>
       {pidiendo && nombreTutor && <DialogoPedirAyuda estudianteId={hijo.id} para={para} tutor={nombreTutor} onCerrar={() => setPidiendo(false)} />}
     </>

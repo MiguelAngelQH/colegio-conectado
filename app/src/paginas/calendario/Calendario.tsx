@@ -80,7 +80,8 @@ export function Calendario() {
     <>
       <Encabezado etiqueta="Colegio" titulo="Calendario escolar" subtitulo="Evaluaciones, reuniones, actividades y feriados."
         accion={puedeCrear ? <Boton icono={Plus} onClick={() => setEditando("nuevo")}>Nuevo evento</Boton> : undefined} />
-      <Contenido ancho="max-w-4xl">
+      <Contenido>
+        <div className="grid items-start gap-4 xl:grid-cols-[minmax(0,1.7fr)_minmax(0,1fr)]">
         <Tarjeta className="aparecer p-3 sm:p-5">
           <div className="mb-3 flex items-center gap-2">
             <button onClick={() => mover(-1)} className="rounded-full p-2 hover:bg-sup/60" aria-label="Mes anterior"><ChevronLeft className="h-5 w-5" aria-hidden /></button>
@@ -97,7 +98,7 @@ export function Calendario() {
               const feriado = fer.get(d);
               return (
                 <button key={d} onClick={() => setDia(d)} aria-label={`${Number(d.slice(8))}${feriado ? `, ${feriado}` : ""}${evs.length ? `, ${evs.length} eventos` : ""}`}
-                  className={cx("flex min-h-14 flex-col items-center gap-1 rounded-xl p-1 text-sm transition sm:min-h-16",
+                  className={cx("flex min-h-14 flex-col items-center gap-1 rounded-xl p-1 text-sm transition sm:min-h-16 xl:min-h-[4.5rem]",
                     d === dia ? "bg-blue-600 text-white" : d === hoy ? "bg-sup/80 ring-2 ring-blue-500" : "bg-sup/40 hover:bg-sup/70",
                     feriado && d !== dia && "text-red-700")}>
                   <span className="font-bold">{Number(d.slice(8))}</span>
@@ -115,6 +116,7 @@ export function Calendario() {
           </div>
         </Tarjeta>
 
+        <div className="space-y-4">
         <section className="space-y-2">
           <h2 className="etiqueta px-1">{new Date(`${dia}T12:00:00`).toLocaleDateString("es-PE", { weekday: "long", day: "numeric", month: "long" })}</h2>
           <Tarjeta className="overflow-hidden">
@@ -130,6 +132,8 @@ export function Calendario() {
             <Tarjeta className="overflow-hidden"><ListaEventos lista={proximos} /></Tarjeta>
           </section>
         )}
+        </div>
+        </div>
       </Contenido>
       {editando && <EditorEvento evento={editando} fechaInicial={dia} gestion={gestion} secciones={datos.mias.map((s) => ({ id: s.id, nombre: s.nombreLargo }))} onCerrar={() => setEditando(null)} />}
     </>

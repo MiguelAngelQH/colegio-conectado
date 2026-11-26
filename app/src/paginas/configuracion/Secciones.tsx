@@ -20,7 +20,7 @@ export function SeccionesPagina() {
   return (
     <>
       <Encabezado etiqueta="Configuración · Paso 2" titulo="Grados y secciones" subtitulo={e.anio ? `Año escolar ${e.anio.anio}` : undefined} />
-      <Contenido ancho="max-w-4xl">
+      <Contenido>
         {!e.anio ? (
           <Vacio icono={CalendarRange} tono="tono-cielo" titulo="Primero cree el año escolar"
             accion={<Link to="/configuracion/anio"><Boton>Ir al paso 1</Boton></Link>}>

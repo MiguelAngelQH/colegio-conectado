@@ -112,7 +112,7 @@ export function Tareas() {
     <>
       <Encabezado etiqueta="Clases" titulo="Tareas" subtitulo={!familia ? "Deje tareas a sus secciones: la familia recibe el aviso." : esApoderado ? `Lo que dejaron los docentes de ${hijo?.nombres.split(" ")[0] ?? "su hijo(a)"} y cuándo entregarlo.` : "Lo que dejaron tus docentes y cuándo hay que entregarlo."}
         accion={!familia && curso ? <Boton icono={Plus} onClick={() => setEditando("nueva")}>Nueva tarea</Boton> : undefined} />
-      <Contenido ancho="max-w-3xl">
+      <Contenido>
         {!familia && (
           datos.cursos.length === 0
             ? <Vacio icono={BookCheck} titulo="No tiene cursos asignados">La dirección debe asignarle áreas y secciones.</Vacio>

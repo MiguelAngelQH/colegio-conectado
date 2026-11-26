@@ -88,7 +88,7 @@ function InicioTutoria() {
   return (
     <>
       <Encabezado etiqueta="Tutoría y orientación educativa" titulo="Tutoría" subtitulo="Seguimiento de cada estudiante, sesiones de tutoría y entrevistas con las familias." />
-      <Contenido ancho="max-w-4xl">
+      <Contenido>
         {pedidos && (pedidos.total > 0 || secciones.length > 0) && (
           <button onClick={() => navegar("pedidos")}
             className={cx("vidrio aparecer flex w-full items-center gap-4 p-4 text-left transition hover:bg-sup/55", pedidos.nuevos > 0 && "ring-2 ring-sky-300")}>
@@ -153,7 +153,7 @@ function InicioTutoria() {
               <>
                 <div className="flex justify-end"><Boton icono={Plus} onClick={() => setNuevaSesion(true)}>Nueva sesión</Boton></div>
                 {datos.sesiones.length === 0 ? <Vacio icono={Users} tono="tono-rosa" titulo="Aún no hay sesiones de tutoría registradas" /> : (
-                  <div className="space-y-3">
+                  <div className="grid gap-3 lg:grid-cols-2">
                     {datos.sesiones.map((s) => (
                       <Tarjeta key={s.id} className="space-y-2 p-4">
                         <div className="flex items-start gap-3">
@@ -176,7 +176,7 @@ function InicioTutoria() {
               <>
                 <div className="flex justify-end"><Boton icono={Plus} onClick={() => setNuevaEntrevista(true)}>Nueva entrevista</Boton></div>
                 {datos.entrevistas.length === 0 ? <Vacio icono={MessagesSquare} tono="tono-rosa" titulo="Aún no hay entrevistas registradas" /> : (
-                  <div className="space-y-3">
+                  <div className="grid gap-3 lg:grid-cols-2">
                     {datos.entrevistas.map((x) => (
                       <Tarjeta key={x.id} className="space-y-2 p-4">
                         <div className="flex items-start gap-3">

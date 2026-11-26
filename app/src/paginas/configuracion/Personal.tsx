@@ -40,7 +40,7 @@ export function PersonalPagina() {
     <>
       <Encabezado etiqueta="Configuración · Paso 3" titulo="Personal" subtitulo="Docentes, auxiliares y dirección. Asigne a cada docente sus áreas y secciones."
         accion={<Boton icono={UserPlus} onClick={() => setCreando(true)} className="hidden sm:inline-flex">Agregar</Boton>} />
-      <Contenido ancho="max-w-3xl">
+      <Contenido>
         <div className="flex gap-2">
           <div className="flex-1"><Buscador valor={busca} onCambio={setBusca} placeholder="Buscar por nombre o DNI" /></div>
           <Boton icono={UserPlus} onClick={() => setCreando(true)} className="sm:hidden" aria-label="Agregar personal" />
@@ -195,7 +195,7 @@ export function FichaPersonal() {
   return (
     <>
       <Encabezado etiqueta="Personal" titulo={`${persona.nombres} ${persona.apellidos}`} />
-      <Contenido ancho="max-w-3xl">
+      <Contenido>
         <Tarjeta className="aparecer flex flex-wrap items-center gap-4 p-5" style={orden(1)}>
           <Avatar u={persona} tam="h-16 w-16 text-xl" />
           <div className="min-w-0 flex-1">

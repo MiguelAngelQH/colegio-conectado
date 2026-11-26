@@ -80,7 +80,7 @@ export function TomaAsistencia() {
     <>
       <Encabezado etiqueta={`Asistencia · ${new Date(`${sesion.fecha}T12:00:00`).toLocaleDateString("es-PE", { weekday: "long", day: "numeric", month: "long" })}`}
         titulo={`${datos.titulo}${datos.area ? ` · ${datos.area}` : ""}`} />
-      <Contenido ancho="max-w-4xl">
+      <Contenido>
         <Tarjeta className="aparecer p-4" style={orden(1)}>
           <div className={cx("grid gap-2 text-center", ESTADOS.length === 4 ? "grid-cols-5" : "grid-cols-4")}>
             {ESTADOS.map((e) => (

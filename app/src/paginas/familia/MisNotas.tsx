@@ -45,7 +45,7 @@ export function MisNotas() {
     return (
       <>
         <Encabezado etiqueta="Familia" titulo="Notas y libreta" />
-        <Contenido ancho="max-w-md"><Vacio icono={BookOpenCheck} titulo="No hay estudiantes vinculados a su cuenta">Comuníquese con la dirección del colegio.</Vacio></Contenido>
+        <Contenido angosto><Vacio icono={BookOpenCheck} titulo="No hay estudiantes vinculados a su cuenta">Comuníquese con la dirección del colegio.</Vacio></Contenido>
       </>
     );
   }
@@ -76,7 +76,7 @@ export function MisNotas() {
     <>
       <Encabezado etiqueta={usuario?.roles.includes("apoderado") ? `Notas de ${hijo.nombres.split(" ")[0]}` : "Mis notas"} titulo="Notas y libreta"
         accion={<Boton variante="vidrio" icono={FileDown} onClick={libreta} cargando={generando} className="hidden sm:inline-flex">Libreta PDF</Boton>} />
-      <Contenido ancho="max-w-3xl">
+      <Contenido>
         <SelectorHijo hijos={hijos ?? []} hijo={hijo} />
         <Tarjeta className="aparecer space-y-4 p-4" style={orden(1)}>
           <div className="flex flex-wrap items-center gap-2">
@@ -95,7 +95,7 @@ export function MisNotas() {
 
         {delPeriodo.length === 0 ? (
           <Vacio icono={BookOpenCheck} tono="tono-cielo" titulo="Aún no hay notas en este periodo">Aparecerán cuando los docentes las registren y se sincronicen.</Vacio>
-        ) : delPeriodo.map((f, i) => (
+        ) : <div className="grid items-start gap-4 xl:grid-cols-2">{delPeriodo.map((f, i) => (
           <Tarjeta key={f.area.id} className="aparecer overflow-hidden" style={orden(Math.min(i + 2, 8))}>
             <h2 className="border-b border-sup/70 px-5 py-3 font-bold">{f.area.nombre}</h2>
             <ul className="divide-y divide-sup/70">
@@ -115,11 +115,12 @@ export function MisNotas() {
               })}
             </ul>
           </Tarjeta>
-        ))}
+        ))}</div>}
 
         {datos.obs.length > 0 && (
           <section className="space-y-2">
             <h2 className="etiqueta px-1">Observaciones de los docentes</h2>
+            <div className="grid gap-3 lg:grid-cols-2">
             {datos.obs.map((o) => (
               <Tarjeta key={o.id} className="flex gap-3 p-4">
                 <Gema icono={StickyNote} tono={o.tipo === "felicitacion" ? "tono-musgo" : o.tipo === "conducta" ? "tono-ambar" : "tono-cielo"} tam="sm" />
@@ -129,6 +130,7 @@ export function MisNotas() {
                 </div>
               </Tarjeta>
             ))}
+            </div>
           </section>
         )}
       </Contenido>

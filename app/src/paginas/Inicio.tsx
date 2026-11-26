@@ -179,7 +179,7 @@ export function Inicio() {
       {datos && datos.comunicados.length > 0 && (
         <section>
           <h2 className="etiqueta mb-2 px-1">Comunicados</h2>
-          <div className="space-y-3">
+          <div className="grid gap-3 lg:grid-cols-2 2xl:grid-cols-3">
             {datos.comunicados.map((c, i) => (
               <Tarjeta key={c.id} className="aparecer flex gap-3 p-4" style={orden(i + 5)}>
                 <Gema icono={Megaphone} tono="tono-ambar" tam="sm" />
