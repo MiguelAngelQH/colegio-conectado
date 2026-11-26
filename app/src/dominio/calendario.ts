@@ -60,3 +60,12 @@ export const sumarDiasTexto = (fecha: string, n: number) => {
   const [a, m, d] = fecha.split("-").map(Number);
   return aTexto(new Date(a, m - 1, d + n));
 };
+
+/**
+ * Cómo se resume un día con varias marcas de asistencia (una por clase):
+ * manda lo más importante para la familia: falta, luego tardanza, luego justificada, luego presente.
+ */
+export function estadoDelDia<E extends "P" | "T" | "F" | "J">(estados: E[]): E | null {
+  for (const e of ["F", "T", "J", "P"] as const) if (estados.includes(e as E)) return e as E;
+  return null;
+}

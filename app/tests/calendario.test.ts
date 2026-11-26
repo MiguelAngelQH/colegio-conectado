@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { calcularAvisos } from "@/dominio/avisos";
-import { cuadriculaMes, feriados, ocurreEn } from "@/dominio/calendario";
+import { cuadriculaMes, estadoDelDia, feriados, ocurreEn } from "@/dominio/calendario";
 
 describe("calendario escolar", () => {
   it("incluye los feriados fijos y Semana Santa (Pascua 2026: 5 de abril)", () => {
@@ -25,5 +25,15 @@ describe("calendario escolar", () => {
     const titulos = calcularAvisos({ ...base, eventos: [ev("2026-11-24"), ev("2026-11-25"), ev("2026-11-30")] }).map((a) => a.titulo);
     expect(titulos).toEqual(expect.arrayContaining(["Hoy: Reunión de padres", "Mañana: Reunión de padres"]));
     expect(titulos).toHaveLength(2);
+  });
+});
+
+describe("estado del día de asistencia", () => {
+  it("la falta manda sobre la tardanza, la justificada y el presente", () => {
+    expect(estadoDelDia(["P", "P", "F"])).toBe("F");
+    expect(estadoDelDia(["P", "T", "J"])).toBe("T");
+    expect(estadoDelDia(["P", "J"])).toBe("J");
+    expect(estadoDelDia(["P"])).toBe("P");
+    expect(estadoDelDia([])).toBeNull();
   });
 });
