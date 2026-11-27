@@ -516,12 +516,21 @@ export function MapaCalor({ titulo, subtitulo, dias, desde, hasta , className }:
   const inicio = new Date(`${desde}T12:00:00Z`);
   inicio.setUTCDate(inicio.getUTCDate() - ((inicio.getUTCDay() + 6) % 7));
   for (let d = inicio; d.toISOString().slice(0, 10) <= hasta; d = new Date(d.getTime() + 7 * 86_400_000)) lunes.push(d.toISOString().slice(0, 10));
-  const izq = 34, arr = 18, hueco = 4;
+  const izq = 34, arr = 42, hueco = 4;
   const celda = Math.min(52, Math.floor((ancho - izq - (lunes.length - 1) * hueco) / Math.max(1, lunes.length)));
   const conNumeros = celda >= 30;
   const altoSvg = arr + 5 * celda + 4 * hueco;
   const fechaDe = (col: number, fila: number) => new Date(Date.parse(`${lunes[col]}T12:00:00Z`) + fila * 86_400_000).toISOString().slice(0, 10);
   const mes = (f: string) => new Date(`${f}T12:00:00`).toLocaleDateString("es-PE", { month: "short" }).replace(".", "");
+  const mesLargo = (f: string) => mayuscula(new Date(`${f}T12:00:00`).toLocaleDateString("es-PE", { month: "long" }));
+  // Cada semana pertenece al mes de su miércoles; los meses se dibujan como una franja sobre sus semanas.
+  const mesDeSemana = (l: string) => fechaDe(lunes.indexOf(l), 2).slice(0, 7);
+  const franjas: { mes: string; desde: number; hasta: number }[] = [];
+  lunes.forEach((l, col) => {
+    const m = mesDeSemana(l);
+    if (franjas.length && franjas[franjas.length - 1].mes === m) franjas[franjas.length - 1].hasta = col;
+    else franjas.push({ mes: m, desde: col, hasta: col });
+  });
   const conDatos = dias.filter((d) => d.porcentaje !== null);
   const falta = (d: PuntoDiaCalor) => 100 - (d.porcentaje ?? 100);
   const promedio = conDatos.length ? Math.round(conDatos.reduce((t, d) => t + falta(d), 0) / conDatos.length) : 0;
@@ -538,7 +547,7 @@ export function MapaCalor({ titulo, subtitulo, dias, desde, hasta , className }:
       leyenda={
         <div className="space-y-2">
           <p className="text-xs text-tinta-suave">
-            Cada cuadro es un día de clases. El número de arriba es el día del mes y el de abajo, el porcentaje de estudiantes que faltó. Mientras más oscuro, más faltas.
+            Cada columna es una semana (de lunes a viernes) y cada cuadro, un día de clases: arriba el día del mes y abajo el porcentaje de estudiantes que faltó. Mientras más oscuro, más faltas.
           </p>
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 text-xs text-tinta-suave" aria-label="Leyenda">
             <span className="font-semibold text-tinta">Estudiantes que faltaron:</span>
@@ -566,12 +575,24 @@ export function MapaCalor({ titulo, subtitulo, dias, desde, hasta , className }:
             {DIAS.map((d, fila) => (
               <text key={d} x={0} y={arr + fila * (celda + hueco) + celda / 2 + 4} fontSize={10} fill={SUAVE}>{d}</text>
             ))}
+            {franjas.map((f) => {
+              const x1 = izq + f.desde * (celda + hueco);
+              const x2 = izq + f.hasta * (celda + hueco) + celda;
+              return (
+                <g key={f.mes}>
+                  <text x={x1 + 2} y={11} fontSize={11} fontWeight={700} fill={TINTA}>
+                    {/* Si la franja es angosta (una sola semana), el nombre corto para que no se monte con el siguiente. */}
+                    {x2 - x1 >= mesLargo(`${f.mes}-15`).length * 7 ? mesLargo(`${f.mes}-15`) : mayuscula(mes(`${f.mes}-15`))}
+                  </text>
+                  <line x1={x1 + 1} x2={x2 - 1} y1={17} y2={17} stroke={SUAVE} strokeOpacity={0.45} strokeWidth={1.5} strokeLinecap="round" />
+                </g>
+              );
+            })}
             {lunes.map((l, col) => {
               const x = izq + col * (celda + hueco);
-              const cambioMes = col === 0 || mes(l) !== mes(lunes[col - 1]);
               return (
                 <g key={l}>
-                  {cambioMes && <text x={x} y={11} fontSize={10} fill={SUAVE} className="capitalize">{mes(l)}</text>}
+                  <text x={x + celda / 2} y={33} fontSize={9.5} textAnchor="middle" fill={SUAVE}>{Number(l.slice(8))}–{Number(fechaDe(col, 4).slice(8))}</text>
                   {DIAS.map((_, fila) => {
                     const f = fechaDe(col, fila);
                     const d = porFecha.get(f);
@@ -589,7 +610,7 @@ export function MapaCalor({ titulo, subtitulo, dias, desde, hasta , className }:
                           strokeDasharray={conValor ? undefined : "2 2"} strokeWidth={enFoco ? 2 : 1} />
                         {conNumeros && (
                           <>
-                            <text x={x + 5} y={y + 12} fontSize={9.5} fill={colorTexto} opacity={0.75}>{Number(f.slice(8))}</text>
+                            <text x={x + 5} y={y + 12} fontSize={9.5} fill={colorTexto} opacity={0.75} fontWeight={f.endsWith("-01") ? 700 : 400}>{Number(f.slice(8))}{f.endsWith("-01") ? ` ${mes(f)}` : ""}</text>
                             {conValor && (
                               <text x={x + celda / 2} y={y + celda - 8} fontSize={celda >= 40 ? 12 : 10.5} fontWeight={700} textAnchor="middle" fill={colorTexto}>
                                 {100 - d.porcentaje!}%
