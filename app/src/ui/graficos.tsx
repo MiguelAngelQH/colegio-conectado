@@ -496,6 +496,12 @@ function useAncho<T extends HTMLElement>() {
 }
 
 const CORTES = [5, 10, 15, 25]; // % de inasistencia que separan los 5 tonos
+/** Solo la primera letra en mayúscula ("Jueves, 26 de noviembre"). */
+const mayuscula = (t: string) => t.charAt(0).toUpperCase() + t.slice(1);
+const RANGOS = ["Menos de 5%", "5 a 9%", "10 a 14%", "15 a 24%", "25% o más"];
+/** Texto legible sobre cada tono (los dos más oscuros llevan letra blanca). */
+const TEXTO_TONO = ["#7c3a1d", "#7c3a1d", "#5c2410", "#ffffff", "#ffffff"];
+const indiceTono = (inasistencia: number) => (CORTES.findIndex((c) => inasistencia < c) === -1 ? 4 : CORTES.findIndex((c) => inasistencia < c));
 const tono = (inasistencia: number) => RAMPA[CORTES.findIndex((c) => inasistencia < c) === -1 ? 4 : CORTES.findIndex((c) => inasistencia < c)];
 const DIAS = ["Lun", "Mar", "Mié", "Jue", "Vie"];
 const fechaLarga = (f: string) => new Date(`${f}T12:00:00`).toLocaleDateString("es-PE", { weekday: "long", day: "numeric", month: "long" });
@@ -510,28 +516,46 @@ export function MapaCalor({ titulo, subtitulo, dias, desde, hasta , className }:
   const inicio = new Date(`${desde}T12:00:00Z`);
   inicio.setUTCDate(inicio.getUTCDate() - ((inicio.getUTCDay() + 6) % 7));
   for (let d = inicio; d.toISOString().slice(0, 10) <= hasta; d = new Date(d.getTime() + 7 * 86_400_000)) lunes.push(d.toISOString().slice(0, 10));
-  const izq = 30, arr = 18, hueco = 3;
-  const celda = Math.min(40, Math.floor((ancho - izq - (lunes.length - 1) * hueco) / Math.max(1, lunes.length)));
+  const izq = 34, arr = 18, hueco = 4;
+  const celda = Math.min(52, Math.floor((ancho - izq - (lunes.length - 1) * hueco) / Math.max(1, lunes.length)));
+  const conNumeros = celda >= 30;
   const altoSvg = arr + 5 * celda + 4 * hueco;
   const fechaDe = (col: number, fila: number) => new Date(Date.parse(`${lunes[col]}T12:00:00Z`) + fila * 86_400_000).toISOString().slice(0, 10);
   const mes = (f: string) => new Date(`${f}T12:00:00`).toLocaleDateString("es-PE", { month: "short" }).replace(".", "");
   const conDatos = dias.filter((d) => d.porcentaje !== null);
+  const falta = (d: PuntoDiaCalor) => 100 - (d.porcentaje ?? 100);
+  const promedio = conDatos.length ? Math.round(conDatos.reduce((t, d) => t + falta(d), 0) / conDatos.length) : 0;
+  const peor = conDatos.reduce<PuntoDiaCalor | null>((p, d) => (!p || falta(d) > falta(p) ? d : p), null);
+  const porDiaSemana = DIAS.map((nombre, i) => {
+    const del = conDatos.filter((d) => (new Date(`${d.fecha}T12:00:00`).getDay() + 6) % 7 === i);
+    return { nombre, prom: del.length ? del.reduce((t, d) => t + falta(d), 0) / del.length : 0, n: del.length };
+  });
+  const peorDiaSemana = porDiaSemana.filter((x) => x.n).sort((a, b) => b.prom - a.prom)[0];
+  const NOMBRE_DIA: Record<string, string> = { Lun: "los lunes", Mar: "los martes", Mié: "los miércoles", Jue: "los jueves", Vie: "los viernes" };
 
   return (
     <MarcoGrafico className={className} titulo={titulo} subtitulo={subtitulo}
       leyenda={
-        <div className="flex flex-wrap items-center gap-2 text-xs text-tinta-suave" aria-label="Leyenda">
-          <span>Menos faltas</span>
-          {RAMPA.map((c, i) => <span key={c} className="h-3 w-5 rounded-[3px] ring-1 ring-black/5" style={{ background: c }} title={["0-5%", "5-10%", "10-15%", "15-25%", "25% o más"][i]} />)}
-          <span>Más faltas</span>
-          <span className="ml-2 inline-flex items-center gap-1"><span className="h-3 w-3 rounded-[3px] border border-dashed border-slate-300" /> Sin clases o sin registro</span>
+        <div className="space-y-2">
+          <p className="text-xs text-tinta-suave">
+            Cada cuadro es un día de clases. El número de arriba es el día del mes y el de abajo, el porcentaje de estudiantes que faltó. Mientras más oscuro, más faltas.
+          </p>
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 text-xs text-tinta-suave" aria-label="Leyenda">
+            <span className="font-semibold text-tinta">Estudiantes que faltaron:</span>
+            {RAMPA.map((c, i) => (
+              <span key={c} className="inline-flex items-center gap-1.5">
+                <span className="h-3.5 w-3.5 rounded-[4px] ring-1 ring-black/10" style={{ background: c }} /> {RANGOS[i]}
+              </span>
+            ))}
+            <span className="inline-flex items-center gap-1.5"><span className="h-3.5 w-3.5 rounded-[4px] border border-dashed border-slate-400" /> Sin clases o sin registro</span>
+          </div>
         </div>
       }
       tabla={
         <table className={claseTabla}>
           <thead><tr><th>Día</th><th className="text-right">Asistencia</th><th className="text-right">Inasistencia</th><th className="text-right">Registros</th></tr></thead>
           <tbody>{[...conDatos].reverse().map((d) => (
-            <tr key={d.fecha}><td className="capitalize">{fechaLarga(d.fecha)}</td><td className="text-right tabular-nums">{d.porcentaje}%</td>
+            <tr key={d.fecha}><td>{mayuscula(fechaLarga(d.fecha))}</td><td className="text-right tabular-nums">{d.porcentaje}%</td>
               <td className="text-right tabular-nums">{100 - (d.porcentaje ?? 0)}%</td><td className="text-right tabular-nums text-tinta-suave">{d.registros}</td></tr>
           ))}</tbody>
         </table>
@@ -554,12 +578,26 @@ export function MapaCalor({ titulo, subtitulo, dias, desde, hasta , className }:
                     const y = arr + fila * (celda + hueco);
                     if (f > hasta || f < desde) return null;
                     const conValor = d && d.porcentaje !== null;
+                    const enFoco = !!foco && typeof foco.d !== "string" && foco.d.fecha === f;
+                    const it = conValor ? indiceTono(100 - d.porcentaje!) : -1;
+                    const colorTexto = conValor ? TEXTO_TONO[it] : SUAVE;
                     return (
-                      <rect key={f} x={x} y={y} width={celda} height={celda} rx={4}
-                        fill={conValor ? tono(100 - d.porcentaje!) : "transparent"}
-                        stroke={conValor ? (foco && typeof foco.d !== "string" && foco.d.fecha === f ? TINTA : REJILLA) : SUAVE}
-                        strokeDasharray={conValor ? undefined : "2 2"} strokeWidth={conValor && foco && typeof foco.d !== "string" && foco.d.fecha === f ? 2 : 1}
-                        onMouseEnter={() => setFoco({ d: d ?? f, x: x + celda / 2, y })} onClick={() => setFoco({ d: d ?? f, x: x + celda / 2, y })} />
+                      <g key={f} onMouseEnter={() => setFoco({ d: d ?? f, x: x + celda / 2, y })} onClick={() => setFoco({ d: d ?? f, x: x + celda / 2, y })} style={{ cursor: "pointer" }}>
+                        <rect x={x} y={y} width={celda} height={celda} rx={5}
+                          fill={conValor ? RAMPA[it] : "transparent"}
+                          stroke={conValor ? (enFoco ? TINTA : REJILLA) : SUAVE}
+                          strokeDasharray={conValor ? undefined : "2 2"} strokeWidth={enFoco ? 2 : 1} />
+                        {conNumeros && (
+                          <>
+                            <text x={x + 5} y={y + 12} fontSize={9.5} fill={colorTexto} opacity={0.75}>{Number(f.slice(8))}</text>
+                            {conValor && (
+                              <text x={x + celda / 2} y={y + celda - 8} fontSize={celda >= 40 ? 12 : 10.5} fontWeight={700} textAnchor="middle" fill={colorTexto}>
+                                {100 - d.porcentaje!}%
+                              </text>
+                            )}
+                          </>
+                        )}
+                      </g>
                     );
                   })}
                 </g>
@@ -567,16 +605,23 @@ export function MapaCalor({ titulo, subtitulo, dias, desde, hasta , className }:
             })}
           </svg>
         )}
+        {conDatos.length > 0 && (
+          <p className="mt-3 text-sm text-tinta">
+            En promedio faltó el <b>{promedio}%</b> de los estudiantes por día.
+            {peor && falta(peor) > 0 && <> El día con más faltas fue el <b>{mayuscula(fechaLarga(peor.fecha))}</b> ({falta(peor)}%).</>}
+            {peorDiaSemana && peorDiaSemana.prom >= 1 && <> Suelen faltar más <b>{NOMBRE_DIA[peorDiaSemana.nombre]}</b> ({Math.round(peorDiaSemana.prom)}% en promedio).</>}
+          </p>
+        )}
         {foco && (
           <div className="pointer-events-none absolute z-10 -translate-x-1/2 -translate-y-full" style={{ left: Math.min(Math.max(foco.x, 90), ancho - 90), top: foco.y - 6 }}>
             {typeof foco.d === "string" ? (
-              <Caja titulo={<span className="capitalize">{fechaLarga(foco.d)}</span>} filas={[{ etiqueta: "Sin clases o sin registro", valor: "" }]} />
+              <Caja titulo={<span>{mayuscula(fechaLarga(foco.d))}</span>} filas={[{ etiqueta: "Sin clases o sin registro", valor: "" }]} />
             ) : (
-              <Caja titulo={<span className="capitalize">{fechaLarga(foco.d.fecha)}</span>}
+              <Caja titulo={<span>{mayuscula(fechaLarga(foco.d.fecha))}</span>}
                 filas={[
-                  { color: tono(100 - (foco.d.porcentaje ?? 0)), etiqueta: "Inasistencia", valor: `${100 - (foco.d.porcentaje ?? 0)}%` },
-                  { etiqueta: "Asistencia", valor: `${foco.d.porcentaje}%` },
-                  { etiqueta: "Registros", valor: foco.d.registros },
+                  { color: tono(100 - (foco.d.porcentaje ?? 0)), etiqueta: "Faltaron", valor: `${100 - (foco.d.porcentaje ?? 0)}%` },
+                  { etiqueta: "Asistieron", valor: `${foco.d.porcentaje}%` },
+                  { etiqueta: "Marcas de asistencia", valor: foco.d.registros },
                 ]} />
             )}
           </div>

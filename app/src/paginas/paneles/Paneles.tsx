@@ -201,7 +201,7 @@ export function Paneles() {
             meta={{ valor: UMBRAL_ASISTENCIA, etiqueta: `Meta ${UMBRAL_ASISTENCIA}%` }}
             items={panel.porSeccion.map((s) => ({ etiqueta: s.seccion, valor: s.porcentaje, detalle: `${s.registros} registros` }))} />
 
-          <MapaCalor className="lg:col-span-12" titulo="Inasistencia por día" subtitulo={`Últimas 14 semanas · ${alcance}`}
+          <MapaCalor className="lg:col-span-12" titulo="¿Qué días faltaron más estudiantes?" subtitulo={`Últimas 14 semanas · ${alcance}`}
             dias={panel.dias} desde={panel.semanas[0]?.semana ?? hoyISO()} hasta={hoyISO()} />
 
           {avanceDocentes.length > 0 && (
